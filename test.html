@@ -69,17 +69,135 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
-            padding: 12px 24px;
+            padding: 14px 24px;
             border-radius: 16px;
             font-weight: 800;
             font-size: 14px;
             transition: all 0.2s;
             cursor: pointer;
             width: 100%;
-            max-width: 300px;
+            max-width: 320px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         .btn-google:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+
+        .btn-guest {
+            background-color: transparent;
+            color: #64748b;
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px; 
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 11px; 
+            transition: all 0.2s;
+            cursor: pointer;
+            width: auto; 
+            margin: 0 auto;
+            max-width: 200px; 
+        }
+        .btn-guest:hover { background-color: #1e293b; color: white; border-color: #475569; }
+
+        /* Custom Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10B981;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10B981;
+        }
+
+        /* --- Minimal Dark Horizontal Card Styles (YouTube Credit) --- */
+        .yt-card-horizontal {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            background-color: #121212;
+            border-radius: 50px;
+            padding: 5px 5px 5px 8px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            border: 1px solid #2a2a2a;
+            transition: all 0.2s ease-in-out;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .yt-card-horizontal:hover {
+            border-color: #404040;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .yt-avatar-wrapper {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+
+        .yt-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-image: url('https://yt3.googleusercontent.com/vlD4rkRPBg-HIUX6kAbuW1AHgE1FzYa4cs7W3ZD1AV0z4Xg_vM42d1r_slf8SVPhjmJXPslvcg=s160-c-k-c0x00ffffff-no-rj');
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 0 0 1px #121212, 0 0 0 2px #333;
+        }
+
+        .yt-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .yt-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+
+        .yt-stats {
+            font-size: 0.65rem;
+            color: #aaa;
+            margin-top: 2px;
+            white-space: nowrap;
+        }
+
+        .yt-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            background-color: #cc0000;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+            height: 28px;
+            flex-shrink: 0;
+            margin-left: 0;
+            margin-right: 2px;
+        }
+
+        .yt-btn:hover {
+            background-color: #ff0000;
+        }
+
+        .yt-icon {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body>
@@ -87,7 +205,7 @@
 
     <script type="text/babel">
         // ==========================================
-        // 🔴 ส่วนที่ 1: สำหรับเจ้าของเว็บ (YOU) 🔴
+        // 🔴 CONFIG SECTION 🔴
         // ==========================================
         const OWNER_CONFIG = {
           apiKey: "AIzaSyAbWzr8o_OhkjGbEetBYq_nzYmVZ2fTf40",
@@ -100,15 +218,12 @@
         };
         // ==========================================
 
-
         const { useState, useEffect, useMemo, useRef } = React;
         const Recharts = window.Recharts || { LineChart: () => null, Line: () => null, XAxis: () => null, YAxis: () => null, CartesianGrid: () => null, Tooltip: () => null, ResponsiveContainer: () => null };
         const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
 
-        // FIXED: Safe Icon Component for Lucide CDN
         const Icon = ({ name, size = 20, className = "" }) => {
             const spanRef = useRef(null);
-
             useEffect(() => {
                 if (window.lucide && spanRef.current) {
                     spanRef.current.innerHTML = '';
@@ -116,99 +231,68 @@
                     i.setAttribute('data-lucide', name);
                     i.setAttribute('class', className);
                     spanRef.current.appendChild(i);
-                    window.lucide.createIcons({
-                        root: spanRef.current,
-                        nameAttr: 'data-lucide',
-                        attrs: { width: size, height: size }
-                    });
+                    window.lucide.createIcons({ root: spanRef.current, nameAttr: 'data-lucide', attrs: { width: size, height: size } });
                 }
             }, [name, size, className]);
-
             return <span ref={spanRef} style={{ display: 'inline-flex', verticalAlign: 'middle' }}></span>;
         };
 
-        const Zeny16Bit = ({ className }) => (
-            <svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges">
-                <rect x="10" y="4" width="12" height="24" fill="#FFD700" rx="4" />
-                <rect x="8" y="6" width="16" height="20" fill="#FFD700" />
-                <rect x="10" y="6" width="12" height="20" fill="#FFEC8B" /> 
-                <path d="M12 4 L20 4 L22 6 L22 26 L20 28 L12 28 L10 26 L10 6 Z" fill="none" stroke="#B8860B" strokeWidth="2" />
-                <path d="M14 10 L20 10 L20 12 L16 18 L20 18 L20 20 L12 20 L12 18 L16 12 L12 12 Z" fill="#8B4513" />
-            </svg>
-        );
+        // 16-bit SVGs
+        const Zeny16Bit = ({ className }) => (<svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges"><rect x="10" y="4" width="12" height="24" fill="#FFD700" rx="4" /><rect x="8" y="6" width="16" height="20" fill="#FFD700" /><rect x="10" y="6" width="12" height="20" fill="#FFEC8B" /><path d="M12 4 L20 4 L22 6 L22 26 L20 28 L12 28 L10 26 L10 6 Z" fill="none" stroke="#B8860B" strokeWidth="2" /><path d="M14 10 L20 10 L20 12 L16 18 L20 18 L20 20 L12 20 L12 18 L16 12 L12 12 Z" fill="#8B4513" /></svg>);
+        const BubbleGum16Bit = ({ className }) => (<svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges"><rect x="6" y="14" width="20" height="8" fill="#42A5F5" /><rect x="4" y="16" width="2" height="4" fill="#1E88E5" /><rect x="26" y="16" width="2" height="4" fill="#1E88E5" /><circle cx="16" cy="12" r="6" fill="#F06292" /><circle cx="14" cy="10" r="2" fill="#F48FB1" /><rect x="8" y="15" width="16" height="1" fill="#90CAF9" opacity="0.5" /></svg>);
+        const CoagulatedSpell16Bit = ({ className }) => (<svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges"><path d="M16 4 L24 12 L24 22 L16 28 L8 22 L8 12 Z" fill="#7E57C2" /><path d="M16 6 L22 12 L22 20 L16 26 L10 20 L10 12 Z" fill="#9575CD" /><path d="M16 4 L16 28" stroke="#D1C4E9" strokeWidth="1" opacity="0.4" /><rect x="13" y="10" width="2" height="2" fill="#EDE7F6" /><rect x="18" y="18" width="1" height="1" fill="#EDE7F6" /></svg>);
+        const ContaminatedMagic16Bit = ({ className }) => (<svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges"><circle cx="16" cy="16" r="10" fill="#EF5350" /><circle cx="16" cy="16" r="6" fill="#B71C1C" /><path d="M16 6 L18 10 L22 10 L20 14 L22 18 L18 18 L16 22 L14 18 L10 18 L12 14 L10 10 L14 10 Z" fill="#FFCDD2" opacity="0.5"/></svg>);
+        const Silvervine16Bit = ({ className }) => (<svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges"><rect x="8" y="10" width="16" height="14" fill="#5D4037" /><rect x="14" y="4" width="4" height="6" fill="#4CAF50" /><rect x="14" y="14" width="4" height="4" fill="#FFD600" /><rect x="8" y="10" width="16" height="2" fill="#795548" /></svg>);
+        const GoogleLogo = () => (<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>);
 
-        const BubbleGum16Bit = ({ className }) => (
-            <svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges">
-                <rect x="6" y="14" width="20" height="8" fill="#42A5F5" />
-                <rect x="4" y="16" width="2" height="4" fill="#1E88E5" />
-                <rect x="26" y="16" width="2" height="4" fill="#1E88E5" />
-                <circle cx="16" cy="12" r="6" fill="#F06292" />
-                <circle cx="14" cy="10" r="2" fill="#F48FB1" />
-                <rect x="8" y="15" width="16" height="1" fill="#90CAF9" opacity="0.5" />
-            </svg>
-        );
+        // --- CUSTOM TOGGLE SWITCH ---
+        const ToggleSwitch = ({ checked, onChange, activeColor = "bg-green-500" }) => {
+            return (
+                <div onClick={() => onChange(!checked)} className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all ${checked ? `border-${activeColor.replace('bg-', '')}/50 bg-${activeColor.replace('bg-', '')}/10` : 'border-slate-800 bg-slate-950'}`}>
+                    <div className={`w-8 h-4 rounded-full relative transition-colors ${checked ? activeColor : 'bg-slate-700'}`}>
+                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${checked ? 'left-4.5' : 'left-0.5'}`} style={{left: checked ? '18px' : '2px'}}></div>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${checked ? 'text-white' : 'text-slate-500'}`}>
+                        {checked ? 'Sell' : 'Store'}
+                    </span>
+                </div>
+            );
+        };
 
-        const CoagulatedSpell16Bit = ({ className }) => (
-            <svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges">
-                <path d="M16 4 L24 12 L24 22 L16 28 L8 22 L8 12 Z" fill="#7E57C2" />
-                <path d="M16 6 L22 12 L22 20 L16 26 L10 20 L10 12 Z" fill="#9575CD" />
-                <path d="M16 4 L16 28" stroke="#D1C4E9" strokeWidth="1" opacity="0.4" />
-                <rect x="13" y="10" width="2" height="2" fill="#EDE7F6" />
-                <rect x="18" y="18" width="1" height="1" fill="#EDE7F6" />
-            </svg>
-        );
-
-        const ContaminatedMagic16Bit = ({ className }) => (
-            <svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges">
-                <circle cx="16" cy="16" r="10" fill="#EF5350" />
-                <circle cx="16" cy="16" r="6" fill="#B71C1C" />
-                <path d="M16 6 L18 10 L22 10 L20 14 L22 18 L18 18 L16 22 L14 18 L10 18 L12 14 L10 10 L14 10 Z" fill="#FFCDD2" opacity="0.5"/>
-            </svg>
-        );
-
-        const Silvervine16Bit = ({ className }) => (
-            <svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges">
-                <rect x="8" y="10" width="16" height="14" fill="#5D4037" />
-                <rect x="14" y="4" width="4" height="6" fill="#4CAF50" />
-                <rect x="14" y="14" width="4" height="4" fill="#FFD600" />
-                <rect x="8" y="10" width="16" height="2" fill="#795548" />
-            </svg>
-        );
-
-        // --- NEW: Welcome Screen Component ---
-        const WelcomeScreen = ({ onLogin }) => {
+        // --- WELCOME SCREEN ---
+        const WelcomeScreen = ({ onLogin, onGuest }) => {
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-[#020617] p-6 text-center animate-fade-in relative overflow-hidden">
-                    {/* Background decoration */}
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                     <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-600/20 rounded-full blur-[100px] animate-pulse"></div>
                     <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-600/20 rounded-full blur-[100px] animate-pulse" style={{animationDelay:'1s'}}></div>
-
                     <div className="relative z-10 flex flex-col items-center max-w-md w-full">
-                        <div className="mb-8 relative">
-                            <div className="w-24 h-24 bg-slate-800 rounded-3xl flex items-center justify-center shadow-2xl border border-slate-700 transform rotate-3 hover:rotate-0 transition-all duration-500">
-                                <CoagulatedSpell16Bit className="w-16 h-16 drop-shadow-lg" />
+                        <div className="mb-8 relative animate-slide-up">
+                            <div className="w-28 h-28 bg-slate-800 rounded-[2rem] flex items-center justify-center shadow-2xl border-2 border-slate-700/50 transform rotate-3 hover:rotate-0 transition-all duration-500">
+                                <CoagulatedSpell16Bit className="w-20 h-20 drop-shadow-lg" />
                             </div>
-                            <div className="absolute -bottom-2 -right-2 bg-green-500 text-slate-900 text-[10px] font-black px-2 py-1 rounded-lg shadow-lg rotate-[-5deg]">OGH</div>
+                            <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg rotate-[-5deg]">OGH Farm</div>
                         </div>
-
-                        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 mb-2 tracking-tighter italic">
-                            OGH Farming
-                        </h1>
-                        <p className="text-slate-400 text-sm mb-10 font-medium leading-relaxed">
-                            ระบบบันทึกสถิติและคำนวณกำไร Old Glast Heim <br/>
-                            <span className="text-slate-500 text-xs">ซิงค์ข้อมูลผ่าน Cloud ใช้งานได้ทุกที่</span>
-                        </p>
-
-                        <div className="w-full space-y-4 animate-slide-up" style={{animationDelay:'0.2s'}}>
-                            <button onClick={onLogin} className="btn-google w-full mx-auto justify-center hover:scale-105 active:scale-95">
-                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" className="w-5 h-5" />
-                                <span>เข้าสู่ระบบด้วย Gmail</span>
-                            </button>
-                            
-                            <p className="text-[10px] text-slate-600 mt-6">
-                                Developed by <span className="text-slate-400 font-bold">SDekza RO</span>
-                            </p>
+                        <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 mb-4 tracking-tighter italic animate-slide-up" style={{animationDelay:'0.1s'}}>OGH Farming</h1>
+                        <p className="text-slate-400 text-sm mb-12 font-medium leading-relaxed max-w-xs animate-slide-up" style={{animationDelay:'0.2s'}}>ระบบบันทึกสถิติและคำนวณกำไร <br/><span className="text-slate-500 text-xs">สำหรับผู้เล่น Ragnarok Online (Classic/GGT)</span></p>
+                        <div className="w-full space-y-6 animate-slide-up" style={{animationDelay:'0.3s'}}>
+                            <button onClick={onLogin} className="btn-google mx-auto hover:scale-105 active:scale-95 group"><GoogleLogo /> <span>เข้าสู่ระบบด้วย Gmail</span></button>
+                            <button onClick={onGuest} className="btn-guest hover:scale-105 active:scale-95"><Icon name="user" size={14} /> <span>ใช้งานแบบ Guest</span></button>
+                            <div className="flex items-center justify-center gap-2 opacity-60 hover:opacity-100 transition-opacity mt-8">
+                                <div className="yt-card-horizontal">
+                                    <div className="yt-avatar-wrapper">
+                                        <div className="yt-avatar"></div>
+                                    </div>
+                                    <div className="yt-info">
+                                        <h2 class="yt-name">SDekza</h2>
+                                        <div class="yt-stats">140+ Subs</div>
+                                    </div>
+                                    <a href="https://www.youtube.com/@SDekza-ro" target="_blank" className="yt-btn">
+                                        <svg className="yt-icon" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.005 3.005 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                                        Subscribe
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -219,42 +303,18 @@
             // Helpers
             const formatZeny = (num) => new Intl.NumberFormat('th-TH').format(Math.round(num || 0));
             const formatMZeny = (num) => (Number(num || 0) / 1000000).toFixed(2) + " M";
-            
             const formatTimerDisplay = (ms) => {
                 const mins = Math.floor(ms / 60000);
                 const secs = Math.floor((ms % 60000) / 1000);
                 const centi = Math.floor((ms % 1000) / 10);
                 return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}:${centi.toString().padStart(2, '0')}`;
             };
+            const convertToISO = (d) => { if(!d) return ""; const p = d.split('/'); return p.length===3 ? `${p[2]}-${p[1]}-${p[0]}` : d; };
+            const convertToDisplay = (d) => { if(!d) return ""; const p = d.split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };
 
-            const convertToISO = (displayDate) => {
-                if (!displayDate) return "";
-                const parts = displayDate.split('/');
-                if (parts.length === 3) {
-                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
-                return displayDate;
-            };
-
-            const convertToDisplay = (isoDate) => {
-                if (!isoDate) return "";
-                const parts = isoDate.split('-');
-                if (parts.length === 3) {
-                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
-                }
-                return isoDate;
-            };
-
-            // State
-            const [records, setRecords] = useState([]);
-            const [globalPrices, setGlobalPrices] = useState({
-                purpleStonePrice: 15000,
-                contMagicPrice: 15000,
-                gumBoxPrice: 1000000,
-                silvervineBoxPrice: 2000000,
-            });
-
-            // UI State
+            const [records, setRecords] = useState(() => { const s = localStorage.getItem('ogh_records'); return s ? JSON.parse(s) : []; });
+            const [globalPrices, setGlobalPrices] = useState(() => { const s = localStorage.getItem('ogh_prices'); return s ? JSON.parse(s) : { purpleStonePrice: 15000, contMagicPrice: 15000, gumBoxPrice: 1000000, silvervineBoxPrice: 2000000 }; });
+            
             const [activeTab, setActiveTab] = useState('ogh');
             const [isAdding, setIsAdding] = useState(false);
             const [showManual, setShowManual] = useState(false);
@@ -265,790 +325,236 @@
             const [gumFilter, setGumFilter] = useState('all');
             const [sortOrder, setSortOrder] = useState('date-desc');
             const [expandedId, setExpandedId] = useState(null);
-
-            // Timer State
             const [timeInMs, setTimeInMs] = useState(0);
             const [isTimerActive, setIsTimerActive] = useState(false);
             const [isTimerPaused, setIsTimerPaused] = useState(true);
+            const [isGuestMode, setIsGuestMode] = useState(false);
             const timerRef = useRef(null);
+            const [formData, setFormData] = useState({ date: new Date().toLocaleDateString('en-GB'), gumUsed: 0, trashAmount: "", purpleStoneCount: "", contMagicCount: "", isSellingSpell: false, isSellingMagic: false, useSilvervine: true, minutesUsed: 60, notes: "", otherCosts: [] });
+            
+            const firebaseAppRef = useRef(null); const authRef = useRef(null); const dbRef = useRef(null); const [user, setUser] = useState(null); const [isLoading, setIsLoading] = useState(true);
 
-            // Form Data
-            const [formData, setFormData] = useState({
-                date: new Date().toLocaleDateString('en-GB'),
-                gumUsed: 0,
-                trashAmount: "",
-                purpleStoneCount: "",
-                contMagicCount: "",
-                isSellingSpell: false,
-                isSellingMagic: false,
-                useSilvervine: true,
-                minutesUsed: 60,
-                notes: "",
-                otherCosts: []
-            });
-
-            // Firebase Refs
-            const firebaseAppRef = useRef(null);
-            const authRef = useRef(null);
-            const dbRef = useRef(null);
-            const [user, setUser] = useState(null);
-            const [isLoading, setIsLoading] = useState(true);
-
-            // Initialize App & Load Config
+            // ... (All Effects & Handlers for Firebase/Timer/Save remain same) ...
+            // Copying essential logic to keep file complete
             useEffect(() => {
                 const initSystem = async () => {
                     let fbConfig = OWNER_CONFIG;
-                    
-                    if (!fbConfig) {
-                        const savedConfig = localStorage.getItem('firebase_config_json');
-                        if (savedConfig) fbConfig = JSON.parse(savedConfig);
-                    }
-                    
-                    if (!fbConfig && typeof __firebase_config !== 'undefined') {
-                        fbConfig = JSON.parse(__firebase_config);
-                    }
-
+                    if (!fbConfig) { const s = localStorage.getItem('firebase_config_json'); if (s) fbConfig = JSON.parse(s); }
+                    if (!fbConfig && typeof __firebase_config !== 'undefined') fbConfig = JSON.parse(__firebase_config);
                     if (fbConfig && window.FirebaseSDK) {
                         try {
                             const { initializeApp, getAuth, getFirestore, onAuthStateChanged } = window.FirebaseSDK;
-                            if (!firebaseAppRef.current) {
-                                firebaseAppRef.current = initializeApp(fbConfig);
-                                authRef.current = getAuth(firebaseAppRef.current);
-                                dbRef.current = getFirestore(firebaseAppRef.current);
-                            }
-
-                            onAuthStateChanged(authRef.current, (u) => {
-                                setUser(u);
-                                setIsLoading(false);
-                                if (!u) {
-                                    // User not logged in, we stay in Loading=false state to show Welcome Screen
-                                }
-                            });
-                        } catch (e) {
-                            console.error("Firebase Init Error:", e);
-                            setIsLoading(false);
-                        }
-                    } else {
-                        // Local Mode fallback
-                         setIsLoading(false);
-                    }
+                            if (!firebaseAppRef.current) { firebaseAppRef.current = initializeApp(fbConfig); authRef.current = getAuth(firebaseAppRef.current); dbRef.current = getFirestore(firebaseAppRef.current); }
+                            onAuthStateChanged(authRef.current, (u) => { setUser(u); setIsLoading(false); if(!u) { const lr = localStorage.getItem('ogh_records'); if(lr) setRecords(JSON.parse(lr)); } });
+                        } catch (e) { setIsLoading(false); }
+                    } else { setIsLoading(false); }
                 };
-                
-                if (window.FirebaseSDK) {
-                    initSystem();
-                } else {
-                    setTimeout(initSystem, 500);
-                }
+                if(window.FirebaseSDK) initSystem(); else setTimeout(initSystem, 500);
             }, []);
 
-            // Data Sync Effect
             useEffect(() => {
-                if (!user || !dbRef.current) return;
+                if (isGuestMode) return;
+                if(!user || !dbRef.current) return;
                 setIsLoading(true);
-
                 const { collection, doc, query, onSnapshot, getDoc, setDoc } = window.FirebaseSDK;
-                const appId = 'ro-farm-app';
-                const recordsRef = collection(dbRef.current, 'artifacts', appId, 'users', user.uid, 'farm_records');
-                const pricesRef = doc(dbRef.current, 'artifacts', appId, 'users', user.uid, 'settings', 'prices');
+                const recRef = collection(dbRef.current, 'artifacts', 'ro-farm-app', 'users', user.uid, 'farm_records');
+                const priceRef = doc(dbRef.current, 'artifacts', 'ro-farm-app', 'users', user.uid, 'settings', 'prices');
+                const unsub = onSnapshot(query(recRef), (snap) => { setRecords(snap.docs.map(d => ({id:d.id, ...d.data()}))); setIsLoading(false); });
+                getDoc(priceRef).then(s => { if(s.exists()) setGlobalPrices(s.data()); else setDoc(priceRef, globalPrices); });
+                return () => unsub();
+            }, [user, isGuestMode]);
 
-                const unsubRecords = onSnapshot(query(recordsRef), (snapshot) => {
-                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setRecords(data);
-                    setIsLoading(false);
-                }, (err) => {
-                    console.error("Records Sync Error:", err);
-                    setIsLoading(false);
-                });
-
-                const fetchPrices = async () => {
-                    try {
-                        const docSnap = await getDoc(pricesRef);
-                        if (docSnap.exists()) {
-                            setGlobalPrices(docSnap.data());
-                        } else {
-                            await setDoc(pricesRef, globalPrices);
-                        }
-                    } catch(e) { console.error("Prices Sync Error:", e); }
-                };
-                fetchPrices();
-
-                return () => unsubRecords();
-            }, [user]);
-
-            // Timer Logic
-            useEffect(() => {
-                if (isTimerActive && !isTimerPaused) {
-                    timerRef.current = setInterval(() => {
-                        setTimeInMs(prev => {
-                            if (prev >= 3600000) {
-                                setIsTimerActive(false);
-                                setIsTimerPaused(true);
-                                setFormData(f => ({ ...f, minutesUsed: 60 }));
-                                return 3600000;
-                            }
-                            return prev + 10;
-                        });
-                    }, 10);
-                } else { clearInterval(timerRef.current); }
-                return () => clearInterval(timerRef.current);
-            }, [isTimerActive, isTimerPaused]);
-
-            // Handlers
+            useEffect(() => { if (!user) localStorage.setItem('ogh_records', JSON.stringify(records)); }, [records, user]);
+            useEffect(() => { if (!user) localStorage.setItem('ogh_prices', JSON.stringify(globalPrices)); }, [globalPrices, user]);
+            useEffect(() => { if(isTimerActive && !isTimerPaused) { timerRef.current = setInterval(() => setTimeInMs(p => p>=3600000 ? (setIsTimerActive(false)||setIsTimerPaused(true)||setFormData(f=>({...f, minutesUsed:60}))||3600000) : p+10), 10); } else clearInterval(timerRef.current); return () => clearInterval(timerRef.current); }, [isTimerActive, isTimerPaused]);
+            
             const handleTimerStart = () => { setIsTimerActive(true); setIsTimerPaused(false); };
             const handleTimerPause = () => { setIsTimerPaused(true); };
-            const handleTimerStop = () => {
-                const mins = Math.ceil(timeInMs / 60000);
-                setFormData(prev => ({ ...prev, minutesUsed: mins > 0 ? mins : 1 }));
-                setIsTimerActive(false);
-                setIsTimerPaused(true);
-            };
+            const handleTimerStop = () => { const m = Math.ceil(timeInMs/60000); setFormData(p => ({...p, minutesUsed: m>0?m:1})); setIsTimerActive(false); setIsTimerPaused(true); };
             const handleTimerReset = () => { setTimeInMs(0); setIsTimerActive(false); setIsTimerPaused(true); };
-
-            const handleLogin = async () => {
-                if (!authRef.current) {
-                    setShowConfigModal(true);
-                    return;
-                }
-                const { GoogleAuthProvider, signInWithPopup } = window.FirebaseSDK;
-                const provider = new GoogleAuthProvider();
-                try { await signInWithPopup(authRef.current, provider); } catch (error) { console.error("Login Error:", error); }
-            };
-
-            const handleLogout = () => {
-                if (authRef.current) {
-                    const { signOut } = window.FirebaseSDK;
-                    signOut(authRef.current);
-                    setRecords([]); 
-                    window.location.reload(); 
-                }
-            };
-
-            const saveConfig = () => {
-                try {
-                    JSON.parse(configInput);
-                    localStorage.setItem('firebase_config_json', configInput);
-                    window.location.reload();
-                } catch (e) {
-                    alert("รูปแบบ JSON ไม่ถูกต้อง กรุณาตรวจสอบ");
-                }
-            };
-
-            const updatePricesInCloud = async (newPrices) => {
-                if (!user || !dbRef.current) return;
-                const { doc, setDoc } = window.FirebaseSDK;
-                const appId = 'ro-farm-app';
-                const pricesRef = doc(dbRef.current, 'artifacts', appId, 'users', user.uid, 'settings', 'prices');
-                await setDoc(pricesRef, newPrices);
-            };
-
+            
+            const handleLogin = async () => { if(!authRef.current){setShowConfigModal(true);return;} try{ await window.FirebaseSDK.signInWithPopup(authRef.current, new window.FirebaseSDK.GoogleAuthProvider()); }catch(e){ if(e.code==='auth/unauthorized-domain') alert(`Please add domain: ${window.location.hostname} to Firebase Console`); } };
+            const handleLogout = () => { if(authRef.current) { window.FirebaseSDK.signOut(authRef.current); setRecords([]); window.location.reload(); } };
+            const handleGuestLogin = () => { setIsGuestMode(true); };
+            const handleExitGuest = () => { setIsGuestMode(false); window.location.reload(); };
+            const saveConfig = () => { try { JSON.parse(configInput); localStorage.setItem('firebase_config_json', configInput); window.location.reload(); } catch(e){ alert("Invalid JSON"); }};
+            const updatePricesInCloud = async (np) => { if(user && dbRef.current) await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(dbRef.current, 'artifacts', 'ro-farm-app', 'users', user.uid, 'settings', 'prices'), np); };
+            
             const handleSave = async (e) => {
                 e.preventDefault();
+                const d = { ...formData, id: editingId||Date.now(), timestamp: Date.now(), mode: activeTab, revenue: Number(formData.trashAmount||0) + (formData.isSellingSpell?(Number(formData.purpleStoneCount||0)*globalPrices.purpleStonePrice):0) + (activeTab==='aogh'&&formData.isSellingMagic?(Number(formData.contMagicCount||0)*globalPrices.contMagicPrice):0), totalCost: (formData.gumUsed*(globalPrices.gumBoxPrice/10)) + (formData.useSilvervine?(2*(globalPrices.silvervineBoxPrice/10)):0) + formData.otherCosts.reduce((a,b)=>a+Number(b.amount||0),0) };
+                d.profit = d.revenue - d.totalCost; d.revenuePerMinute = d.minutesUsed>0?d.revenue/d.minutesUsed:0;
                 
-                const dataToSave = {
-                    ...formData,
-                    id: editingId || Date.now(),
-                    timestamp: Date.now(),
-                    mode: activeTab,
-                    revenue: Number(formData.trashAmount || 0) + 
-                             (formData.isSellingSpell ? (Number(formData.purpleStoneCount || 0) * globalPrices.purpleStonePrice) : 0) +
-                             (activeTab === 'aogh' && formData.isSellingMagic ? (Number(formData.contMagicCount || 0) * globalPrices.contMagicPrice) : 0),
-                    
-                    totalCost: (formData.gumUsed * (globalPrices.gumBoxPrice / 10)) + 
-                               (formData.useSilvervine ? (2 * (globalPrices.silvervineBoxPrice / 10)) : 0) + 
-                               formData.otherCosts.reduce((a, b) => a + Number(b.amount || 0), 0)
-                };
-                
-                dataToSave.profit = dataToSave.revenue - dataToSave.totalCost;
-                dataToSave.revenuePerMinute = dataToSave.minutesUsed > 0 ? dataToSave.revenue / dataToSave.minutesUsed : 0;
-
-                if (user && dbRef.current) {
-                     const { collection, doc, addDoc, updateDoc } = window.FirebaseSDK;
-                     const appId = 'ro-farm-app';
-                     try {
-                        const recordsRef = collection(dbRef.current, 'artifacts', appId, 'users', user.uid, 'farm_records');
-                        if (editingId) {
-                            const recordRef = doc(dbRef.current, 'artifacts', appId, 'users', user.uid, 'farm_records', editingId);
-                            await updateDoc(recordRef, dataToSave);
-                        } else {
-                            await addDoc(recordsRef, dataToSave);
-                        }
-                    } catch (err) { console.error("Cloud Save Error:", err); }
+                if(user && dbRef.current && !isGuestMode) {
+                    const { collection, doc, addDoc, updateDoc } = window.FirebaseSDK;
+                    const c = collection(dbRef.current, 'artifacts', 'ro-farm-app', 'users', user.uid, 'farm_records');
+                    if(editingId) await updateDoc(doc(dbRef.current, 'artifacts', 'ro-farm-app', 'users', user.uid, 'farm_records', editingId), d); else await addDoc(c, d);
                 } else {
-                    if (editingId) {
-                        setRecords(records.map(r => r.id === editingId ? dataToSave : r));
-                    } else {
-                        setRecords([dataToSave, ...records]);
-                    }
+                    if(editingId) setRecords(records.map(r=>r.id===editingId?d:r)); else setRecords([d, ...records]);
                 }
-                
-                setIsAdding(false);
-                setEditingId(null);
-                setFormData({ 
-                    date: new Date().toLocaleDateString('en-GB'), 
-                    gumUsed: 0, 
-                    trashAmount: "", 
-                    purpleStoneCount: "", 
-                    contMagicCount: "", 
-                    isSellingSpell: false, 
-                    isSellingMagic: false,
-                    useSilvervine: true,
-                    minutesUsed: 60, 
-                    notes: "", 
-                    otherCosts: [] 
-                });
+                setIsAdding(false); setEditingId(null); setFormData({ date: new Date().toLocaleDateString('en-GB'), gumUsed: 0, trashAmount: "", purpleStoneCount: "", contMagicCount: "", isSellingSpell: false, isSellingMagic: false, useSilvervine: true, minutesUsed: 60, notes: "", otherCosts: [] });
             };
+            const handleDelete = async (id) => { if(user && dbRef.current && !isGuestMode) { try{ await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(dbRef.current, 'artifacts', 'ro-farm-app', 'users', user.uid, 'farm_records', id)); }catch(e){} } else setRecords(records.filter(r=>r.id!==id)); };
+            
+            const addOtherCostField = () => setFormData(p => ({...p, otherCosts:[...p.otherCosts, {name:"", amount:""}]}));
+            const removeOtherCostField = (i) => setFormData(p => ({...p, otherCosts:p.otherCosts.filter((_,x)=>x!==i)}));
+            const updateOtherCost = (i, f, v) => { const n = [...formData.otherCosts]; n[i][f] = v; setFormData(p => ({...p, otherCosts:n})); };
+            const startEdit = (r) => { setFormData({...r, date: r.date.includes('/')?r.date:convertToDisplay(r.date)}); setEditingId(r.id); setIsAdding(true); };
+            const handleBackup = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({records, globalPrices})], {type:"application/json"})); a.download=`ogh_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); };
+            const handleRestore = (e) => { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=(ev)=>{ try{ const d=JSON.parse(ev.target.result); if(d.records)setRecords(d.records); if(d.globalPrices)setGlobalPrices(d.globalPrices); alert("Success!"); }catch(e){alert("Invalid");} }; r.readAsText(f); };
 
-            const handleDelete = async (id) => {
-                if (user && dbRef.current) {
-                    const { doc, deleteDoc } = window.FirebaseSDK;
-                    const appId = 'ro-farm-app';
-                    try {
-                        const recordRef = doc(dbRef.current, 'artifacts', appId, 'users', user.uid, 'farm_records', id);
-                        await deleteDoc(recordRef);
-                    } catch (e) { console.error(e); }
-                } else {
-                    setRecords(records.filter(r => r.id !== id));
-                }
-            };
-
-            const handleBackup = () => {
-                const data = { records, globalPrices };
-                const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `ogh_backup_${new Date().toISOString().slice(0,10)}.json`;
-                a.click();
-            };
-
-            const handleRestore = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const data = JSON.parse(event.target.result);
-                        if (data.records) setRecords(data.records);
-                        if (data.globalPrices) setGlobalPrices(data.globalPrices);
-                        alert("กู้คืนข้อมูลสำเร็จ!");
-                    } catch (err) {
-                        alert("ไฟล์ไม่ถูกต้อง");
-                    }
-                };
-                reader.readAsText(file);
-            };
-
-            const addOtherCostField = () => setFormData(prev => ({ ...prev, otherCosts: [...prev.otherCosts, { name: "", amount: "" }] }));
-            const removeOtherCostField = (index) => setFormData(prev => ({ ...prev, otherCosts: prev.otherCosts.filter((_, i) => i !== index) }));
-            const updateOtherCost = (index, field, value) => {
-                const newList = [...formData.otherCosts];
-                newList[index][field] = value;
-                setFormData(prev => ({ ...prev, otherCosts: newList }));
-            };
-
-            const startEdit = (record) => {
-                setFormData({
-                    date: record.date.includes('/') ? record.date : convertToDisplay(record.date),
-                    gumUsed: record.gumUsed,
-                    trashAmount: record.trashAmount,
-                    purpleStoneCount: record.purpleStoneCount,
-                    contMagicCount: record.contMagicCount || "",
-                    isSellingSpell: record.isSellingSpell !== false,
-                    isSellingMagic: record.isSellingMagic !== false,
-                    useSilvervine: record.useSilvervine !== false,
-                    minutesUsed: record.minutesUsed || 60,
-                    notes: record.notes || "",
-                    otherCosts: record.otherCosts || []
-                });
-                setEditingId(record.id);
-                setIsAdding(true);
-            };
-
-            // Analytics
-            const filteredRecords = useMemo(() => {
-                return records.filter(r => (r.mode || 'ogh') === activeTab);
-            }, [records, activeTab]);
-
+            const filteredRecords = useMemo(() => records.filter(r => (r.mode || 'ogh') === activeTab), [records, activeTab]);
             const processedData = useMemo(() => {
-                return [...filteredRecords].sort((a, b) => {
-                    const dateA = new Date(convertToISO(a.date));
-                    const dateB = new Date(convertToISO(b.date));
-                    const diff = dateA - dateB;
-                    return diff === 0 ? (a.timestamp || 0) - (b.timestamp || 0) : diff;
-                });
-            }, [filteredRecords]);
-
-            const chartData = useMemo(() => {
-                const data = gumFilter === 'all' ? processedData : processedData.filter(item => item.gumUsed === Number(gumFilter));
-                return data.map(item => ({ 
-                    ...item, 
-                    purpleStoneCount: Number(item.purpleStoneCount || 0),
-                    contMagicCount: Number(item.contMagicCount || 0)
-                }));
-            }, [processedData, gumFilter]);
-
-            const chartConfig = useMemo(() => {
-                switch(chartMode) {
-                    case 'revenue': return { key: 'revenue', color: '#10b981', label: 'รายได้', unit: 'Z' };
-                    case 'stones': return { key: 'purpleStoneCount', color: '#f59e0b', label: 'หินม่วง', unit: 'ชิ้น' };
-                    case 'magic': return { key: 'contMagicCount', color: '#ef4444', label: 'หินแดง', unit: 'ชิ้น' };
-                    case 'profit': default: return { key: 'profit', color: '#a855f7', label: 'กำไร', unit: 'Z' };
-                }
-            }, [chartMode]);
-
-            const sortedTableData = useMemo(() => {
-                const data = [...filteredRecords];
-                switch (sortOrder) {
-                    case 'revenue-desc': return data.sort((a, b) => b.revenue - a.revenue);
-                    case 'revenue-asc': return data.sort((a, b) => a.revenue - b.revenue);
-                    case 'profit-desc': return data.sort((a, b) => b.profit - a.profit);
-                    case 'profit-asc': return data.sort((a, b) => a.profit - b.profit);
-                    case 'date-asc': return data.sort((a, b) => (new Date(convertToISO(a.date)) - new Date(convertToISO(b.date))) || (a.timestamp - b.timestamp));
-                    case 'date-desc': default: return data.sort((a, b) => (new Date(convertToISO(b.date)) - new Date(convertToISO(a.date))) || (b.timestamp - a.timestamp));
-                }
-            }, [filteredRecords, sortOrder]);
-
+                const runsPerDate = {}; records.forEach(r => { if(r.useSilvervine!==false) { const d=r.date; runsPerDate[d]=(runsPerDate[d]||0)+1; } });
+                return filteredRecords.map(r => {
+                    const rev = Number(r.trashAmount||0) + (r.isSellingSpell?(Number(r.purpleStoneCount||0)*globalPrices.purpleStonePrice):0) + ((r.mode==='aogh'&&r.isSellingMagic)?(Number(r.contMagicCount||0)*globalPrices.contMagicPrice):0);
+                    let svCost = 0; if(r.useSilvervine!==false) { const c=runsPerDate[r.date]||1; svCost=(2*(globalPrices.silvervineBoxPrice/10))/c; }
+                    const gCost = r.gumUsed*(globalPrices.gumBoxPrice/10); const oCost = (r.otherCosts||[]).reduce((a,b)=>a+Number(b.amount||0),0); const tCost = gCost+svCost+oCost;
+                    return { ...r, revenue:rev, totalCost:tCost, profit:rev-tCost, revenuePerMinute:r.minutesUsed>0?rev/r.minutesUsed:0 };
+                }).sort((a,b) => (new Date(convertToISO(a.date)) - new Date(convertToISO(b.date))) || (a.timestamp - b.timestamp));
+            }, [filteredRecords, globalPrices, records]);
+            const chartData = useMemo(() => (gumFilter === 'all' ? processedData : processedData.filter(i => i.gumUsed === Number(gumFilter))).map(i => ({...i, purpleStoneCount: Number(i.purpleStoneCount||0), contMagicCount: Number(i.contMagicCount||0)})), [processedData, gumFilter]);
+            const chartConfig = useMemo(() => { switch(chartMode) { case 'revenue': return { key: 'revenue', color: '#10b981', label: 'รายได้', unit: 'Z' }; case 'stones': return { key: 'purpleStoneCount', color: '#f59e0b', label: 'หินม่วง', unit: 'ชิ้น' }; case 'magic': return { key: 'contMagicCount', color: '#ef4444', label: 'หินแดง', unit: 'ชิ้น' }; case 'profit': default: return { key: 'profit', color: '#a855f7', label: 'กำไร', unit: 'Z' }; } }, [chartMode]);
+            const sortedTableData = useMemo(() => { const d = [...processedData]; if(sortOrder==='revenue-desc') return d.sort((a,b)=>b.revenue-a.revenue); if(sortOrder==='revenue-asc') return d.sort((a,b)=>a.revenue-b.revenue); if(sortOrder==='profit-desc') return d.sort((a,b)=>b.profit-a.profit); if(sortOrder==='profit-asc') return d.sort((a,b)=>a.profit-b.profit); if(sortOrder==='date-asc') return d.sort((a,b)=>{const [d1,m1,y1]=a.date.split('/');const [d2,m2,y2]=b.date.split('/');return (new Date(y1,m1-1,d1)-new Date(y2,m2-1,d2))||(a.timestamp-b.timestamp)}); return d.sort((a,b)=>{const [d1,m1,y1]=a.date.split('/');const [d2,m2,y2]=b.date.split('/');return (new Date(y2,m2-1,d2)-new Date(y1,m1-1,d1))||(b.timestamp-a.timestamp)}); }, [processedData, sortOrder]);
             const stats = useMemo(() => {
-                if (filteredRecords.length === 0) return { totalProfit: 0, avgProfit: 0, totalStoredStones: 0, totalStoredMagic: 0, avgRevenue: 0, minRevenue: 0, maxRevenue: 0, avgRevenuePerMinute: 0 };
-                const totalProfit = filteredRecords.reduce((a, b) => a + b.profit, 0);
-                const totalStoredStones = filteredRecords.reduce((a, b) => a + (!b.isSellingSpell ? Number(b.purpleStoneCount || 0) : 0), 0);
-                const totalStoredMagic = filteredRecords.reduce((a, b) => a + (!b.isSellingMagic ? Number(b.contMagicCount || 0) : 0), 0);
-                const revenues = filteredRecords.map(r => r.revenue);
-                return {
-                    totalProfit,
-                    avgProfit: totalProfit / filteredRecords.length,
-                    totalStoredStones,
-                    totalStoredMagic,
-                    avgRevenue: revenues.reduce((a, b) => a + b, 0) / filteredRecords.length,
-                    minRevenue: Math.min(...revenues),
-                    maxRevenue: Math.max(...revenues),
-                    avgRevenuePerMinute: filteredRecords.reduce((a, b) => a + (b.revenuePerMinute || 0), 0) / filteredRecords.length
-                };
-            }, [filteredRecords]);
+                if(!processedData.length) return { totalProfit:0, avgRevenue:0, totalStoredStones:0, totalStoredMagic:0, minRevenue:0, maxRevenue:0, avgRevenuePerMinute:0 };
+                const revs = processedData.map(r => r.revenue);
+                return { totalProfit: processedData.reduce((a,b)=>a+b.profit,0), avgRevenue: revs.reduce((a,b)=>a+b,0)/processedData.length, totalStoredStones: processedData.reduce((a,b)=>a+(!b.isSellingSpell?Number(b.purpleStoneCount||0):0),0), totalStoredMagic: processedData.reduce((a,b)=>a+(!b.isSellingMagic?Number(b.contMagicCount||0):0),0), minRevenue: Math.min(...revs), maxRevenue: Math.max(...revs), avgRevenuePerMinute: processedData.reduce((a,b)=>a+(b.revenuePerMinute||0),0)/processedData.length };
+            }, [processedData]);
 
-            // Render Logic
-            // 1. Loading
-            if (isLoading) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-                        <div className="text-center">
-                            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                            <p className="font-bold tracking-widest animate-pulse">LOADING...</p>
-                        </div>
-                    </div>
-                );
-            }
+            if (isLoading && user) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><div className="text-center"><div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="font-bold tracking-widest animate-pulse">SYNCING DATA...</p></div></div>;
+            if (!user && !isGuestMode && records.length === 0 && !isAdding) return <WelcomeScreen onLogin={handleLogin} onGuest={handleGuestLogin} />;
 
-            // 2. Not Logged In -> Show Welcome Screen
-            if (!user) {
-                return <WelcomeScreen onLogin={handleLogin} />;
-            }
-
-            // 3. Logged In -> Show Dashboard
             return (
                 <div className="min-h-screen p-4 md:p-6 lg:p-8 pb-32 max-w-7xl mx-auto safe-area-pb">
-                     {/* ... (Config & Manual Modals remain same) ... */}
-                     {showConfigModal && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-                            <div className="bg-slate-900 border border-slate-800 w-full max-w-lg p-8 rounded-[2rem] shadow-2xl relative">
-                                <button onClick={() => setShowConfigModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white"><Icon name="x" size={24}/></button>
-                                <h3 className="text-xl font-black mb-4 text-purple-400">⚙️ ตั้งค่า Firebase Cloud</h3>
-                                <p className="text-slate-400 text-xs mb-4">โปรดวาง Firebase Config (JSON) ของคุณเพื่อเปิดใช้งาน Login:</p>
-                                <textarea 
-                                    className="w-full h-40 bg-slate-950 border border-slate-700 rounded-xl p-4 text-xs font-mono text-green-400 outline-none mb-4"
-                                    placeholder='{ "apiKey": "...", ... }'
-                                    value={configInput}
-                                    onChange={e => setConfigInput(e.target.value)}
-                                ></textarea>
-                                <button onClick={saveConfig} className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold uppercase text-xs">บันทึกและรีโหลด</button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Manual Modal */}
-                    {showManual && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowManual(false)}>
-                            <div className="bg-slate-900 border border-slate-800 w-full max-w-md p-8 rounded-[2rem] shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                                <button onClick={() => setShowManual(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white"><Icon name="x" size={24}/></button>
-                                <h3 className="text-xl font-black mb-6 text-purple-400 italic">📱 วิธีติดตั้งบนมือถือ</h3>
-                                <div className="space-y-6 text-sm">
-                                    <div className="flex gap-4">
-                                        <div className="bg-blue-600/20 text-blue-400 w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0">1</div>
-                                        <p className="text-slate-300"><span className="text-white font-bold">iOS (iPhone):</span> เปิดผ่าน Safari กดปุ่ม <span className="inline-flex bg-slate-800 p-1 rounded"><Icon name="share" size={14}/></span> แล้วเลือก <span className="text-white font-bold">"Add to Home Screen"</span></p>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <div className="bg-green-600/20 text-green-400 w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0">2</div>
-                                        <p className="text-slate-300"><span className="text-white font-bold">Android:</span> เปิดผ่าน Chrome กดจุด 3 จุด <span className="text-white font-bold">(⋮)</span> แล้วเลือก <span className="text-white font-bold">"ติดตั้งแอป"</span> หรือ <span className="text-white font-bold">"เพิ่มลงในหน้าจอหลัก"</span></p>
-                                    </div>
-                                </div>
-                                <button onClick={() => setShowManual(false)} className="w-full mt-8 bg-slate-800 py-3 rounded-xl font-bold uppercase tracking-widest text-xs">ตกลง</button>
-                            </div>
-                        </div>
-                    )}
+                     {/* ... (Modals hidden) ... */}
+                     {showConfigModal && (<div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"><div className="bg-slate-900 border border-slate-800 w-full max-w-lg p-8 rounded-[2rem] shadow-2xl relative"><button onClick={()=>setShowConfigModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white"><Icon name="x"/></button><h3 className="text-xl font-black mb-4 text-purple-400">⚙️ ตั้งค่า Firebase</h3><textarea className="w-full h-40 bg-slate-950 border border-slate-700 rounded-xl p-4 text-xs font-mono text-green-400 outline-none mb-4" value={configInput} onChange={e=>setConfigInput(e.target.value)} placeholder='{ "apiKey": "..." }'></textarea><button onClick={saveConfig} className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold uppercase text-xs">บันทึก</button></div></div>)}
+                     {showManual && (<div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={()=>setShowManual(false)}><div className="bg-slate-900 border border-slate-800 w-full max-w-md p-8 rounded-[2rem] shadow-2xl relative" onClick={e=>e.stopPropagation()}><button onClick={()=>setShowManual(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white"><Icon name="x"/></button><h3 className="text-xl font-black mb-6 text-purple-400 italic">📱 วิธีติดตั้ง</h3><div className="space-y-4 text-sm text-slate-300"><p>1. <b>iOS:</b> Safari > แชร์ > Add to Home Screen</p><p>2. <b>Android:</b> Chrome > เมนู > Install App</p></div><button onClick={()=>setShowManual(false)} className="w-full mt-8 bg-slate-800 py-3 rounded-xl font-bold uppercase text-xs">ตกลง</button></div></div>)}
 
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                        <div className="w-full md:w-auto">
+                        <div>
                             <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                                <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-purple-500 to-pink-500 bg-clip-text text-transparent uppercase italic">
-                                    Old Glast Heim
-                                </h1>
+                                <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-purple-500 to-pink-500 bg-clip-text text-transparent uppercase italic">Old Glast Heim</h1>
                                 <div className="flex gap-2">
-                                    <a href="https://www.youtube.com/@SDekza-RO" target="_blank" className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest px-3 py-1.5 bg-slate-900/80 border border-slate-800 rounded-2xl group shadow-sm transition-all w-fit">
-                                        <Icon name="youtube" size={14} className="text-red-500" />
-                                        <span>SDekza RO</span>
-                                    </a>
-                                    <button onClick={() => setShowManual(true)} className="inline-flex items-center gap-2 text-[10px] font-black text-blue-400 hover:text-blue-300 uppercase tracking-widest px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-2xl transition-all">
-                                        <Icon name="help-circle" size={14} />
-                                        <span>ติดตั้งแอป</span>
-                                    </button>
+                                    <div className="yt-card-horizontal">
+                                        <div className="yt-avatar-wrapper"><div className="yt-avatar"></div></div>
+                                        <div className="yt-info"><h2 className="yt-name">SDekza</h2><div className="yt-stats">140+ Subs</div></div>
+                                        <a href="https://www.youtube.com/@SDekza-ro" target="_blank" className="yt-btn"><svg className="yt-icon" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.005 3.005 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>Subscribe</a>
+                                    </div>
+                                    {!user && <button onClick={() => setShowManual(true)} className="inline-flex items-center gap-2 text-[10px] font-black text-blue-400 hover:text-blue-300 uppercase tracking-widest px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-2xl transition-all"><Icon name="help-circle" size={14}/><span>ติดตั้งแอป</span></button>}
                                 </div>
                             </div>
-                            <p className="text-slate-500 text-[10px] uppercase tracking-[0.4em] font-black mt-2">Cloud Farming Dashboard</p>
+                            <p className="text-slate-500 text-[10px] uppercase tracking-[0.4em] font-black mt-2">{user ? "Cloud Farming Dashboard" : "Offline Farming Dashboard"}</p>
                         </div>
-                        
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                             {user ? (
-                                <div className="flex items-center gap-3 bg-slate-900 p-1 pr-4 rounded-2xl border border-slate-800">
-                                    <img src={user.photoURL || "https://via.placeholder.com/32"} className="w-8 h-8 rounded-xl" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-white truncate max-w-[100px]">{user.displayName}</span>
-                                        <button onClick={handleLogout} className="text-[8px] font-bold text-red-500 uppercase text-left">Logout</button>
-                                    </div>
-                                </div>
-                             ) : (
-                                <button onClick={handleLogin} className="btn-google text-[10px] py-2 cursor-pointer">
-                                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" className="w-4 h-4" />
-                                    Login / Config
-                                </button>
-                             )}
-
-                             {!user && (
-                                <div className="flex gap-2">
-                                     <button onClick={handleBackup} className="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl transition-all" title="Backup"><Icon name="download" size={16}/></button>
-                                     <label className="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl transition-all cursor-pointer" title="Restore">
-                                        <input type="file" accept=".json" onChange={handleRestore} className="hidden" />
-                                        <Icon name="upload" size={16}/>
-                                     </label>
-                                </div>
-                             )}
-
-                            <button onClick={() => { setIsAdding(!isAdding); if(isAdding) setEditingId(null); }} className="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 transition-all px-6 py-3 rounded-2xl font-black flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 uppercase tracking-widest text-xs">
-                                <Icon name={isAdding ? "layout-dashboard" : "plus-circle"} /> {isAdding ? "หน้าหลัก" : "บันทึกข้อมูล"}
-                            </button>
+                             {user ? (<div className="flex items-center gap-3 bg-slate-900 p-1 pr-4 rounded-2xl border border-slate-800"><img src={user.photoURL || "https://via.placeholder.com/32"} className="w-8 h-8 rounded-xl" /><div className="flex flex-col"><span className="text-[10px] font-black text-white truncate max-w-[100px]">{user.displayName}</span><button onClick={handleLogout} className="text-[8px] font-bold text-red-500 uppercase text-left">Logout</button></div></div>) : (<div className="flex gap-2">{isGuestMode && <button onClick={handleExitGuest} className="text-[10px] text-red-500 font-bold px-3 border border-red-500/30 rounded-xl hover:bg-red-500/10 transition-all">Exit Guest</button>}<button onClick={handleLogin} className="btn-google text-[10px] py-2 cursor-pointer"><GoogleLogo /> Login</button></div>)}
+                             <button onClick={() => { setIsAdding(!isAdding); if(isAdding) setEditingId(null); }} className="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 transition-all px-6 py-3 rounded-2xl font-black flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 uppercase tracking-widest text-xs"><Icon name={isAdding ? "layout-dashboard" : "plus-circle"} /> {isAdding ? "หน้าหลัก" : "บันทึก"}</button>
                         </div>
                     </div>
                     
-                    {/* Tab Navigation */}
-                    <div className="flex justify-center mb-8">
-                        <div className="bg-slate-900/50 p-1 rounded-2xl border border-slate-800 flex gap-2">
-                            <button 
-                                onClick={() => setActiveTab('ogh')}
-                                className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${activeTab === 'ogh' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-                            >
-                                Normal (OGH)
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('aogh')}
-                                className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${activeTab === 'aogh' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-                            >
-                                Hard (AOGH)
-                            </button>
-                        </div>
-                    </div>
+                    <div className="flex justify-center mb-8"><div className="bg-slate-900/50 p-1 rounded-2xl border border-slate-800 flex gap-2"><button onClick={() => setActiveTab('ogh')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${activeTab === 'ogh' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Normal (OGH)</button><button onClick={() => setActiveTab('aogh')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${activeTab === 'aogh' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Hard (AOGH)</button></div></div>
 
+                    {/* Content ... (Same Dashboard code as stable version) ... */}
                     {!isAdding && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-fade-in">
-                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl">
-                                <div className="p-3 bg-green-500/10 rounded-xl text-green-500 w-fit mb-4"><Icon name="wallet" size={24} /></div>
-                                <h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">กำไรรวมสุทธิ</h3>
-                                <p className="text-3xl font-black">{formatMZeny(stats.totalProfit)} <span className="text-sm text-slate-600 font-bold ml-1">Zeny</span></p>
-                            </div>
-                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl relative border-b-blue-500/30">
-                                <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500 w-fit mb-4"><Icon name="trending-up" size={24} /></div>
-                                <h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">ยอดขายเฉลี่ยต่อรอบ</h3>
-                                <p className="text-3xl font-black">{formatMZeny(stats.avgRevenue)} <span className="text-sm text-slate-600 font-bold ml-1">Zeny</span></p>
-                                <div className="flex flex-wrap items-center gap-2 mt-2 text-[10px] font-bold uppercase text-slate-500">
-                                     <span className="text-green-500 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded"><Icon name="arrow-up" size={10}/> {formatMZeny(stats.maxRevenue)}</span>
-                                     <span className="text-red-500 flex items-center gap-1 bg-red-500/10 px-2 py-1 rounded"><Icon name="arrow-down" size={10}/> {formatMZeny(stats.minRevenue)}</span>
-                                     <span className="text-blue-400 flex items-center gap-1"><Icon name="clock" size={12}/> เฉลี่ย {formatZeny(stats.avgRevenuePerMinute)} Z/นาที</span>
-                                </div>
-                            </div>
-                            
-                            {/* Conditional Stats Card based on Mode */}
-                            {activeTab === 'ogh' ? (
-                                <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl border-b-amber-500/30">
-                                    <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 w-fit mb-4"><Icon name="archive" size={24} /></div>
-                                    <h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">Coagulated Spell ในคลัง</h3>
-                                    <p className="text-3xl font-black">{stats.totalStoredStones.toLocaleString()} <span className="text-sm text-slate-600 font-bold ml-1">ชิ้น</span></p>
-                                    <div className="text-[10px] text-amber-400 mt-2 font-bold uppercase italic flex items-center gap-1">
-                                        <Icon name="sparkles" size={12} /> มูลค่า: {formatMZeny(stats.totalStoredStones * globalPrices.purpleStonePrice)} Zeny
-                                    </div>
+                            {records.length === 0 ? (
+                                <div className="col-span-3 bg-slate-900 border border-slate-800 p-12 rounded-[2.5rem] shadow-xl text-center flex flex-col items-center justify-center h-[350px] relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                                    <div className="w-24 h-24 bg-slate-800/50 rounded-full flex items-center justify-center mb-6 border border-slate-700 relative z-10"><Icon name="scroll" size={48} className="text-slate-600" /><div className="absolute -bottom-2 -right-2 bg-white text-slate-900 p-2 rounded-full shadow-lg animate-bounce" style={{animationDuration: '2s'}}><Icon name="pointer" size={16} /></div></div>
+                                    <h3 className="text-2xl font-black text-slate-300 mb-2 relative z-10">ยังไม่มีข้อมูลการฟาร์ม</h3>
+                                    <p className="text-slate-500 text-sm mb-8 max-w-xs leading-relaxed relative z-10">เริ่มบันทึกรอบแรกของคุณเพื่อดูสถิติ <br/><span className="text-purple-400 font-bold">กดปุ่มด้านล่างได้เลย!</span></p>
+                                    <div className="relative z-10"><div className="absolute -inset-1 bg-purple-500/30 rounded-2xl blur opacity-75 animate-pulse"></div><button onClick={() => setIsAdding(true)} className="relative bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-3 shadow-2xl active:scale-95 transition-all group-hover:scale-105"><Icon name="plus-circle" size={20} className="animate-spin-slow" /> บันทึกรอบแรก</button></div>
                                 </div>
                             ) : (
-                                <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl border-b-red-500/30">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-red-500/10 rounded-xl text-red-500"><Icon name="skull" size={24} /></div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Coagulated Spell</p>
-                                            <p className="text-lg font-black text-slate-200">{stats.totalStoredStones.toLocaleString()} <span className="text-[8px]">ชิ้น</span></p>
-                                            <p className="text-[8px] text-amber-500 italic mt-0.5">{formatMZeny(stats.totalStoredStones * globalPrices.purpleStonePrice)} Z</p>
-                                        </div>
-                                    </div>
-                                    <h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">Contaminated Magic ในคลัง</h3>
-                                    <p className="text-3xl font-black">{stats.totalStoredMagic.toLocaleString()} <span className="text-sm text-slate-600 font-bold ml-1">ชิ้น</span></p>
-                                    <div className="text-[10px] text-red-400 mt-2 font-bold uppercase italic flex items-center gap-1">
-                                        <Icon name="sparkles" size={12} /> มูลค่า: {formatMZeny(stats.totalStoredMagic * globalPrices.contMagicPrice)} Zeny
-                                    </div>
-                                </div>
+                                <>
+                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl"><div className="p-3 bg-green-500/10 rounded-xl text-green-500 w-fit mb-4"><Icon name="wallet" size={24} /></div><h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">กำไรรวมสุทธิ</h3><p className="text-3xl font-black">{formatMZeny(stats.totalProfit)} <span className="text-sm text-slate-600 font-bold ml-1">Zeny</span></p></div>
+                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl relative border-b-blue-500/30"><div className="p-3 bg-blue-500/10 rounded-xl text-blue-500 w-fit mb-4"><Icon name="trending-up" size={24} /></div><h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">ยอดขายเฉลี่ย</h3><p className="text-3xl font-black">{formatMZeny(stats.avgRevenue)} <span className="text-sm text-slate-600 font-bold ml-1">Zeny</span></p><div className="flex flex-wrap items-center gap-2 mt-2 text-[10px] font-bold uppercase text-slate-500"><span className="text-green-500 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded"><Icon name="arrow-up" size={10}/> {formatMZeny(stats.maxRevenue)}</span><span className="text-red-500 flex items-center gap-1 bg-red-500/10 px-2 py-1 rounded"><Icon name="arrow-down" size={10}/> {formatMZeny(stats.minRevenue)}</span></div></div>
+                                    {activeTab === 'ogh' ? (
+                                        <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl border-b-amber-500/30"><div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 w-fit mb-4"><Icon name="archive" size={24} /></div><h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">Coagulated Spell ในคลัง</h3><p className="text-3xl font-black">{stats.totalStoredStones.toLocaleString()} <span className="text-sm text-slate-600 font-bold ml-1">ชิ้น</span></p><div className="text-[10px] text-amber-400 mt-2 font-bold uppercase italic flex items-center gap-1"><Icon name="sparkles" size={12} /> มูลค่า: {formatMZeny(stats.totalStoredStones * globalPrices.purpleStonePrice)} Zeny</div></div>
+                                    ) : (
+                                        <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-xl border-b-red-500/30"><div className="flex items-center justify-between mb-4"><div className="p-3 bg-red-500/10 rounded-xl text-red-500"><Icon name="skull" size={24} /></div><div className="text-right"><p className="text-[10px] text-slate-400 uppercase tracking-tighter">Coagulated</p><p className="text-lg font-black text-slate-200">{stats.totalStoredStones.toLocaleString()} <span className="text-[8px]">ชิ้น</span></p></div></div><h3 className="text-slate-400 text-xs font-black uppercase mb-1 tracking-widest">Contaminated Magic ในคลัง</h3><p className="text-3xl font-black">{stats.totalStoredMagic.toLocaleString()} <span className="text-sm text-slate-600 font-bold ml-1">ชิ้น</span></p><div className="text-[10px] text-red-400 mt-2 font-bold uppercase italic flex items-center gap-1"><Icon name="sparkles" size={12} /> มูลค่า: {formatMZeny(stats.totalStoredMagic * globalPrices.contMagicPrice)} Zeny</div></div>
+                                    )}
+                                </>
                             )}
                         </div>
                     )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Same Dashboard Body (Form/Table/Sidebar) */}
                         <div className="lg:col-span-2">
                             {isAdding ? (
                                 <form onSubmit={handleSave} className="bg-slate-900 border border-slate-800 p-6 md:p-10 rounded-[2.5rem] shadow-xl animate-fade-in">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h2 className="text-xl md:text-2xl font-black uppercase text-purple-400 italic flex items-center gap-3">
-                                            <Icon name={editingId ? "pencil" : "plus-circle"} size={24} /> {editingId ? "แก้ไขข้อมูล" : "บันทึกข้อมูล"} ({activeTab.toUpperCase()})
-                                        </h2>
-                                        {/* Silvervine Toggle Moved Here */}
-                                        <label className="flex items-center gap-2 cursor-pointer bg-slate-950 p-2 px-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all">
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${formData.useSilvervine ? 'bg-green-500 border-green-500' : 'border-slate-600'}`}>
-                                                {formData.useSilvervine && <Icon name="check" size={10} className="text-white" />}
-                                            </div>
-                                            <input type="checkbox" className="hidden" checked={formData.useSilvervine} onChange={e => setFormData({...formData, useSilvervine: e.target.checked})} />
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">ใช้ Silvervine <Silvervine16Bit className="w-3 h-3"/></span>
-                                        </label>
-                                    </div>
-
-                                    {/* Date & Gum Row */}
+                                    {/* ... Form Content (Preserved) ... */}
+                                    <div className="flex justify-between items-center mb-8"><h2 className="text-xl md:text-2xl font-black uppercase text-purple-400 italic flex items-center gap-3"><Icon name={editingId ? "pencil" : "plus-circle"} size={24} /> {editingId ? "แก้ไข" : "บันทึก"} ({activeTab.toUpperCase()})</h2><label className="flex items-center gap-2 cursor-pointer bg-slate-950 p-2 px-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all"><div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${formData.useSilvervine ? 'bg-green-500 border-green-500' : 'border-slate-600'}`}>{formData.useSilvervine && <Icon name="check" size={10} className="text-white" />}</div><input type="checkbox" className="hidden" checked={formData.useSilvervine} onChange={e => setFormData({...formData, useSilvervine: e.target.checked})} /><span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">ใช้ Silvervine <Silvervine16Bit className="w-3 h-3"/></span></label></div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                        <div className="space-y-3 h-24">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 h-4"><Icon name="calendar" size={14}/> วันที่ฟาร์ม</label>
-                                            {/* Date Picker Input */}
-                                            <input 
-                                                type="date" 
-                                                value={convertToISO(formData.date)} 
-                                                onChange={e => setFormData({...formData, date: convertToDisplay(e.target.value)})} 
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold outline-none focus:ring-2 focus:ring-purple-500/50" 
-                                                required 
-                                            />
-                                        </div>
-                                        <div className="space-y-3 h-24">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 h-4"><BubbleGum16Bit className="w-4 h-4"/> Bubble Gum</label>
-                                            <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 h-[58px]">
-                                                {[0, 1, 2].map(n => (
-                                                    <button type="button" key={n} onClick={() => setFormData({...formData, gumUsed: n})} className={`flex-1 rounded-xl text-sm font-black transition-all ${formData.gumUsed === n ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{n} EA</button>
-                                                ))}
-                                            </div>
-                                        </div>
+                                        <div className="space-y-3 h-24"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 h-4"><Icon name="calendar" size={14}/> วันที่ฟาร์ม</label><input type="date" value={convertToISO(formData.date)} onChange={e => setFormData({...formData, date: convertToDisplay(e.target.value)})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold outline-none focus:ring-2 focus:ring-purple-500/50" required /></div>
+                                        <div className="space-y-3 h-24"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 h-4"><BubbleGum16Bit className="w-4 h-4"/> Bubble Gum</label><div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 h-[58px]">{[0, 1, 2].map(n => (<button type="button" key={n} onClick={() => setFormData({...formData, gumUsed: n})} className={`flex-1 rounded-xl text-sm font-black transition-all ${formData.gumUsed === n ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{n} EA</button>))}</div></div>
                                     </div>
-
-                                    {/* Time & Revenue Row (Combined) */}
                                     <div className="grid grid-cols-2 gap-6 mb-6">
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 h-4"><Icon name="clock" size={14}/> เวลาที่ใช้</label>
-                                            <div className="relative">
-                                                <input type="number" value={formData.minutesUsed} onChange={e => setFormData({...formData, minutesUsed: Number(e.target.value)})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none" />
-                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">นาที</span>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest h-4 flex items-center">ยอดขาย</label>
-                                            <div className="relative">
-                                                <input type="number" value={formData.trashAmount} onChange={e => setFormData({...formData, trashAmount: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none" placeholder="" />
-                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">Zeny</span>
-                                            </div>
-                                        </div>
+                                        <div className="space-y-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 h-4"><Icon name="clock" size={14}/> เวลาที่ใช้</label><div className="relative h-[58px]"><input type="number" value={formData.minutesUsed} onChange={e => setFormData({...formData, minutesUsed: Number(e.target.value)})} className="w-full h-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">นาที</span></div></div>
+                                        <div className="space-y-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest h-4 flex items-center">ยอดขาย</label><div className="relative h-[58px]"><input type="number" value={formData.trashAmount} onChange={e => setFormData({...formData, trashAmount: e.target.value})} className="w-full h-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none" placeholder="" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">Zeny</span></div></div>
                                     </div>
-
-                                    {/* Items Row (Adaptive) - OGH:1col, AOGH:2col side-by-side */}
                                     <div className={`grid gap-6 mb-6 ${activeTab === 'aogh' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                                        {/* Coagulated Spell */}
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center h-4">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><CoagulatedSpell16Bit className="w-4 h-4"/> Coagulated Spell</label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={formData.isSellingSpell} onChange={e => setFormData({...formData, isSellingSpell: e.target.checked})} className="w-3 h-3 accent-green-500 bg-slate-950 border-slate-700 rounded" />
-                                                    <span className={`text-[9px] font-bold uppercase tracking-wider ${formData.isSellingSpell ? 'text-green-400' : 'text-slate-500'}`}>Sell</span>
-                                                </label>
-                                            </div>
-                                            <div className="relative">
-                                                <input type="number" value={formData.purpleStoneCount} onChange={e => setFormData({...formData, purpleStoneCount: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none" placeholder="" />
-                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">ชิ้น</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Contaminated Magic (Only in AOGH - Forced same line by grid-cols-2) */}
-                                        {activeTab === 'aogh' && (
-                                            <div className="space-y-3 animate-in fade-in">
-                                                <div className="flex justify-between items-center h-4">
-                                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><ContaminatedMagic16Bit className="w-4 h-4"/> Contaminated Magic</label>
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input type="checkbox" checked={formData.isSellingMagic} onChange={e => setFormData({...formData, isSellingMagic: e.target.checked})} className="w-3 h-3 accent-green-500 bg-slate-950 border-slate-700 rounded" />
-                                                        <span className={`text-[9px] font-bold uppercase tracking-wider ${formData.isSellingMagic ? 'text-green-400' : 'text-slate-500'}`}>Sell</span>
-                                                    </label>
-                                                </div>
-                                                <div className="relative">
-                                                    <input type="number" value={formData.contMagicCount} onChange={e => setFormData({...formData, contMagicCount: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none border-red-500/30 focus:border-red-500" placeholder="" />
-                                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">ชิ้น</span>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <div className="space-y-3"><div className="flex justify-between items-center h-4"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><CoagulatedSpell16Bit className="w-4 h-4"/> Coagulated Spell</label><ToggleSwitch checked={formData.isSellingSpell} onChange={v => setFormData({...formData, isSellingSpell: v})} activeColor="bg-purple-500" /></div><div className="relative h-[58px]"><input type="number" value={formData.purpleStoneCount} onChange={e => setFormData({...formData, purpleStoneCount: e.target.value})} className="w-full h-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none" placeholder="" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">ชิ้น</span></div></div>
+                                        {activeTab === 'aogh' && (<div className="space-y-3 animate-in fade-in"><div className="flex justify-between items-center h-4"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><ContaminatedMagic16Bit className="w-4 h-4"/> Contaminated Magic</label><ToggleSwitch checked={formData.isSellingMagic} onChange={v => setFormData({...formData, isSellingMagic: v})} activeColor="bg-red-500" /></div><div className="relative h-[58px]"><input type="number" value={formData.contMagicCount} onChange={e => setFormData({...formData, contMagicCount: e.target.value})} className="w-full h-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pr-12 text-white font-bold outline-none border-red-500/30 focus:border-red-500" placeholder="" /><span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">ชิ้น</span></div></div>)}
                                     </div>
-                                    
-                                    <div className="md:col-span-2 space-y-3 border-t border-slate-800 pt-6">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="plus" size={14}/> ต้นทุนเพิ่มเติม</label>
-                                            <button type="button" onClick={addOtherCostField} className="text-[9px] font-black px-3 py-1 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all">+ เพิ่มรายการ</button>
-                                        </div>
-                                        {formData.otherCosts.map((cost, idx) => (
-                                            <div key={idx} className="flex gap-3">
-                                                <input type="text" value={cost.name} onChange={(e) => updateOtherCost(idx, 'name', e.target.value)} className="flex-[2] bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs font-bold outline-none" placeholder="ชื่อรายการ..." />
-                                                <div className="flex-1 relative">
-                                                    <input type="number" value={cost.amount} onChange={(e) => updateOtherCost(idx, 'amount', e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pr-8 text-white text-xs font-bold outline-none text-right" />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600">Z</span>
-                                                </div>
-                                                <button type="button" onClick={() => removeOtherCostField(idx)} className="text-red-500 p-2 hover:bg-red-500/10 rounded-xl"><Icon name="minus-circle" size={18}/></button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="md:col-span-2 space-y-3 pt-6">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="file-text" size={14}/> บันทึกเพิ่มเติม (Memo)</label>
-                                        <textarea value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-sm outline-none font-medium h-24 mt-2 focus:border-purple-500/50 transition-all" placeholder="จดบันทึกรายละเอียด..."></textarea>
-                                    </div>
-                                    <div className="mt-10 pt-8 border-t border-slate-800 flex gap-4">
-                                        <button type="button" onClick={() => setIsAdding(false)} className="flex-1 bg-slate-800 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:bg-slate-700">ยกเลิก</button>
-                                        <button type="submit" className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl active:scale-95">{editingId ? "อัปเดตข้อมูล" : "บันทึกข้อมูลเข้าระบบ"}</button>
-                                    </div>
+                                    <div className="md:col-span-2 space-y-3 border-t border-slate-800 pt-6"><div className="flex justify-between items-center"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="plus" size={14}/> ต้นทุนเพิ่มเติม</label><button type="button" onClick={addOtherCostField} className="text-[9px] font-black px-3 py-1 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all">+ เพิ่มรายการ</button></div>{formData.otherCosts.map((cost, idx) => (<div key={idx} className="flex gap-3"><input type="text" value={cost.name} onChange={(e) => updateOtherCost(idx, 'name', e.target.value)} className="flex-[2] bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs font-bold outline-none" placeholder="ชื่อรายการ..." /><div className="flex-1 relative"><input type="number" value={cost.amount} onChange={(e) => updateOtherCost(idx, 'amount', e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pr-8 text-white text-xs font-bold outline-none text-right" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600">Z</span></div><button type="button" onClick={() => removeOtherCostField(idx)} className="text-red-500 p-2 hover:bg-red-500/10 rounded-xl"><Icon name="minus-circle" size={18}/></button></div>))}</div>
+                                    <div className="md:col-span-2 space-y-3 pt-6"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="file-text" size={14}/> บันทึกเพิ่มเติม (Memo)</label><textarea value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-sm outline-none font-medium h-24 mt-2 focus:border-purple-500/50 transition-all" placeholder="จดบันทึกรายละเอียด..."></textarea></div>
+                                    <div className="mt-10 pt-8 border-t border-slate-800 flex gap-4"><button type="button" onClick={() => setIsAdding(false)} className="flex-1 bg-slate-800 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:bg-slate-700">ยกเลิก</button><button type="submit" className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl active:scale-95">{editingId ? "อัปเดตข้อมูล" : "บันทึกข้อมูลเข้าระบบ"}</button></div>
                                 </form>
                             ) : (
                                 <>
-                                    {/* Chart */}
-                                    <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-[2.5rem] shadow-xl h-[400px] md:h-[450px] mb-8 flex flex-col animate-fade-in">
-                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                                            <div className="flex items-center gap-4">
-                                                <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-3 italic"><Icon name="trending-up" className="text-green-500"/> สถิติ ({activeTab.toUpperCase()})</h2>
-                                                <select value={gumFilter} onChange={e => setGumFilter(e.target.value)} className="bg-slate-950 text-[10px] font-black uppercase p-2 rounded-xl border border-slate-800 outline-none text-slate-300">
-                                                    <option value="all">ทุก Gum</option>
-                                                    <option value="0">Gum 0</option>
-                                                    <option value="1">Gum 1</option>
-                                                    <option value="2">Gum 2</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800">
-                                                <button onClick={() => setChartMode('profit')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'profit' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-500'}`}>กำไร</button>
-                                                <button onClick={() => setChartMode('revenue')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'revenue' ? 'bg-green-600 text-white shadow-lg' : 'text-slate-500'}`}>รายได้</button>
-                                                <button onClick={() => setChartMode('stones')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'stones' ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-500'}`}>หินม่วง</button>
-                                                {activeTab === 'aogh' && <button onClick={() => setChartMode('magic')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'magic' ? 'bg-red-500 text-white shadow-lg' : 'text-slate-500'}`}>หินแดง</button>}
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={chartData}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                                    <XAxis dataKey="date" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
-                                                    <YAxis stroke="#475569" fontSize={10} tickFormatter={v => `${v/1000}k`} axisLine={false} tickLine={false} />
-                                                    <Tooltip 
-                                                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px' }} 
-                                                        formatter={(v) => [formatZeny(v) + ' ' + chartConfig.unit, chartConfig.label]}
-                                                    />
-                                                    <Line 
-                                                        type="monotone" 
-                                                        dataKey={chartConfig.key} 
-                                                        stroke={chartConfig.color} 
-                                                        strokeWidth={4} 
-                                                        dot={{ r: 4 }} 
-                                                    />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
+                                    {records.length > 0 && (
+                                        <>
+                                            {/* Chart */}
+                                            <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-[2.5rem] shadow-xl h-[400px] md:h-[450px] mb-8 flex flex-col animate-fade-in"><div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"><div className="flex items-center gap-4"><h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-3 italic"><Icon name="trending-up" className="text-green-500"/> สถิติ ({activeTab.toUpperCase()})</h2><select value={gumFilter} onChange={e => setGumFilter(e.target.value)} className="bg-slate-950 text-[10px] font-black uppercase p-2 rounded-xl border border-slate-800 outline-none text-slate-300"><option value="all">ทุก Gum</option><option value="0">Gum 0</option><option value="1">Gum 1</option><option value="2">Gum 2</option></select></div><div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800"><button onClick={() => setChartMode('profit')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'profit' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-500'}`}>กำไร</button><button onClick={() => setChartMode('revenue')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'revenue' ? 'bg-green-600 text-white shadow-lg' : 'text-slate-500'}`}>รายได้</button><button onClick={() => setChartMode('stones')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'stones' ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-500'}`}>หินม่วง</button>{activeTab === 'aogh' && <button onClick={() => setChartMode('magic')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${chartMode === 'magic' ? 'bg-red-500 text-white shadow-lg' : 'text-slate-500'}`}>หินแดง</button>}</div></div><div className="flex-1 w-full"><ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} /><XAxis dataKey="date" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} /><YAxis stroke="#475569" fontSize={10} tickFormatter={v => `${v/1000}k`} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px' }} formatter={(v) => [formatZeny(v) + ' ' + chartConfig.unit, chartConfig.label]} /><Line type="monotone" dataKey={chartConfig.key} stroke={chartConfig.color} strokeWidth={4} dot={{ r: 4 }} /></LineChart></ResponsiveContainer></div></div>
+                                            
+                                            {/* History Table */}
+                                            <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden animate-fade-in">
+                                                <div className="p-8 border-b border-slate-800 flex justify-between items-center"><h2 className="text-xl font-black text-blue-400 italic flex items-center gap-3 tracking-tight"><Icon name="history" /> ประวัติการฟาร์ม</h2><select className="bg-slate-950 text-[10px] font-black uppercase p-2 rounded-xl border border-slate-800 outline-none text-slate-300" onChange={e => setSortOrder(e.target.value)}><option value="date-desc">ล่าสุด</option><option value="date-asc">เก่าสุด</option><option value="revenue-desc">รายได้ สูง-ต่ำ</option><option value="profit-desc">กำไร สูง-ต่ำ</option></select></div>
+                                                <div className="overflow-x-auto custom-scrollbar"><table className="w-full text-left"><thead className="bg-slate-900/50 border-b border-slate-800"><tr><th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">วันที่</th><th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">ข้อมูลการฟาร์ม</th><th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase text-right tracking-widest whitespace-nowrap">กำไรสุทธิ</th><th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase text-center tracking-widest whitespace-nowrap">จัดการ</th></tr></thead><tbody className="divide-y divide-slate-800/50">{sortedTableData.map((record) => (<React.Fragment key={record.id}><tr className="hover:bg-white/[0.02] cursor-pointer transition-colors" onClick={() => setExpandedId(expandedId === record.id ? null : record.id)}><td className="px-6 py-4 font-bold text-sm text-slate-300 flex items-center gap-2 whitespace-nowrap">{record.date} {expandedId === record.id ? <Icon name="chevron-up" size={14}/> : <Icon name="chevron-down" size={14}/>}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex gap-2">
+                                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black border border-emerald-500/20 bg-emerald-500/10 text-emerald-400`}>
+                                                            GUM {record.gumUsed}
+                                                        </span>
+                                                        
+                                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black border border-purple-500/20 bg-purple-500/10 text-purple-400 flex items-center gap-1`}>
+                                                            <CoagulatedSpell16Bit className="w-3 h-3" />
+                                                            {record.purpleStoneCount || 0}
+                                                            <span className="opacity-60 text-[8px] uppercase">
+                                                                {record.isSellingSpell ? '(Sell)' : '(Keep)'}
+                                                            </span>
+                                                        </span>
 
-                                    {/* History Table */}
-                                    <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden animate-fade-in">
-                                        <div className="p-8 border-b border-slate-800 flex justify-between items-center">
-                                            <h2 className="text-xl font-black text-blue-400 italic flex items-center gap-3 tracking-tight"><Icon name="history" /> ประวัติการฟาร์ม</h2>
-                                            <select className="bg-slate-950 text-[10px] font-black uppercase p-2 rounded-xl border border-slate-800 outline-none text-slate-300" onChange={e => setSortOrder(e.target.value)}>
-                                                <option value="date-desc">ล่าสุด</option>
-                                                <option value="date-asc">เก่าสุด</option>
-                                                <option value="revenue-desc">รายได้ สูง-ต่ำ</option>
-                                                <option value="profit-desc">กำไร สูง-ต่ำ</option>
-                                            </select>
-                                        </div>
-                                        <div className="overflow-x-auto custom-scrollbar">
-                                            <table className="w-full text-left">
-                                                <thead className="bg-slate-900/50 border-b border-slate-800">
-                                                    <tr>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">วันที่</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">ข้อมูลการฟาร์ม</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase text-right tracking-widest whitespace-nowrap">กำไรสุทธิ</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase text-center tracking-widest whitespace-nowrap">จัดการ</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-800/50">
-                                                    {sortedTableData.length > 0 ? sortedTableData.map((record) => (
-                                                        <React.Fragment key={record.id}>
-                                                            <tr className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${expandedId === record.id ? 'bg-white/[0.03]' : ''}`} onClick={() => setExpandedId(expandedId === record.id ? null : record.id)}>
-                                                                <td className="px-6 py-4 font-bold text-sm text-slate-300 flex items-center gap-2 whitespace-nowrap">
-                                                                    {record.date} {expandedId === record.id ? <Icon name="chevron-up" size={14}/> : <Icon name="chevron-down" size={14}/>}
-                                                                </td>
-                                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <div className="flex gap-2">
-                                                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black border ${record.gumUsed > 0 ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-slate-800 text-slate-500'}`}>GUM {record.gumUsed}</span>
-                                                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black border ${record.isSellingSpell !== false ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>{record.isSellingSpell !== false ? 'SELL' : `STORE (${record.purpleStoneCount || 0})`}</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className={`px-6 py-4 text-right font-black text-lg tabular-nums whitespace-nowrap ${record.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatZeny(record.profit)} <span className="text-[10px] opacity-40 ml-1">Z</span></td>
-                                                                <td className="px-6 py-4 text-center whitespace-nowrap">
-                                                                    <div className="flex justify-center gap-2">
-                                                                        <button onClick={(e) => { e.stopPropagation(); startEdit(record); }} className="text-slate-500 hover:text-purple-400 p-2 bg-slate-800/50 rounded-xl"><Icon name="pencil" size={14} /></button>
-                                                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(record.id); }} className="text-slate-500 hover:text-red-500 p-2 bg-slate-800/50 rounded-xl"><Icon name="trash-2" size={14} /></button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            {expandedId === record.id && (
-                                                                <tr className="bg-slate-950/50 border-x-2 border-purple-500/30">
-                                                                    <td colSpan="4" className="px-6 md:px-10 py-6 border-b border-slate-800">
-                                                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                                                            <div className="space-y-3 border-r border-slate-800 pr-8">
-                                                                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="sparkles" size={12} className="text-purple-500"/> รายละเอียดรายได้</h4>
-                                                                                <p className="text-xs text-slate-300 flex justify-between font-bold"><span>ยอดขายรวม:</span> <span className="text-green-400 font-black">{formatZeny(record.revenue)} Z</span></p>
-                                                                                <p className="text-xs text-slate-300 flex justify-between font-bold"><span>เวลาที่ใช้:</span> <span>{record.minutesUsed || 0} นาที</span></p>
-                                                                                <p className="text-xs text-slate-300 flex justify-between font-bold"><span>เฉลี่ย/นาที:</span> <span className="text-blue-400">{formatZeny(record.revenuePerMinute || 0)} Z</span></p>
-                                                                            </div>
-                                                                            <div className="space-y-3 border-r border-slate-800 pr-8">
-                                                                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="package" size={12} className="text-blue-500"/> รายละเอียดต้นทุน</h4>
-                                                                                <p className="text-xs text-slate-300 flex justify-between font-bold"><span>ต้นทุนรวม:</span> <span className="text-red-400 font-black">{formatZeny(record.totalCost)} Z</span></p>
-                                                                                <div className="pt-2">
-                                                                                    {Array.isArray(record.otherCosts) && record.otherCosts.length > 0 ? record.otherCosts.map((c, i) => (
-                                                                                        <p key={i} className="text-[11px] text-slate-400 flex justify-between"><span>- {c.name}:</span> <span>{formatZeny(c.amount)} Z</span></p>
-                                                                                    )) : <p className="text-[10px] text-slate-600 italic">ไม่มีต้นทุนเพิ่มเติม</p>}
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="md:col-span-2 space-y-3">
-                                                                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="file-text" size={12} className="text-amber-500"/> บันทึกเพิ่มเติม</h4>
-                                                                                <p className="text-[11px] text-slate-300 leading-relaxed italic bg-slate-900/50 p-4 rounded-xl border border-slate-800 whitespace-pre-wrap">{record.notes || "ไม่มีข้อความบันทึก"}</p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            )}
-                                                        </React.Fragment>
-                                                    )) : <tr><td colSpan="4" className="px-8 py-20 text-center text-slate-700 font-black italic">ไม่พบข้อมูล</td></tr>}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                                        {(record.mode === 'aogh' || record.contMagicCount > 0) && (
+                                                             <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black border border-rose-500/20 bg-rose-500/10 text-rose-400 flex items-center gap-1`}>
+                                                                <ContaminatedMagic16Bit className="w-3 h-3" />
+                                                                {record.contMagicCount || 0}
+                                                                <span className="opacity-60 text-[8px] uppercase">
+                                                                    {record.isSellingMagic ? '(Sell)' : '(Keep)'}
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className={`px-6 py-4 text-right font-black text-lg tabular-nums whitespace-nowrap ${record.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatZeny(record.profit)} <span className="text-[10px] opacity-40 ml-1">Z</span></td><td className="px-6 py-4 text-center whitespace-nowrap"><div className="flex justify-center gap-2"><button onClick={(e) => { e.stopPropagation(); startEdit(record); }} className="text-slate-500 hover:text-purple-400 p-2 bg-slate-800/50 rounded-xl"><Icon name="pencil" size={14} /></button><button onClick={(e) => { e.stopPropagation(); handleDelete(record.id); }} className="text-slate-500 hover:text-red-500 p-2 bg-slate-800/50 rounded-xl"><Icon name="trash-2" size={14} /></button></div></td></tr>{expandedId === record.id && (<tr className="bg-slate-950/50 border-x-2 border-purple-500/30"><td colSpan="4" className="px-6 md:px-10 py-6 border-b border-slate-800"><div className="grid grid-cols-1 md:grid-cols-4 gap-8"><div className="space-y-3 border-r border-slate-800 pr-8"><h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="sparkles" size={12} className="text-purple-500"/> รายละเอียดรายได้</h4><p className="text-xs text-slate-300 flex justify-between font-bold"><span>ยอดขายรวม:</span> <span className="text-green-400 font-black">{formatZeny(record.revenue)} Z</span></p><p className="text-xs text-slate-300 flex justify-between font-bold"><span>เวลาที่ใช้:</span> <span>{record.minutesUsed || 0} นาที</span></p><p className="text-xs text-slate-300 flex justify-between font-bold"><span>เฉลี่ย/นาที:</span> <span className="text-blue-400">{formatZeny(record.revenuePerMinute || 0)} Z</span></p></div><div className="space-y-3 border-r border-slate-800 pr-8"><h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="package" size={12} className="text-blue-500"/> รายละเอียดต้นทุน</h4><p className="text-xs text-slate-300 flex justify-between font-bold"><span>ต้นทุนรวม:</span> <span className="text-red-400 font-black">{formatZeny(record.totalCost)} Z</span></p><div className="pt-2">{Array.isArray(record.otherCosts) && record.otherCosts.length > 0 ? record.otherCosts.map((c, i) => (<p key={i} className="text-[11px] text-slate-400 flex justify-between"><span>- {c.name}:</span> <span>{formatZeny(c.amount)} Z</span></p>)) : <p className="text-[10px] text-slate-600 italic">ไม่มีต้นทุนเพิ่มเติม</p>}</div></div><div className="md:col-span-2 space-y-3"><h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Icon name="file-text" size={12} className="text-amber-500"/> บันทึกเพิ่มเติม</h4><p className="text-[11px] text-slate-300 leading-relaxed italic bg-slate-900/50 p-4 rounded-xl border border-slate-800 whitespace-pre-wrap">{record.notes || "ไม่มีข้อความบันทึก"}</p></div></div></td></tr>)}</React.Fragment>))}</tbody></table></div>
+                                            </div>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </div>
 
-                        {/* Sidebar */}
+                        {/* Sidebar (Pricing & Timer) */}
                         <div className="space-y-6">
-                            <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] shadow-xl">
+                            <div className={`bg-slate-900 border p-5 rounded-[2rem] shadow-xl relative transition-all duration-300 ${!records.length && Object.values(globalPrices).every(v => v === 0) ? 'border-rose-400 shadow-[0_0_20px_rgba(251,113,133,0.3)] animate-pulse' : 'border-slate-800'}`}>
+                                {!records.length && Object.values(globalPrices).every(v => v === 0) && (
+                                    <div className="absolute -top-3 -right-3 bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg animate-bounce">
+                                        ! ตั้งค่าราคาก่อนเริ่ม
+                                    </div>
+                                )}
                                 <h3 className="text-sm font-black mb-6 text-indigo-400 uppercase tracking-widest flex items-center gap-3 italic font-black"><Icon name="database" /> ราคาปัจจุบัน</h3>
                                 <div className="space-y-4">
                                     {[
@@ -1075,19 +581,19 @@
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] shadow-xl border-t-red-500/20">
-                                <h3 className="text-sm font-black mb-6 text-red-400 uppercase tracking-widest flex items-center gap-3 italic"><Icon name="clock" /> จับเวลาการฟาร์ม</h3>
-                                <div className="text-4xl font-black text-white tabular-nums mb-10 bg-slate-950 text-center py-8 rounded-[2rem] border border-slate-800 shadow-inner tracking-tighter">
+                            <div className="bg-slate-900 border border-slate-800 p-5 rounded-[2rem] shadow-xl border-t-red-500/20">
+                                <h3 className="text-xs font-black mb-3 text-red-400 uppercase tracking-widest flex items-center gap-2 italic"><Icon name="clock" size={14}/> TIMER</h3>
+                                <div className="text-3xl font-black text-white tabular-nums mb-4 bg-slate-950 text-center py-4 rounded-xl border border-slate-800 shadow-inner tracking-tighter">
                                     {formatTimerDisplay(timeInMs)}
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-2">
                                     {!isTimerActive || isTimerPaused ? (
-                                        <button onClick={handleTimerStart} className="bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"><Icon name="play" size={14} fill="currentColor"/> {timeInMs > 0 ? "ต่อ" : "เริ่ม"}</button>
+                                        <button onClick={handleTimerStart} className="bg-green-600 hover:bg-green-500 py-2 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-1 shadow-lg transition-all active:scale-95"><Icon name="play" size={12} fill="currentColor"/> {timeInMs > 0 ? "ต่อ" : "เริ่ม"}</button>
                                     ) : (
-                                        <button onClick={handleTimerPause} className="bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"><Icon name="pause" size={14} fill="currentColor"/> พัก</button>
+                                        <button onClick={handleTimerPause} className="bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-1 shadow-lg transition-all active:scale-95"><Icon name="pause" size={12} fill="currentColor"/> พัก</button>
                                     )}
-                                    <button onClick={handleTimerStop} className="bg-slate-800 hover:bg-red-600 py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-95 group shadow-lg"><Icon name="square" size={14} fill="currentColor" className="group-hover:text-white"/> หยุด/บันทึก</button>
-                                    <button onClick={handleTimerReset} className="col-span-2 py-3 bg-slate-950 border border-slate-800 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-300 transition-colors">รีเซตเวลา</button>
+                                    <button onClick={handleTimerStop} className="bg-slate-800 hover:bg-red-600 py-2 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-1 transition-all active:scale-95 group shadow-lg"><Icon name="square" size={12} fill="currentColor" className="group-hover:text-white"/> หยุด</button>
+                                    <button onClick={handleTimerReset} className="col-span-2 py-1 bg-slate-950 border border-slate-800 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-300 transition-colors">รีเซต</button>
                                 </div>
                             </div>
                         </div>
@@ -1097,7 +603,15 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        
+        const checkFirebase = () => {
+            if (window.FirebaseSDK) {
+                root.render(<App />);
+            } else {
+                setTimeout(checkFirebase, 50);
+            }
+        };
+        checkFirebase();
     </script>
 </body>
 </html>
