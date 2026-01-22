@@ -54,16 +54,26 @@
         @media (min-width: 768px) {
             .header-slide-container { width: 320px; }
         }
+
+        /* Hide Number Input Arrows */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- REACT HOOKS EXTRACTION ---
+        // --- 1. CORE REACT HOOKS (Must be first) ---
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- GLOBAL CONSTANTS ---
+        // --- 2. GLOBAL CONSTANTS ---
         const YT_AVATAR_URL = "https://yt3.googleusercontent.com/vlD4rkRPBg-HIUX6kAbuW1AHgE1FzYa4cs7W3ZD1AV0z4Xg_vM42d1r_slf8SVPhjmJXPslvcg=s160-c-k-c0x00ffffff-no-rj";
 
         const i18n = {
@@ -100,39 +110,6 @@
             }
         };
 
-        // --- ROBUST SVG ICON SYSTEM ---
-        const Icon = ({ name, size = 16, className = "" }) => {
-            const icons = {
-                Wallet: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/><path d="M18 12h4"/><circle cx="16" cy="12" r="2"/></svg>,
-                TrendingUp: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
-                Archive: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
-                History: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>,
-                Trash2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
-                PlusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
-                Plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-                MinusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
-                Clock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-                Play: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
-                Pause: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
-                Square: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
-                LayoutDashboard: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
-                HelpCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
-                X: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-                Youtube: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2c.46-1.7.46-5.33.46-5.33s0-3.63-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>,
-                LogOut: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
-                User: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>,
-                Languages: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-                Sun: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
-                Moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
-                Maximize2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
-                AlertCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
-                FileText: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
-                Settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            };
-            return icons[name] || null;
-        };
-
         const SVGs = {
             Spell: ({className, style}) => (
                 <svg viewBox="0 0 32 32" className={className} style={style} shapeRendering="crispEdges">
@@ -165,10 +142,41 @@
             )
         };
 
+        const Icon = ({ name, size = 16, className = "" }) => {
+            const icons = {
+                Wallet: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/><path d="M18 12h4"/><circle cx="16" cy="12" r="2"/></svg>,
+                TrendingUp: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+                Archive: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
+                History: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>,
+                Trash2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
+                PlusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
+                Plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>,
+                Sun: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+                Moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+                X: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+                Maximize2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
+                Youtube: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2c.46-1.7.46-5.33.46-5.33s0-3.63-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>,
+                LogOut: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+                User: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+                Languages: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+                HelpCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+                LayoutDashboard: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
+                Clock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+                Settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+                FileText: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+                AlertCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+                MinusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            };
+            return icons[name] || null;
+        };
+
+        // --- 4. WELCOME SCREEN COMPONENT ---
         const WelcomeScreen = ({ onLogin, onGuest, lang, setLang, theme }) => (
             <div className={`min-h-screen flex flex-col items-center justify-center p-6 text-center overflow-hidden transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-[#e5e2da] text-stone-900'}`}>
                 <div className={`absolute top-1/4 left-1/4 w-64 h-64 rounded-full blur-[120px] animate-pulse ${theme === 'dark' ? 'bg-purple-600/10' : 'bg-purple-600/5'}`}></div>
                 <div className={`absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full blur-[120px] animate-pulse ${theme === 'dark' ? 'bg-blue-600/10' : 'bg-blue-600/5'}`}></div>
+                
                 <div className="relative mb-12 transform hover:scale-105 transition-transform duration-500">
                     <div className={`w-48 h-48 md:w-56 md:h-56 rounded-[4rem] flex items-center justify-center shadow-2xl border-2 rotate-3 ${theme === 'dark' ? 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700/50' : 'bg-[#f4f2ee] border-stone-300'}`}>
                         <SVGs.Spell className="w-28 h-28 md:w-32 md:h-32 drop-shadow-2xl" />
@@ -178,8 +186,10 @@
                         <span className="text-[10px] font-black uppercase tracking-widest">SDekza RO</span>
                     </div>
                 </div>
+
                 <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-purple-500 to-pink-500 mb-4 tracking-tighter italic uppercase">OGH TRACKER</h1>
                 <p className={`text-sm mb-12 font-medium leading-relaxed max-w-xs mx-auto ${theme === 'dark' ? 'text-slate-400' : 'text-stone-600'}`}>{i18n[lang].welcomeSub}<br/><span className="text-xs mt-1 block uppercase tracking-widest italic font-bold tracking-[0.2em]">RO Classic / GGT</span></p>
+                
                 <div className="space-y-4 w-full max-w-xs relative z-10">
                     <button onClick={onLogin} className={`w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl font-bold shadow-xl hover:translate-y-[-2px] transition-all ${theme === 'dark' ? 'bg-white text-slate-900' : 'bg-stone-800 text-white'}`}>
                         <SVGs.Google /> <span>{i18n[lang].loginBtn}</span>
@@ -187,15 +197,16 @@
                     <button onClick={onGuest} className={`w-full h-14 flex items-center justify-center gap-2 px-6 rounded-2xl font-semibold text-sm hover:translate-y-[-2px] transition-all border ${theme === 'dark' ? 'bg-transparent text-slate-500 border-slate-800 hover:bg-slate-900 hover:text-white' : 'bg-white text-stone-500 border-stone-300 hover:bg-[#eceae4] hover:text-stone-800'}`}>
                         <Icon name="User" size={16} /> {i18n[lang].guestBtn}
                     </button>
-                    <button onClick={() => setLang(lang === 'th' ? 'en' : 'th')} className={`flex items-center gap-2 mx-auto pt-4 text-[10px] font-black uppercase tracking-widest transition-colors ${theme === 'dark' ? 'text-slate-600 hover:text-white' : 'text-stone-500 hover:text-stone-800'}`}>
+                    <button onClick={() => setLang(lang === 'th' ? 'en' : 'th')} className={`flex items-center gap-2 mx-auto pt-4 text-[10px] font-black uppercase tracking-widest transition-colors ${theme === 'dark' ? 'text-slate-600 hover:text-white' : 'text-stone-400 hover:text-stone-800'}`}>
                         <Icon name="Languages" size={14} /> {i18n[lang].langName}
                     </button>
                 </div>
             </div>
         );
 
+        // --- 5. MAIN APP COMPONENT ---
         function App() {
-            // Safe extraction of Recharts components
+            // Recharts extraction inside function for environment safety
             const RCH = window.Recharts || {};
             const LChart = RCH.LineChart || (() => null);
             const L = RCH.Line || (() => null);
@@ -255,7 +266,7 @@
             };
 
             const handleLogout = () => { setUser(null); setIsGuestMode(false); setRecords([]); setManualSales([]); };
-            const updatePrice = (key, val) => setGlobalPrices(prev => ({ ...prev, [key]: Number(val) }));
+            const updatePrice = (key, val) => setGlobalPrices(prev => ({ ...prev, [key]: val === "" ? "" : Number(val) }));
 
             const handleAddDataToggle = () => {
                 if (isAdding) { setIsAdding(false); setEditingId(null); setPriceWarningActive(false); return; }
@@ -356,14 +367,21 @@
             return (
                 <div className={`min-h-screen p-4 md:p-6 lg:p-8 font-sans selection:bg-purple-500/30 transition-colors duration-500 ${themeClasses.bg}`}>
                     <div className="max-w-7xl mx-auto space-y-6">
+                        {priceWarningActive && !isAdding && (
+                            <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4 duration-300">
+                                <div className="flex items-center gap-3 text-rose-500"><Icon name="AlertCircle" size={20} /><span className="text-xs md:text-sm font-black uppercase tracking-tight">{t.priceWarning}</span></div>
+                                <button onClick={() => setPriceWarningActive(false)} className="text-rose-500/60 hover:text-rose-500"><Icon name="X" size={18}/></button>
+                            </div>
+                        )}
+
                         <header className={`border p-4 md:p-6 rounded-[2rem] backdrop-blur-md shadow-2xl overflow-hidden transition-all ${themeClasses.card}`}>
                             <div className="flex flex-row justify-between items-center gap-4">
                                 <div className="header-slide-container relative">
-                                    <div className={`absolute inset-0 flex flex-col justify-center slide-content ${slideIndex === 0 ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
+                                    <div className={`absolute inset-0 flex flex-col justify-center slide-content ${slideIndex === 0 ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}>
                                         <h1 className="text-lg md:text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-purple-500 to-pink-500 bg-clip-text text-transparent uppercase italic leading-none">OGH TRACKER</h1>
                                         <p className={`text-[8px] md:text-[10px] uppercase font-bold mt-1 opacity-60 ${themeClasses.textDim}`}>{isGuestMode ? t.guestLogin : t.gmailLogin}</p>
                                     </div>
-                                    <div className={`absolute inset-0 flex items-center gap-2 md:gap-4 slide-content ${slideIndex === 1 ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
+                                    <div className={`absolute inset-0 flex items-center gap-2 md:gap-4 slide-content ${slideIndex === 1 ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}>
                                         <div className="w-8 h-8 md:w-11 md:h-11 rounded-full bg-cover border-2 border-red-600/50 shadow-lg shrink-0" style={{backgroundImage: `url('${YT_AVATAR_URL}')`}}></div>
                                         <div className="text-left shrink-0"><p className={`text-[10px] md:text-sm font-black leading-none uppercase ${themeClasses.textMain}`}>SDekza RO</p><p className={`text-[8px] md:text-[10px] font-bold mt-0.5 flex items-center gap-1 ${themeClasses.textDim}`}><Icon name="Youtube" size={10} className="text-red-500"/> {i18n.en.subs}</p></div>
                                     </div>
@@ -401,7 +419,14 @@
                                                 {t[key.replace('Price', '').replace('purpleStone', 'itemSpell').replace('contMagic', 'itemMagic').replace('gumBox', 'itemGumBox').replace('silvervineBox', 'itemSilvervineBox')]}
                                             </span>
                                             <div className="flex items-center gap-1">
-                                                <input type="number" value={globalPrices[key]} onChange={e => updatePrice(key, e.target.value)} className={`bg-transparent text-sm font-black outline-none w-full ${themeClasses.textMain}`} placeholder="0" />
+                                                <input 
+                                                    type="number" 
+                                                    value={globalPrices[key]} 
+                                                    onChange={e => updatePrice(key, e.target.value)} 
+                                                    onFocus={(e) => e.target.select()}
+                                                    className={`bg-transparent text-sm font-black outline-none w-full ${themeClasses.textMain}`} 
+                                                    placeholder="0" 
+                                                />
                                                 <span className={`text-[9px] font-bold ${themeClasses.textDim}`}>Z</span>
                                             </div>
                                         </div>
@@ -433,17 +458,17 @@
                                         <div className="space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.textDim}`}>{t.gum}</label><div className={`flex p-1 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e9e6dc] border-stone-300'}`}>{[0, 1, 2].map(n => (<button key={n} type="button" onClick={() => setFormData(p => ({...p, gumUsed: n}))} className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${formData.gumUsed === n ? 'bg-blue-600 text-white shadow-md' : 'text-stone-500'}`}>{n}</button>))}</div></div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
-                                        <div className="space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.textDim}`}>{t.duration}</label><input type="number" value={formData.minutesUsed} onChange={e => setFormData(p => ({...p, minutesUsed: Number(e.target.value)}))} className={`w-full border rounded-xl p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
-                                        <div className="space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.textDim}`}>{t.trashSale}</label><input type="number" value={formData.trashAmount} onChange={e => setFormData(p => ({...p, trashAmount: e.target.value}))} placeholder="0" className={`w-full border rounded-xl p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
+                                        <div className="space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.textDim}`}>{t.duration}</label><input type="number" value={formData.minutesUsed} onFocus={(e) => e.target.select()} onChange={e => setFormData(p => ({...p, minutesUsed: e.target.value === "" ? "" : Number(e.target.value)}))} className={`w-full border rounded-xl p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
+                                        <div className="space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.textDim}`}>{t.trashSale}</label><input type="number" value={formData.trashAmount} onFocus={(e) => e.target.select()} onChange={e => setFormData(p => ({...p, trashAmount: e.target.value === "" ? "" : Number(e.target.value)}))} placeholder="0" className={`w-full border rounded-xl p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
                                     </div>
                                     <div className="space-y-6 pt-4 border-t border-stone-300 dark:border-slate-800">
                                         <div className="flex gap-4 items-end">
-                                            <div className="flex-1 space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${themeClasses.textDim}`}><SVGs.Spell className="w-3 h-3"/> {t.itemSpell}</label><input type="number" value={formData.purpleStoneCount} onChange={e => setFormData(p => ({...p, purpleStoneCount: e.target.value}))} className={`w-full border rounded-xl p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
+                                            <div className="flex-1 space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${themeClasses.textDim}`}><SVGs.Spell className="w-3 h-3"/> {t.itemSpell}</label><input type="number" value={formData.purpleStoneCount} onFocus={(e) => e.target.select()} onChange={e => setFormData(p => ({...p, purpleStoneCount: e.target.value === "" ? "" : Number(e.target.value)}))} className={`w-full border rounded-xl p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
                                             <div className={`flex p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e9e6dc] border-stone-300'}`}><button type="button" onClick={() => setFormData(p => ({...p, isSellingSpell: true}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${formData.isSellingSpell ? 'bg-rose-600 text-white shadow-md' : 'text-stone-600'}`}>ขาย</button><button type="button" onClick={() => setFormData(p => ({...p, isSellingSpell: false}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!formData.isSellingSpell ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-600'}`}>เก็บ</button></div>
                                         </div>
                                         {formData.runMode === 'aogh' && (
                                             <div className="flex gap-4 items-end animate-in slide-in-from-top-1">
-                                                <div className="flex-1 space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 text-rose-400`}><SVGs.Magic className="w-3 h-3"/> {t.itemMagic}</label><input type="number" value={formData.contMagicCount} onChange={e => setFormData(p => ({...p, contMagicCount: e.target.value}))} className={`w-full border rounded-xl p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
+                                                <div className="flex-1 space-y-2"><label className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 text-rose-400`}><SVGs.Magic className="w-3 h-3"/> {t.itemMagic}</label><input type="number" value={formData.contMagicCount} onFocus={(e) => e.target.select()} onChange={e => setFormData(p => ({...p, contMagicCount: e.target.value === "" ? "" : Number(e.target.value)}))} className={`w-full border rounded-xl p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#f4f2ee] border-stone-300 text-stone-900'}`} /></div>
                                                 <div className={`flex p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e9e6dc] border-stone-300'}`}><button type="button" onClick={() => setFormData(p => ({...p, isSellingMagic: true}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${formData.isSellingMagic ? 'bg-rose-600 text-white shadow-md' : 'text-stone-600'}`}>ขาย</button><button type="button" onClick={() => setFormData(p => ({...p, isSellingMagic: false}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!formData.isSellingMagic ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-600'}`}>เก็บ</button></div>
                                             </div>
                                         )}
@@ -451,7 +476,7 @@
                                     <div className="space-y-4 pt-4 border-t border-stone-300 dark:border-slate-800">
                                         <div className="flex justify-between items-center"><label className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${themeClasses.textDim}`}><Icon name="FileText" size={12}/> {t.notes}</label><button type="button" onClick={() => setFormData(p => ({...p, otherCosts: [...p.otherCosts, {name: "", amount: ""}]}))} className="text-[9px] font-black text-blue-500 hover:text-blue-600 transition-colors uppercase">+ {t.etc}</button></div>
                                         {formData.otherCosts.map((cost, idx) => (
-                                            <div key={idx} className="flex gap-2"><input type="text" value={cost.name} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].name = e.target.value; setFormData(p => ({...p, otherCosts: nc})); }} placeholder="ชื่อรายการ" className={`flex-[2] border rounded-lg p-2.5 font-bold text-xs outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900'}`} /><input type="number" value={cost.amount} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].amount = e.target.value; setFormData(p => ({...p, otherCosts: nc})); }} className={`flex-1 border rounded-lg p-2.5 font-bold text-xs outline-none text-right ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900'}`} /><button type="button" onClick={() => setFormData(p => ({...p, otherCosts: p.otherCosts.filter((_, i) => i !== idx)}))} className="text-rose-500 hover:text-rose-400"><Icon name="MinusCircle" size={18} /></button></div>
+                                            <div key={idx} className="flex gap-2"><input type="text" value={cost.name} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].name = e.target.value; setFormData(p => ({...p, otherCosts: nc})); }} placeholder="ชื่อรายการ" className={`flex-[2] border rounded-lg p-2.5 font-bold text-xs outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900'}`} /><input type="number" value={cost.amount} onFocus={(e) => e.target.select()} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].amount = e.target.value === "" ? "" : Number(e.target.value); setFormData(p => ({...p, otherCosts: nc})); }} className={`flex-1 border rounded-lg p-2.5 font-bold text-xs outline-none text-right ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900'}`} /><button type="button" onClick={() => setFormData(p => ({...p, otherCosts: p.otherCosts.filter((_, i) => i !== idx)}))} className="text-rose-500 hover:text-rose-400"><Icon name="MinusCircle" size={18} /></button></div>
                                         ))}
                                         <textarea value={formData.notes} onChange={e => setFormData(p => ({...p, notes: e.target.value}))} placeholder="บันทึก..." className={`w-full border rounded-xl p-4 text-xs outline-none h-24 resize-none transition-all ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white focus:border-purple-500' : 'bg-stone-50 border-stone-200 text-stone-900 focus:border-purple-400'}`} />
                                     </div>
@@ -470,7 +495,7 @@
                                                 <p className={`text-2xl font-black ${themeClasses.textMain}`}>{formatMZeny(stats.totalNetProfit)} <span className="text-[10px] opacity-40 ml-1">Z</span></p>
                                                 <p className={`text-[9px] font-bold mt-1 uppercase tracking-tighter opacity-70 italic ${themeClasses.textDim}`}>{t.totalBothModes}</p>
                                             </div>
-                                            <div className={`mt-3 pt-2 border-t space-y-0.5 ${theme === 'dark' ? 'border-slate-800/50' : 'border-stone-300'}`}>
+                                            <div className={`mt-3 pt-2 border-t space-y-0.5 ${theme === 'dark' ? 'border-slate-800/50' : 'border-stone-200'}`}>
                                                 <p className="text-[8px] font-black text-purple-500 uppercase">{t.fromSpell}: <span className={themeClasses.textMain}>{formatZeny(stats.manualSpellRevenue)}</span></p>
                                                 <p className="text-[8px] font-black text-rose-500 uppercase">{t.fromMagic}: <span className={themeClasses.textMain}>{formatZeny(stats.manualMagicRevenue)}</span></p>
                                             </div>
@@ -515,12 +540,12 @@
                                     </div>
                                     {tableData.length > 0 && (
                                         <div className={`border p-6 rounded-[2rem] h-[360px] flex flex-col transition-all ${themeClasses.card}`}>
-                                            <div className="flex justify-between items-center mb-6 px-2"><h2 className={`text-sm font-black uppercase tracking-widest flex items-center gap-2 italic ${themeClasses.textMain}`}><Icon name="TrendingUp" size={16} className="text-purple-500" /> {t.stats} ({activeTab.toUpperCase()})</h2><div className={`flex p-1 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e5e2da] border-stone-200'}`}><button onClick={() => setChartMode('profit')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${chartMode === 'profit' ? 'bg-purple-600 text-white shadow-md' : 'text-stone-500'}`}>{t.profit}</button><button onClick={() => setChartMode('revenue')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${chartMode === 'revenue' ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-500'}`}>{t.revenue}</button></div></div>
+                                            <div className="flex justify-between items-center mb-6 px-2"><h2 className={`text-sm font-black uppercase tracking-widest flex items-center gap-2 italic ${themeClasses.textMain}`}><Icon name="TrendingUp" size={16} className="text-purple-500" /> {t.stats} ({activeTab.toUpperCase()})</h2><div className={`flex p-1 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e9e6dc] border-stone-200'}`}><button onClick={() => setChartMode('profit')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${chartMode === 'profit' ? 'bg-purple-600 text-white shadow-md' : 'text-stone-500'}`}>{t.profit}</button><button onClick={() => setChartMode('revenue')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${chartMode === 'revenue' ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-500'}`}>{t.revenue}</button></div></div>
                                             <div className="flex-1 w-full"><RC width="100%" height="100%"><LChart data={[...filteredData].reverse()}><CG strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e293b' : '#c9c6bb'} vertical={false} /><XA dataKey="date" stroke="#94a3b8" fontSize={9} axisLine={false} tickLine={false} dy={5} /><YA stroke="#94a3b8" fontSize={9} tickFormatter={v => `${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} /><TT contentStyle={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#faf9f6', border: `1px solid ${theme === 'dark' ? '#1e293b' : '#d6d3c1'}`, borderRadius: '12px', fontSize: '10px', color: theme === 'dark' ? '#fff' : '#444' }} formatter={v => [formatZeny(v), t[chartMode]]} /><L type="monotone" dataKey={chartMode} stroke={chartMode === 'profit' ? '#a855f7' : '#10b981'} strokeWidth={3} dot={{ r: 3, fill: theme === 'dark' ? '#020617' : '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} /></LChart></RC></div>
                                         </div>
                                     )}
                                     <div className={`border rounded-[2rem] overflow-hidden shadow-xl transition-all ${themeClasses.card}`}>
-                                        <div className={`p-6 border-b flex justify-between items-center transition-all ${theme === 'dark' ? 'bg-slate-950/20 border-slate-800' : 'bg-stone-50/50 border-stone-200'}`}>
+                                        <div className={`p-6 border-b flex justify-between items-center transition-all ${theme === 'dark' ? 'bg-slate-950/20 border-slate-800' : 'bg-stone-50/50 border-stone-300'}`}>
                                             <h2 className="text-sm font-black text-blue-600 italic flex items-center gap-2 uppercase tracking-widest"><Icon name="History" size={18} /> {t.history}</h2>
                                             {records.length > 0 && (
                                                 <button 
@@ -574,9 +599,10 @@
                             </div>
                         )}
 
+                        {/* Modal Chart Detail */}
                         {showDetailChart && (
                             <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-10 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
-                                <div className={`border w-full max-w-5xl p-6 md:p-10 rounded-[3rem] shadow-2xl flex flex-col h-full max-h-[85vh] relative transition-all ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-[#e5e2da] border-stone-300'}`} onClick={e => e.stopPropagation()}>
+                                <div className={`border w-full max-w-5xl p-6 md:p-10 rounded-[3rem] shadow-2xl flex flex-col h-full max-h-[85vh] relative transition-all ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-[#f4f2ee] border-stone-300'}`} onClick={e => e.stopPropagation()}>
                                     <button onClick={() => setShowDetailChart(null)} className="absolute top-6 right-6 p-2 rounded-full bg-slate-800/10 hover:bg-slate-800/20 dark:bg-white/10 dark:hover:bg-white/20 transition-all z-[310]"><Icon name="X" size={24} className={themeClasses.textMain} /></button>
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pr-12">
                                         <div><h3 className={`text-2xl font-black uppercase italic tracking-tight flex items-center gap-3 ${themeClasses.textMain}`}>{showDetailChart === 'profit' ? <><Icon name="Wallet" className="text-emerald-500"/> {t.netProfit}</> : showDetailChart === 'avgRevenue' ? <><Icon name="TrendingUp" className="text-blue-500"/> {t.avgRev} ({activeTab.toUpperCase()})</> : <><Icon name="Archive" className="text-amber-500"/> {t.assetTrend}</>}</h3><p className={`text-[10px] font-bold uppercase mt-1 ${themeClasses.textDim}`}>{t.viewDetails}</p></div>
@@ -589,7 +615,7 @@
                             </div>
                         )}
 
-                        {/* Modal Delete All confirmation */}
+                        {/* Modal Delete All history Confirmation */}
                         {showDeleteAllModal && (
                             <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDeleteAllModal(false)}>
                                 <div className={`border w-full max-w-sm p-8 rounded-[3rem] shadow-2xl relative transition-all text-center ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-stone-300'}`} onClick={e => e.stopPropagation()}>
@@ -628,12 +654,14 @@
                                             <input 
                                                 type="number" 
                                                 value={saleFormData.quantity} 
+                                                onFocus={(e) => e.target.select()}
                                                 onChange={e => {
-                                                    const val = Number(e.target.value);
+                                                    const valString = e.target.value;
+                                                    const val = valString === "" ? "" : Number(valString);
                                                     const max = saleItem === 'spell' ? stats.stockSpell : stats.stockMagic;
                                                     let cleanVal = val;
-                                                    if (val < 0) cleanVal = 0;
-                                                    if (val > max) cleanVal = max;
+                                                    if (val !== "" && val < 0) cleanVal = 0;
+                                                    if (val !== "" && val > max) cleanVal = max;
                                                     setSaleFormData({...saleFormData, quantity: cleanVal.toString()});
                                                 }} 
                                                 className={`w-full border rounded-xl p-4 font-bold outline-none focus:border-purple-500 ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-200 text-stone-900'}`} 
@@ -645,6 +673,7 @@
                                             <input 
                                                 type="number" 
                                                 value={saleFormData.price} 
+                                                onFocus={(e) => e.target.select()}
                                                 onChange={e => setSaleFormData({...saleFormData, price: e.target.value})} 
                                                 className={`w-full border rounded-xl p-4 font-bold outline-none focus:border-purple-500 ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-200 text-stone-900'}`} 
                                                 placeholder="0" 
@@ -662,7 +691,7 @@
                         )}
 
                         {showManual && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setShowManual(false)}>
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowManual(false)}>
                                 <div className={`border w-full max-sm p-10 rounded-[3rem] shadow-2xl relative transition-all ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#e5e2da] border-stone-300 text-stone-900'}`} onClick={e => e.stopPropagation()}>
                                     <button onClick={() => setShowManual(false)} className={`${themeClasses.textDim} absolute top-8 right-8 hover:text-rose-500`}><Icon name="X" size={20} /></button>
                                     <h3 className="text-xl font-black mb-8 text-purple-600 italic uppercase">{t.install} Guide</h3>
