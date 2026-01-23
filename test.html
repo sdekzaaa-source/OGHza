@@ -99,8 +99,8 @@
         const { useState, useEffect, useMemo, useRef } = React;
 
         const YT_AVATAR_URL = "https://yt3.googleusercontent.com/vlD4rkRPBg-HIUX6kAbuW1AHgE1FzYa4cs7W3ZD1AV0z4Xg_vM42d1r_slf8SVPhjmJXPslvcg=s160-c-k-c0x00ffffff-no-rj";
-        // Version Updated to Ver.01.25
-        const APP_VERSION = "Ver.01.25";
+        // Version Updated to Ver.01.26
+        const APP_VERSION = "Ver.01.26";
 
         const i18n = {
             th: {
@@ -181,7 +181,20 @@
                 Moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
                 Languages: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"/></svg>,
                 Settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2 2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
-                FileText: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                FileText: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+                MinusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
+                AlertCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+                Maximize2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
+                Clock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+                Play: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+                Pause: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
+                Square: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
+                Youtube: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2c.46-1.7.46-5.33.46-5.33s0-3.63-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>,
+                ChevronLeft: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"/></svg>,
+                ChevronRight: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
+                Calendar: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+                Search: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+                Inbox: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
             };
             return icons[name] || null;
         }
@@ -243,6 +256,7 @@
             );
         }
 
+        // Main App Component
         function App() {
             const [lang, setLang] = useState('th');
             const [theme, setTheme] = useState('dark'); 
@@ -276,10 +290,12 @@
             const [showDetailChart, setShowDetailChart] = useState(null);
             const [shareSuccess, setShareSuccess] = useState(false);
 
+            // Filter & Pagination State
             const [filterMode, setFilterMode] = useState('all');
             const [searchDate, setSearchDate] = useState('');
             const [currentPage, setCurrentPage] = useState(1);
             
+            // Responsive itemsPerPage
             const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
             useEffect(() => {
                 const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -657,17 +673,17 @@
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-black">
-                                            <div className="space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest ${themeClasses.textDim}`}>{t.duration} (1-60)</label><input type="number" value={formData.minutesUsed} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 1) val = 1; else if (val > 60) val = 60; setFormData(p => ({...p, minutesUsed: val})); }} className={`w-full border rounded-xl h-[46px] p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
-                                            <div className="space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest ${themeClasses.textDim}`}>{t.trashSale}</label><input type="number" value={formData.trashAmount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setFormData(p => ({...p, trashAmount: val})); }} placeholder="0" className={`w-full border rounded-xl h-[46px] p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
+                                            <div className="space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest ${themeClasses.textDim}`}>{t.duration} (1-60)</label><input type="number" inputMode="numeric" pattern="[0-9]*" value={formData.minutesUsed} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 1) val = 1; else if (val > 60) val = 60; setFormData(p => ({...p, minutesUsed: val})); }} className={`w-full border rounded-xl h-[46px] p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
+                                            <div className="space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest ${themeClasses.textDim}`}>{t.trashSale}</label><input type="number" inputMode="decimal" pattern="[0-9]*" value={formData.trashAmount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setFormData(p => ({...p, trashAmount: val})); }} placeholder="0" className={`w-full border rounded-xl h-[46px] p-3 font-bold outline-none text-sm ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
                                         </div>
                                         <div className="space-y-6 pt-4 border-t border-stone-300 dark:border-slate-800 font-black">
                                             <div className="flex gap-4 items-end">
-                                                <div className="flex-1 space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest flex items-center gap-1 ${themeClasses.textDim}`}><SVGs.Spell className="w-3 h-3"/> {t.itemSpell}</label><input type="number" value={formData.purpleStoneCount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setFormData(p => ({...p, purpleStoneCount: val})); }} className={`w-full border rounded-xl h-[46px] p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
+                                                <div className="flex-1 space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest flex items-center gap-1 ${themeClasses.textDim}`}><SVGs.Spell className="w-3 h-3"/> {t.itemSpell}</label><input type="number" inputMode="numeric" pattern="[0-9]*" value={formData.purpleStoneCount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setFormData(p => ({...p, purpleStoneCount: val})); }} className={`w-full border rounded-xl h-[46px] p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
                                                 <div className={`flex items-stretch p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}><button type="button" onClick={() => setFormData(p => ({...p, isSellingSpell: true}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${formData.isSellingSpell ? 'bg-rose-600 text-white shadow-md' : 'text-stone-600'}`}>ขาย</button><button type="button" onClick={() => setFormData(p => ({...p, isSellingSpell: false}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!formData.isSellingSpell ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-600'}`}>เก็บ</button></div>
                                             </div>
                                             {formData.runMode === 'aogh' && (
                                                 <div className="flex gap-4 items-end animate-in slide-in-from-top-1 font-black">
-                                                    <div className="flex-1 space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest flex items-center gap-1 text-rose-400`}><SVGs.Magic className="w-3.5 h-3.5"/> {t.itemMagic}</label><input type="number" value={formData.contMagicCount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setFormData(p => ({...p, contMagicCount: val})); }} className={`w-full border rounded-xl h-[46px] p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
+                                                    <div className="flex-1 space-y-2 font-medium"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest flex items-center gap-1 text-rose-400`}><SVGs.Magic className="w-3.5 h-3.5"/> {t.itemMagic}</label><input type="number" inputMode="numeric" pattern="[0-9]*" value={formData.contMagicCount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setFormData(p => ({...p, contMagicCount: val})); }} className={`w-full border rounded-xl h-[46px] p-3 font-bold text-sm outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner'}`} /></div>
                                                     <div className={`flex items-stretch p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}><button type="button" onClick={() => setFormData(p => ({...p, isSellingMagic: true}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${formData.isSellingMagic ? 'bg-rose-600 text-white shadow-md' : 'text-stone-600'}`}>{t.sell}</button><button type="button" onClick={() => setFormData(p => ({...p, isSellingMagic: false}))} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!formData.isSellingMagic ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-600'}`}>{t.storeShort}</button></div>
                                                 </div>
                                             )}
@@ -713,7 +729,7 @@
                                                 <div key={item.key} className={`p-4 rounded-2xl border flex flex-col gap-1.5 transition-colors font-black ${theme === 'dark' ? 'bg-slate-950/50 border-slate-800 text-white' : 'bg-[#e9e6dc] border-stone-200 text-stone-900 shadow-sm'}`}>
                                                     <span className={`text-[10px] md:text-[12px] font-medium flex items-center gap-2 ${themeClasses.textDim}`}>{item.icon} {item.label}</span>
                                                     <div className="flex items-center gap-1 font-black">
-                                                        <input type="number" value={globalPrices[item.key]} onFocus={(e) => e.target.select()} onChange={e => updatePrice(item.key, e.target.value)} className={`bg-transparent text-base md:text-lg font-medium outline-none w-full ${themeClasses.textMain}`} placeholder="0" />
+                                                        <input type="number" inputMode="decimal" pattern="[0-9]*" value={globalPrices[item.key]} onFocus={(e) => e.target.select()} onChange={e => updatePrice(item.key, e.target.value)} className={`bg-transparent text-base md:text-lg font-medium outline-none w-full ${themeClasses.textMain}`} placeholder="0" />
                                                         <span className={`text-[11px] font-medium ${themeClasses.textDim}`}>Z</span>
                                                     </div>
                                                 </div>
@@ -864,7 +880,7 @@
                                                                                 )}
                                                                             </div>
                                                                         </td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap font-medium font-black"><div className="flex gap-2 items-center"><span className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded font-bold border border-blue-500/10 flex items-center gap-1.5"><SVGs.GumBox className="w-3.5 h-3.5"/> {record.gumUsed}</span><span className={`px-2 py-0.5 rounded font-bold border flex items-center gap-1.5 ${record.useSilvervine ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10 font-black' : 'bg-slate-500/10 text-slate-500 border-slate-500/10 opacity-30 font-black'}`}><SVGs.SilvervineBox className="w-3.5 h-3.5"/> {record.useSilvervine ? '✓' : '✕'}</span></div></td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap font-medium font-black"><div className="flex gap-2 items-center"><span className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded font-bold border border-blue-500/10 flex items-center gap-1.5"><SVGs.GumBox className="w-3.5 h-3.5"/> {record.gumUsed}</span><span className={`px-2 py-0.5 rounded font-bold border flex items-center gap-1.5 ${record.useSilvervine ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' : 'bg-slate-500/10 text-slate-500 border-slate-500/10 opacity-30'}`}><SVGs.SilvervineBox className="w-3.5 h-3.5"/> {record.useSilvervine ? '✓' : '✕'}</span></div></td>
                                                                         <td className={`px-6 py-4 text-right font-bold text-base font-black ${record.profit >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>{formatUnitZeny(record.profit)}</td>
                                                                         <td className="px-5 py-4 text-center font-black">
                                                                             <div className="flex items-center justify-center gap-2">
@@ -961,7 +977,7 @@
                                         </aside>
                                     </div>
 
-                                    {/* SHARE MODAL - Ver.01.23 Square Corners, Fixed Layout, Capture Ready */}
+                                    {/* SHARE MODAL - Ver.01.24 Fix */}
                                     {showShareModal && shareData && (
                                         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300 font-black" onClick={() => setShowShareModal(false)}>
                                             <div className="max-w-xl w-full" onClick={e => e.stopPropagation()}>
@@ -1041,12 +1057,12 @@
                                                             </div>
                                                         </div>
 
-                                                        {/* Optional Notes Section - Larger Font */}
+                                                        {/* Notes Section - Center Fixed */}
                                                         {shareData.notes && (
-                                                            <div className="mb-10 px-8">
-                                                                <p className={`italic text-sm font-medium break-words whitespace-pre-wrap ${theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}>
+                                                            <div className="mb-10 px-4 w-full flex justify-center">
+                                                                <div className={`text-base font-medium break-words whitespace-pre-wrap text-center max-w-[90%] italic ${theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}>
                                                                     "{shareData.notes}"
-                                                                </p>
+                                                                </div>
                                                             </div>
                                                         )}
 
