@@ -21,6 +21,19 @@
     <!-- HTML2Canvas -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Expose Firebase to global scope for React component to use
+        window.firebaseModules = {
+            initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, signOut, onAuthStateChanged,
+            getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, getDoc
+        };
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Kanit:wght@300;400;500;700;900&display=swap');
         
@@ -99,13 +112,27 @@
         const { useState, useEffect, useMemo, useRef } = React;
 
         const YT_AVATAR_URL = "https://yt3.googleusercontent.com/vlD4rkRPBg-HIUX6kAbuW1AHgE1FzYa4cs7W3ZD1AV0z4Xg_vM42d1r_slf8SVPhjmJXPslvcg=s160-c-k-c0x00ffffff-no-rj";
-        // Version Updated to Ver.01.26
-        const APP_VERSION = "Ver.01.26";
+        // Version Updated to Ver.01.29
+        const APP_VERSION = "Ver.01.29";
+
+        // =========================================================================================
+        // [IMPORTANT] Configured for Production
+        // =========================================================================================
+        const USER_FIREBASE_CONFIG = {
+          apiKey: "AIzaSyAbWzr8o_OhkjGbEetBYq_nzYmVZ2fTf40",
+          authDomain: "rocogh-88a38.firebaseapp.com",
+          projectId: "rocogh-88a38",
+          storageBucket: "rocogh-88a38.firebasestorage.app",
+          messagingSenderId: "1025971309206",
+          appId: "1:1025971309206:web:d4f9e0ab6bb016dde590b7",
+          measurementId: "G-04JN1ERQ4T"
+        };
+        // =========================================================================================
 
         const i18n = {
             th: {
                 dashboard: "OLD GLAST HEIM", welcomeSub: "ระบบบันทึกสถิติและวิเคราะห์กำไร", loginBtn: "เข้าสู่ระบบด้วย Gmail", guestBtn: "ใช้งานแบบบุคคลทั่วไป",
-                exit: "Exit", home: "หน้าแรก", addData: "เพิ่มข้อมูล", netProfit: "กำไรสุทธิ", totalBothModes: "ยอดรวมทั้งสองโหมด", avgRev: "รายได้เฉลี่ยต่อรอบ",
+                exit: "Logout", home: "หน้าแรก", addData: "เพิ่มข้อมูล", netProfit: "กำไรสุทธิ", totalBothModes: "ยอดรวมทั้งสองโหมด", avgRev: "รายได้เฉลี่ยต่อรอบ",
                 avgMin: "รายได้เฉลี่ยต่อนาที", inventory: "คลังสมบัติ", stats: "กราฟสถิติ", history: "ประวัติการฟาร์ม", prices: "ราคาตลาดปัจจุบัน",
                 timer: "นาฬิกาจับเวลา", install: "Install App", newRecord: "บันทึกข้อมูลใหม่", editRecord: "แก้ไขข้อมูล", date: "วันที่", duration: "เวลาที่ใช้ (นาที)",
                 trashSale: "ยอดขายขยะ (Zeny)", gum: "บับเบิ้ลกั้ม", silvervine: "มะละกอ", etc: "ต้นทุนอื่นๆ", notes: "บันทึกช่วยจำ", save: "บันทึกข้อมูล",
@@ -119,11 +146,12 @@
                 deleteAll: "ลบทั้งหมด", confirmDeleteAll: "ยืนยันการลบข้อมูลทั้งหมดหรือไม่?", deleteWarn: "การกระทำนี้จะลบประวัติการฟาร์มและรายการขายทั้งหมดและไม่สามารถกู้คืนได้",
                 share: "แชร์ผลลัพธ์", saveImage: "บันทึกรูปภาพ", copyText: "คัดลอกข้อความ", shareSuccess: "คัดลอกเรียบร้อย!",
                 zPerMin: "Zeny/Min", totalRevenue: "ยอดขายรวม", totalCost: "ต้นทุนรวม", action: "จัดการ", store: "เก็บ", storeShort: "เก็บ", drops: "ดรอป",
-                searchPlaceholder: "เลือกวันที่...", allModes: "ทั้งหมด", page: "หน้า", of: "จาก", noData: "ไม่มีข้อมูล", shareTitle: "OGH RUN SUMMARY"
+                searchPlaceholder: "เลือกวันที่...", allModes: "ทั้งหมด", page: "หน้า", of: "จาก", noData: "ไม่มีข้อมูล", shareTitle: "OGH RUN SUMMARY",
+                configMissing: "ไม่พบการตั้งค่า Firebase กรุณาแก้ไขไฟล์เพื่อใส่ Config", configMissingSub: "โปรดดูวิธีใน Code บรรทัดที่ 113"
             },
             en: {
                 dashboard: "OLD GLAST HEIM", welcomeSub: "Statistics & Profit Analytics System", loginBtn: "Login with Gmail", guestBtn: "Use as Guest",
-                exit: "Exit", home: "Home", addData: "Add Data", netProfit: "Net Profit", totalBothModes: "Total for both modes", avgRev: "Avg. Revenue / Round",
+                exit: "Logout", home: "Home", addData: "Add Data", netProfit: "Net Profit", totalBothModes: "Total for both modes", avgRev: "Avg. Revenue / Round",
                 avgMin: "Avg. Revenue / Min", inventory: "Inventory", stats: "Statistics", history: "History", prices: "Market Prices",
                 timer: "Farm Timer", install: "Install App", newRecord: "New Record", editRecord: "Edit Record", date: "Date", duration: "Duration (Min)",
                 trashSale: "Trash Sales (Zeny)", gum: "Bubble Gum", silvervine: "Silvervine", etc: "Other Costs (etc.)", notes: "Notes (Memo)", save: "Save Data",
@@ -138,7 +166,8 @@
                 deleteAll: "Delete All", confirmDeleteAll: "Confirm delete all data?", deleteWarn: "This will permanently remove all farm records and sales history.",
                 share: "Share Result", saveImage: "Save Image", copyText: "Copy Text", shareSuccess: "Copied!",
                 zPerMin: "Zeny/Min", totalRevenue: "Total Sales", totalCost: "Total Cost", action: "Action", store: "Store", storeShort: "Store", drops: "Drops",
-                searchPlaceholder: "Search date...", allModes: "All", page: "Page", of: "of", noData: "No Data", shareTitle: "OGH RUN SUMMARY"
+                searchPlaceholder: "Search date...", allModes: "All", page: "Page", of: "of", noData: "No Data", shareTitle: "OGH RUN SUMMARY",
+                configMissing: "Firebase Config Missing. Please edit the file.", configMissingSub: "Check line 113 for instructions."
             }
         };
 
@@ -155,49 +184,26 @@
             Calendar: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
             Share: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
             Download: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12.01" y2="3"/></svg>,
-            Copy: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+            Sun: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+            Moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+            Languages: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"/></svg>,
+            Settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2 2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+            FileText: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+            MinusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
+            AlertCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+            Maximize2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
+            Clock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            Play: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+            Pause: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
+            Square: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
+            Youtube: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2c.46-1.7.46-5.33.46-5.33s0-3.63-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>,
+            ChevronLeft: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"/></svg>,
+            ChevronRight: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
+            Calendar: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+            Search: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+            Inbox: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
         };
-
-        const Icon = ({ name, size = 16, className = "" }) => {
-            const icons = {
-                Wallet: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/><path d="M18 12h4"/><circle cx="16" cy="12" r="2"/></svg>,
-                TrendingUp: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
-                TrendingDown: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>,
-                Archive: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
-                History: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>,
-                Trash2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
-                PlusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
-                HelpCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
-                X: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-                LogOut: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
-                User: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>,
-                Pencil: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
-                LayoutDashboard: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
-                Share2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
-                Download: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12.01" y2="3"/></svg>,
-                Copy: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
-                Sun: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
-                Moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
-                Languages: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"/></svg>,
-                Settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2 2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
-                FileText: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
-                MinusCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
-                AlertCircle: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
-                Maximize2: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
-                Clock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-                Play: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
-                Pause: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
-                Square: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
-                Youtube: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2c.46-1.7.46-5.33.46-5.33s0-3.63-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>,
-                ChevronLeft: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"/></svg>,
-                ChevronRight: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
-                Calendar: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-                Search: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
-                Inbox: ({size, className}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-            };
-            return icons[name] || null;
-        }
 
         // WelcomeScreen Component
         function WelcomeScreen({ onLogin, onGuest, onShowInstall, lang, setLang, theme }) {
@@ -289,13 +295,12 @@
             const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
             const [showDetailChart, setShowDetailChart] = useState(null);
             const [shareSuccess, setShareSuccess] = useState(false);
+            const [isLoading, setIsLoading] = useState(true);
 
-            // Filter & Pagination State
             const [filterMode, setFilterMode] = useState('all');
             const [searchDate, setSearchDate] = useState('');
             const [currentPage, setCurrentPage] = useState(1);
             
-            // Responsive itemsPerPage
             const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
             useEffect(() => {
                 const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -322,7 +327,204 @@
                 btnGhost: theme === 'dark' ? 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-white' : 'bg-[#faf9f6] border-stone-300 text-stone-500 hover:text-stone-900 shadow-sm'
             };
 
-            const handleLogout = () => { setUser(null); setIsGuestMode(false); setRecords([]); setManualSales([]); };
+            // Firebase Logic
+            useEffect(() => {
+                if (!window.firebaseModules) {
+                    // Fallback or retry logic could go here
+                    console.error("Firebase modules not loaded");
+                    return;
+                }
+                const { initializeApp, getAuth, getFirestore, onAuthStateChanged } = window.firebaseModules;
+                
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : USER_FIREBASE_CONFIG;
+                
+                if (firebaseConfig) {
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    
+                    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                        setUser(currentUser);
+                        setIsGuestMode(currentUser?.isAnonymous || false);
+                        setIsLoading(false);
+                    });
+                    
+                    return () => unsubscribe();
+                } else {
+                    setIsLoading(false);
+                }
+            }, []);
+
+            // Data Sync Logic
+            useEffect(() => {
+                if (!user || !db || !window.firebaseModules) return;
+                const { collection, onSnapshot, query, orderBy, doc } = window.firebaseModules;
+                
+                // Sync Records
+                const qRecords = query(collection(db, 'artifacts', appId, 'users', user.uid, 'records'));
+                const unsubRecords = onSnapshot(qRecords, (snapshot) => {
+                    const loadedRecords = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    setRecords(loadedRecords);
+                });
+
+                // Sync Sales
+                const qSales = query(collection(db, 'artifacts', appId, 'users', user.uid, 'sales'));
+                const unsubSales = onSnapshot(qSales, (snapshot) => {
+                    const loadedSales = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    setManualSales(loadedSales);
+                });
+
+                 // Sync Config (Prices)
+                 const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'prices');
+                 const unsubConfig = onSnapshot(configRef, (docSnap) => {
+                     if (docSnap.exists()) {
+                         setGlobalPrices(docSnap.data());
+                     }
+                 });
+
+                return () => {
+                    unsubRecords();
+                    unsubSales();
+                    unsubConfig();
+                };
+            }, [user]);
+
+            const handleLogin = async () => {
+                 if (!auth) {
+                    alert(i18n[lang].configMissing + "\n" + i18n[lang].configMissingSub);
+                    return;
+                 }
+                 const { signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
+                 const provider = new GoogleAuthProvider();
+                 try {
+                     await signInWithPopup(auth, provider);
+                 } catch (error) {
+                     console.error("Login failed", error);
+                 }
+            };
+
+            const handleGuest = async () => {
+                if (!auth) {
+                    alert(i18n[lang].configMissing + "\n" + i18n[lang].configMissingSub);
+                    return;
+                }
+                const { signInAnonymously } = window.firebaseModules;
+                try {
+                    await signInAnonymously(auth);
+                } catch (error) {
+                     console.error("Guest login failed", error);
+                }
+            };
+
+            const handleLogout = async () => {
+                 if (!auth || !window.firebaseModules) return;
+                 const { signOut } = window.firebaseModules;
+                 try {
+                     await signOut(auth);
+                     setRecords([]);
+                     setManualSales([]);
+                 } catch (error) {
+                     console.error("Logout failed", error);
+                 }
+            };
+
+            const handleSaveInternal = async (e) => {
+                e.preventDefault();
+                if (!db || !user || !window.firebaseModules) return;
+                const { collection, addDoc, updateDoc, doc, setDoc } = window.firebaseModules;
+                
+                // Update prices whenever saving a record to ensure latest prices are saved
+                const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'prices');
+                await setDoc(configRef, globalPrices, { merge: true });
+
+                const entryMode = formData.runMode || activeTab;
+                const [y, m, d] = formData.date.split('-');
+                const formattedDate = `${d}/${m}/${y}`;
+                
+                const entry = { 
+                    ...formData, 
+                    date: formattedDate, 
+                    timestamp: Date.now(), 
+                    mode: entryMode, 
+                    prices: { ...globalPrices } 
+                };
+
+                if (editingId) {
+                     const recordRef = doc(db, 'artifacts', appId, 'users', user.uid, 'records', editingId);
+                     await updateDoc(recordRef, entry);
+                } else {
+                     await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'records'), entry);
+                }
+
+                setIsAdding(false); 
+                setEditingId(null);
+                setFormData({ 
+                    date: new Date().toISOString().split('T')[0],
+                    gumUsed: 0, trashAmount: "", purpleStoneCount: "", contMagicCount: "",
+                    isSellingSpell: false, isSellingMagic: false, useSilvervine: true,
+                    minutesUsed: 60, notes: "", otherCosts: [], runMode: 'ogh',
+                    customSpellPrice: "", customMagicPrice: "" 
+                });
+            };
+
+            const handleDelete = async (id) => {
+                if (!db || !user || !window.firebaseModules) return;
+                const { deleteDoc, doc } = window.firebaseModules;
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'records', id));
+            };
+            
+            const handleClearAllHistory = async () => {
+                if (!db || !user || !window.firebaseModules) return;
+                // Deleting collections is not directly supported in client SDK for safety, 
+                // but we can delete docs one by one for this app scale.
+                const { deleteDoc, doc } = window.firebaseModules;
+                const deletePromises = [
+                    ...records.map(r => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'records', r.id))),
+                    ...manualSales.map(s => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'sales', s.id)))
+                ];
+                await Promise.all(deletePromises);
+                setShowDeleteAllModal(false);
+            };
+
+            const handleManualSellSubmit = async () => {
+                const q = Number(saleFormData.quantity);
+                const p = Number(saleFormData.price);
+                if (isNaN(q) || q <= 0 || isNaN(p) || p < 0) return;
+                
+                if (!db || !user || !window.firebaseModules) return;
+                const { addDoc, collection } = window.firebaseModules;
+
+                await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'sales'), { 
+                    item: saleItem, 
+                    quantity: q, 
+                    price: p, 
+                    timestamp: Date.now() 
+                });
+
+                setShowSaleModal(false);
+                setSaleFormData({ quantity: "", price: "" });
+            };
+
+            const submitEditModal = async () => {
+                 if (!db || !user || !window.firebaseModules) return;
+                 const { updateDoc, doc, setDoc } = window.firebaseModules;
+
+                 // Update prices config as well
+                 const p = editModalData.prices || globalPrices;
+                 const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'prices');
+                 await setDoc(configRef, globalPrices, { merge: true }); // Sync global prices just in case
+                
+                 const recordRef = doc(db, 'artifacts', appId, 'users', user.uid, 'records', editModalData.id);
+                 // We only need to save the editable fields + original prices if needed
+                 // But typically we update the entire doc with new data
+                 const { id, revenue, profit, gumCost, silvervineCost, etcCost, totalCost, revenuePerMinute, stoneValue, ...dataToSave } = editModalData;
+                 
+                 // Re-calculate derived values is not needed for storage if we calculate on read, 
+                 // but we store raw data. tableData helper does the math.
+                 // So we just save the editable fields.
+                 await updateDoc(recordRef, dataToSave);
+                 setShowEditModal(false);
+            };
 
             const resetSlideTimer = () => {
                 if (slideTimerRef.current) clearInterval(slideTimerRef.current);
@@ -374,6 +576,7 @@
                 return `${m}:${s}`;
             };
 
+            // ... (Rest of logic: tableData, stats, etc. remains same but uses records/globalPrices state)
             const tableData = useMemo(() => {
                 const runsPerDate = {};
                 records.forEach(r => { if (r.useSilvervine) { const d = r.date; runsPerDate[d] = (runsPerDate[d] || 0) + 1; } });
@@ -457,20 +660,7 @@
                 };
             }, [tableData, manualSales, globalPrices]);
 
-            const handleManualSellSubmit = () => {
-                const q = Number(saleFormData.quantity);
-                const p = Number(saleFormData.price);
-                if (isNaN(q) || q <= 0 || isNaN(p) || p < 0) return;
-                setManualSales(prev => [...prev, { id: Date.now().toString(), item: saleItem, quantity: q, price: p, timestamp: Date.now() }]);
-                setShowSaleModal(false);
-                setSaleFormData({ quantity: "", price: "" });
-            };
-
-            const updatePrice = (key, val) => {
-                let num = val === "" ? "" : Number(val);
-                if (num !== "" && num < 0) num = 0;
-                setGlobalPrices(prev => ({ ...prev, [key]: num }));
-            };
+            const updatePrice = (key, val) => setGlobalPrices(prev => ({ ...prev, [key]: val === "" ? "" : Math.max(0, Number(val)) }));
 
             const validatePrices = () => {
                 const isValid = globalPrices.purpleStonePrice > 0 && globalPrices.contMagicPrice > 0 && globalPrices.gumBoxPrice > 0 && globalPrices.silvervineBoxPrice > 0;
@@ -491,27 +681,6 @@
                     setIsAdding(true);
                 }
             };
-
-            const handleSaveInternal = (e) => {
-                e.preventDefault();
-                const id = editingId || Date.now().toString();
-                const entryMode = formData.runMode || activeTab;
-                const [y, m, d] = formData.date.split('-');
-                const formattedDate = `${d}/${m}/${y}`;
-                const entry = { ...formData, date: formattedDate, id, timestamp: Date.now(), mode: entryMode, prices: { ...globalPrices } };
-                setRecords(prev => editingId ? prev.map(r => r.id === editingId ? entry : r) : [entry, ...prev]);
-                setIsAdding(false); setEditingId(null);
-                setFormData({ 
-                    date: new Date().toISOString().split('T')[0],
-                    gumUsed: 0, trashAmount: "", purpleStoneCount: "", contMagicCount: "",
-                    isSellingSpell: false, isSellingMagic: false, useSilvervine: true,
-                    minutesUsed: 60, notes: "", otherCosts: [], runMode: 'ogh',
-                    customSpellPrice: "", customMagicPrice: "" 
-                });
-            };
-
-            const handleDelete = (id) => setRecords(prev => prev.filter(r => r.id !== id));
-            const handleClearAllHistory = () => { setRecords([]); setManualSales([]); setShowDeleteAllModal(false); };
 
             const handleShare = (record) => { setShareData(record); setShowShareModal(true); };
 
@@ -574,27 +743,40 @@
                 setShowEditModal(true);
             };
 
-            const submitEditModal = () => {
-                const p = editModalData.prices || globalPrices;
-                const sp = Number(editModalData.isSellingSpell ? (editModalData.customSpellPrice || p.purpleStonePrice) : 0);
-                const mp = (editModalData.mode === 'aogh' && editModalData.isSellingMagic) ? (editModalData.customMagicPrice || p.contMagicPrice) : 0;
-                const rev = Number(editModalData.trashAmount || 0) + (Number(editModalData.purpleStoneCount || 0) * sp) + (editModalData.mode === 'aogh' ? (Number(editModalData.contMagicCount || 0) * mp) : 0);
-                const updatedRecord = { ...editModalData, id: editModalData.id, revenue: rev, profit: rev - editModalData.totalCost, revenuePerMinute: editModalData.minutesUsed > 0 ? rev / editModalData.minutesUsed : 0 };
-                setRecords(prev => prev.map(r => r.id === updatedRecord.id ? updatedRecord : r));
-                setShowEditModal(false);
+            const handleManualSellSubmit = () => {
+                const q = Number(saleFormData.quantity);
+                const p = Number(saleFormData.price);
+                if (isNaN(q) || q <= 0 || isNaN(p) || p < 0) return;
+                
+                if (!db || !user || !window.firebaseModules) return;
+                const { addDoc, collection } = window.firebaseModules;
+
+                addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'sales'), { 
+                    item: saleItem, 
+                    quantity: q, 
+                    price: p, 
+                    timestamp: Date.now() 
+                });
+
+                setShowSaleModal(false);
+                setSaleFormData({ quantity: "", price: "" });
             };
 
-            useEffect(() => {
-                if (isTimerActive && !isTimerPaused) {
-                    timerRef.current = setInterval(() => setTimeInMs(p => p + 1000), 1000);
-                } else { clearInterval(timerRef.current); }
-                return () => clearInterval(timerRef.current);
-            }, [isTimerActive, isTimerPaused]);
+            if (isLoading) {
+                 return (
+                     <div className={`min-h-screen flex items-center justify-center ${themeClasses.bg}`}>
+                        <div className="flex flex-col items-center gap-4 animate-pulse">
+                            <div className="w-16 h-16 rounded-full bg-slate-200/20"></div>
+                            <div className="h-4 w-32 bg-slate-200/20 rounded"></div>
+                        </div>
+                     </div>
+                 );
+            }
 
             return (
                 <div className={`min-h-screen p-0 m-0 transition-colors duration-500 ${themeClasses.bg}`}>
-                    {!user && !isGuestMode ? (
-                        <WelcomeScreen onLogin={() => setUser({displayName: "User"})} onGuest={() => setIsGuestMode(true)} onShowInstall={() => setShowManual(true)} lang={lang} setLang={setLang} theme={theme} />
+                    {!user ? (
+                        <WelcomeScreen onLogin={handleLogin} onGuest={handleGuest} onShowInstall={() => setShowManual(true)} lang={lang} setLang={setLang} theme={theme} />
                     ) : (
                         <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-6 lg:p-8 font-black">
                             {/* USER PROFILE HEADER */}
@@ -630,6 +812,8 @@
                                     </div>
                                 </div>
                             </header>
+
+                            {/* ... (Previous code remains the same until Market Price Card) ... */}
 
                             {priceWarningActive && !isAdding && (
                                 <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4 duration-300 font-black">
@@ -880,7 +1064,7 @@
                                                                                 )}
                                                                             </div>
                                                                         </td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap font-medium font-black"><div className="flex gap-2 items-center"><span className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded font-bold border border-blue-500/10 flex items-center gap-1.5"><SVGs.GumBox className="w-3.5 h-3.5"/> {record.gumUsed}</span><span className={`px-2 py-0.5 rounded font-bold border flex items-center gap-1.5 ${record.useSilvervine ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' : 'bg-slate-500/10 text-slate-500 border-slate-500/10 opacity-30'}`}><SVGs.SilvervineBox className="w-3.5 h-3.5"/> {record.useSilvervine ? '✓' : '✕'}</span></div></td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap font-medium font-black"><div className="flex gap-2 items-center"><span className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded font-bold border border-blue-500/10 flex items-center gap-1.5"><SVGs.GumBox className="w-3.5 h-3.5"/> {record.gumUsed}</span><span className={`px-2 py-0.5 rounded font-bold border flex items-center gap-1.5 ${record.useSilvervine ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10 font-black' : 'bg-slate-500/10 text-slate-500 border-slate-500/10 opacity-30 font-black'}`}><SVGs.SilvervineBox className="w-3.5 h-3.5"/> {record.useSilvervine ? '✓' : '✕'}</span></div></td>
                                                                         <td className={`px-6 py-4 text-right font-bold text-base font-black ${record.profit >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>{formatUnitZeny(record.profit)}</td>
                                                                         <td className="px-5 py-4 text-center font-black">
                                                                             <div className="flex items-center justify-center gap-2">
@@ -977,7 +1161,7 @@
                                         </aside>
                                     </div>
 
-                                    {/* SHARE MODAL - Ver.01.24 Fix */}
+                                    {/* SHARE MODAL - Ver.01.27 Square Corners, Fixed Layout, Capture Ready */}
                                     {showShareModal && shareData && (
                                         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300 font-black" onClick={() => setShowShareModal(false)}>
                                             <div className="max-w-xl w-full" onClick={e => e.stopPropagation()}>
@@ -1029,7 +1213,7 @@
                                                             <div className="flex flex-col gap-1 font-black">
                                                                 <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">EFF.</span>
                                                                 <span className="text-blue-400 font-black text-2xl truncate">
-                                                                    {(shareData.profit / (shareData.minutesUsed || 1) / 1000).toLocaleString(undefined, {maximumFractionDigits: 1})}
+                                                                    {Math.round((shareData.profit / (shareData.minutesUsed || 1))/1000).toLocaleString(undefined, {maximumFractionDigits: 1})}
                                                                     <span className="text-[10px] text-slate-500 ml-1">Kz/min</span>
                                                                 </span>
                                                             </div>
@@ -1057,7 +1241,7 @@
                                                             </div>
                                                         </div>
 
-                                                        {/* Notes Section - Center Fixed */}
+                                                        {/* Notes Section - No border, just text */}
                                                         {shareData.notes && (
                                                             <div className="mb-10 px-4 w-full flex justify-center">
                                                                 <div className={`text-base font-medium break-words whitespace-pre-wrap text-center max-w-[90%] italic ${theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}>
@@ -1100,8 +1284,8 @@
                                         </h2>
                                         <div className="space-y-6 font-medium">
                                             <div className="grid grid-cols-1 gap-4 font-black">
-                                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase opacity-50">จำนวน</label><input type="number" value={saleFormData.quantity} onChange={e => { let val = parseInt(e.target.value); const max = saleItem === 'spell' ? stats.stockSpell : stats.stockMagic; if (isNaN(val)) val = ""; else if (val < 0) val = 0; else if (val > max) val = max; setSaleFormData({...saleFormData, quantity: val}); }} className={`w-full p-4 rounded-xl border font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 shadow-inner'}`} placeholder={`0 (Max: ${saleItem === 'spell' ? stats.stockSpell : stats.stockMagic})`} /></div>
-                                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase opacity-50">ราคาขาย</label><input type="number" value={saleFormData.price} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setSaleFormData({...saleFormData, price: val}); }} className={`w-full p-4 rounded-xl border font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 shadow-inner'}`} placeholder="0" /></div>
+                                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase opacity-50">จำนวน</label><input type="number" inputMode="numeric" pattern="[0-9]*" value={saleFormData.quantity} onChange={e => { let val = parseInt(e.target.value); const max = saleItem === 'spell' ? stats.stockSpell : stats.stockMagic; if (isNaN(val)) val = ""; else if (val < 0) val = 0; else if (val > max) val = max; setSaleFormData({...saleFormData, quantity: val}); }} className={`w-full p-4 rounded-xl border font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 shadow-inner'}`} placeholder={`0 (Max: ${saleItem === 'spell' ? stats.stockSpell : stats.stockMagic})`} /></div>
+                                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase opacity-50">ราคาขาย</label><input type="number" inputMode="decimal" pattern="[0-9]*" value={saleFormData.price} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setSaleFormData({...saleFormData, price: val}); }} className={`w-full p-4 rounded-xl border font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 shadow-inner'}`} placeholder="0" /></div>
                                             </div>
                                             <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
                                                 <p className="text-[10px] uppercase font-bold opacity-50 mb-1">ยอดขายที่จะได้รับ</p>
@@ -1123,31 +1307,31 @@
                                         <h2 className="text-xl md:text-2xl font-black mb-8 text-amber-500 italic uppercase font-black">{t.editRecord}</h2>
                                         <div className="space-y-6 max-h-[65vh] overflow-y-auto px-1 pr-3 font-medium font-black">
                                             <div className="grid grid-cols-2 gap-4 font-black">
-                                                <div className="space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50">ขยะ</label><input type="number" value={editModalData.trashAmount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setEditModalData({...editModalData, trashAmount: val}); }} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
-                                                <div className="space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50">เวลา</label><input type="number" value={editModalData.minutesUsed} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 1) val = 1; else if (val > 60) val = 60; setEditModalData({...editModalData, minutesUsed: val}); }} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
+                                                <div className="space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50">ขยะ</label><input type="number" inputMode="decimal" pattern="[0-9]*" value={editModalData.trashAmount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setEditModalData({...editModalData, trashAmount: val}); }} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
+                                                <div className="space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50">เวลา</label><input type="number" inputMode="numeric" pattern="[0-9]*" value={editModalData.minutesUsed} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 1) val = 1; else if (val > 60) val = 60; setEditModalData({...editModalData, minutesUsed: val}); }} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
                                             </div>
                                             <div className="grid grid-cols-1 gap-4 font-black">
                                                 <div className="flex gap-4 items-end font-black">
-                                                    <div className="flex-1 space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 flex items-center gap-1 font-black"><SVGs.Spell className="w-3.5 h-3.5 font-black"/> {t.itemSpell}</label><input type="number" value={editModalData.purpleStoneCount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setEditModalData({...editModalData, purpleStoneCount: val}); }} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
+                                                    <div className="flex-1 space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 flex items-center gap-1 font-black"><SVGs.Spell className="w-3.5 h-3.5 font-black"/> {t.itemSpell}</label><input type="number" inputMode="numeric" pattern="[0-9]*" value={editModalData.purpleStoneCount} onFocus={(e) => e.target.select()} onChange={e => { let val = parseInt(e.target.value); if (isNaN(val)) val = ""; else if (val < 0) val = 0; setEditModalData({...editModalData, purpleStoneCount: val}); }} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
                                                     <div className={`flex items-stretch p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800 font-black' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}><button type="button" onClick={() => setEditModalData({...editModalData, isSellingSpell: true})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${editModalData.isSellingSpell ? 'bg-rose-600 text-white shadow-md' : 'text-stone-600'}`}>{t.sell}</button><button type="button" onClick={() => setEditModalData({...editModalData, isSellingSpell: false})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!editModalData.isSellingSpell ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-600'}`}>{t.storeShort}</button></div>
                                                 </div>
                                                 {editModalData.isSellingSpell && (
                                                     <div className="space-y-1.5 animate-in slide-in-from-top-1 font-black">
                                                         <label className="text-[10px] font-black uppercase opacity-50 text-rose-500">ระบุราคาขายหินม่วง (ชิ้นละ)</label>
-                                                        <input type="number" value={editModalData.customSpellPrice} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, customSpellPrice: e.target.value})} className={`w-full h-[46px] p-3 rounded-xl border border-rose-500/30 font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 text-rose-400' : 'bg-rose-50 text-rose-600 shadow-inner'}`} />
+                                                        <input type="number" inputMode="decimal" pattern="[0-9]*" value={editModalData.customSpellPrice} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, customSpellPrice: e.target.value})} className={`w-full h-[46px] p-3 rounded-xl border border-rose-500/30 font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 text-rose-400' : 'bg-rose-50 text-rose-600 shadow-inner'}`} />
                                                     </div>
                                                 )}
                                                 
                                                 {editModalData.mode === 'aogh' && (
                                                     <React.Fragment>
                                                         <div className="flex gap-4 items-end mt-2">
-                                                            <div className="flex-1 space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 flex items-center gap-1 font-black"><SVGs.Magic className="w-3.5 h-3.5 font-black"/> {t.itemMagic}</label><input type="number" value={editModalData.contMagicCount} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, contMagicCount: e.target.value})} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
+                                                            <div className="flex-1 space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 flex items-center gap-1 font-black"><SVGs.Magic className="w-3.5 h-3.5 font-black"/> {t.itemMagic}</label><input type="number" inputMode="numeric" pattern="[0-9]*" value={editModalData.contMagicCount} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, contMagicCount: e.target.value})} className={`w-full h-[46px] p-3 rounded-xl border font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
                                                             <div className={`flex items-stretch p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800 font-black' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}><button type="button" onClick={() => setEditModalData({...editModalData, isSellingMagic: true})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${editModalData.isSellingMagic ? 'bg-rose-600 text-white shadow-md' : 'text-stone-600'}`}>{t.sell}</button><button type="button" onClick={() => setEditModalData({...editModalData, isSellingMagic: false})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!editModalData.isSellingMagic ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-600'}`}>{t.storeShort}</button></div>
                                                         </div>
                                                         {editModalData.isSellingMagic && (
                                                             <div className="space-y-1.5 animate-in slide-in-from-top-1 font-black">
                                                                 <label className="text-[10px] font-black uppercase opacity-50 text-rose-500">ระบุราคาขายหินแดง (ชิ้นละ)</label>
-                                                                <input type="number" value={editModalData.customMagicPrice} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, customMagicPrice: e.target.value})} className={`w-full h-[46px] p-4 rounded-xl border border-rose-500/30 font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 text-rose-400' : 'bg-rose-50 text-rose-600 shadow-inner'}`} />
+                                                                <input type="number" inputMode="decimal" pattern="[0-9]*" value={editModalData.customMagicPrice} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, customMagicPrice: e.target.value})} className={`w-full h-[46px] p-4 rounded-xl border border-rose-500/30 font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 text-rose-400' : 'bg-rose-50 text-rose-600 shadow-inner'}`} />
                                                             </div>
                                                         )}
                                                     </React.Fragment>
@@ -1162,6 +1346,7 @@
                                                         <input type="text" value={cost.name} onChange={e => { const nc = [...editModalData.otherCosts]; nc[idx].name = e.target.value; setEditModalData({...editModalData, otherCosts: nc}); }} placeholder="ชื่อรายการ" className={`flex-[2] h-[46px] border rounded-lg p-2.5 text-xs outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-[#faf9f6] border-stone-300 shadow-inner'}`} />
                                                         <input 
                                                             type="number" 
+                                                            inputMode="decimal" pattern="[0-9]*"
                                                             value={cost.amount} 
                                                             onFocus={(e) => e.target.select()} 
                                                             onChange={e => { 
