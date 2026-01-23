@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 1. Lock Zoom: Added maximum-scale=1.0 and user-scalable=no -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OGH TRACKER - SDekza RO</title>
     
     <!-- App Icon -->
@@ -38,6 +39,8 @@
             padding: 0;
             transition: background-color 0.5s ease, color 0.5s ease;
             line-height: 1.5;
+            /* 1. Lock Zoom: Prevent double-tap zoom */
+            touch-action: manipulation;
         }
 
         .glass-card {
@@ -48,6 +51,15 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
+
+        /* Hide scrollbar for horizontal scrolling cards */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -237,6 +249,7 @@
             );
         }
 
+        // Main App Component
         function App() {
             const [lang, setLang] = useState('th');
             const [theme, setTheme] = useState('dark'); 
@@ -593,7 +606,7 @@
                                         <div className="space-y-4 pt-4 border-t border-stone-300 dark:border-slate-800 font-black">
                                             <div className="flex justify-between items-center font-black font-black font-black"><label className={`text-xs md:text-sm font-medium uppercase tracking-widest flex items-center gap-1 ${themeClasses.textDim} font-black font-black`}><Icon name="FileText" size={14}/> {t.notes}</label><button type="button" onClick={() => setFormData(p => ({...p, otherCosts: [...p.otherCosts, {name: "", amount: ""}]}))} className="text-[10px] md:text-[12px] font-black text-blue-500 hover:text-blue-600 transition-colors uppercase font-black font-black">+ {t.etc}</button></div>
                                             {formData.otherCosts.map((cost, idx) => (
-                                                <div key={idx} className="flex gap-2 font-medium font-medium font-black font-black"><input type="text" value={cost.name} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].name = e.target.value; setFormData(p => ({...p, otherCosts: nc})); }} placeholder="ชื่อรายการ" className={`flex-[2] border rounded-lg p-2.5 text-xs outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner font-black'}`} /><input type="number" value={cost.amount} onFocus={(e) => e.target.select()} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].amount = e.target.value; setFormData(p => ({...p, otherCosts: nc})); }} className={`flex-1 border rounded-lg p-2.5 text-xs outline-none text-right font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner font-black'}`} /><button type="button" onClick={() => setFormData(p => ({...p, otherCosts: p.otherCosts.filter((_, i) => i !== idx)}))} className="text-rose-500 hover:text-rose-400 font-black"><Icon name="MinusCircle" size={18} /></button></div>
+                                                <div key={idx} className="flex gap-2 font-medium font-medium font-black font-black"><input type="text" value={cost.name} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].name = e.target.value; setFormData(p => ({...p, otherCosts: nc})); }} placeholder="ชื่อรายการ" className={`flex-[2] border rounded-lg p-2.5 text-xs outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner font-black'}`} /><input type="number" value={cost.amount} onFocus={(e) => e.target.select()} onChange={e => { const nc = [...formData.otherCosts]; nc[idx].amount = e.target.value; setFormData(p => ({...p, otherCosts: nc})); }} className={`flex-1 border rounded-lg p-2.5 text-xs outline-none text-right font-black ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-[#faf9f6] border-stone-300 text-stone-900 shadow-inner font-black'}`} /><button type="button" onClick={() => setFormData(p => ({...p, otherCosts: p.otherCosts.filter((_, i) => i !== idx)}))} className="text-rose-500 hover:text-rose-400 font-black font-black"><Icon name="MinusCircle" size={18} /></button></div>
                                             ))}
                                             <textarea value={formData.notes} onChange={e => setFormData(p => ({...p, notes: e.target.value}))} placeholder="บันทึก..." className={`w-full border rounded-xl p-4 text-xs font-medium outline-none h-24 resize-none transition-all ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white focus:border-purple-500 font-black font-black' : 'bg-stone-50 border-stone-200 text-stone-900 focus:border-purple-400 shadow-inner font-black font-black'}`} />
                                         </div>
@@ -602,17 +615,19 @@
                                 </div>
                             ) : (
                                 <div className="space-y-6">
+                                    {/* ... PRICES ... */}
                                     <section className={`border p-5 md:p-6 rounded-[2rem] shadow-xl backdrop-blur-sm transition-all duration-300 ${themeClasses.card} ${priceValidationPulse ? 'border-rose-500 animate-bounce' : ''}`}>
                                         <h3 className={`text-xl font-black uppercase flex items-center gap-2 italic mb-5 ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'} font-black font-black`}><Icon name="TrendingUp" size={16} /> {t.prices}</h3>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 font-black">
-                                            {[
+                                            {/* ... Price inputs ... */}
+                                             {[
                                                 { key: 'purpleStonePrice', icon: <SVGs.Spell className="w-4 h-4"/>, label: t.itemSpell },
                                                 { key: 'contMagicPrice', icon: <SVGs.Magic className="w-4 h-4"/>, label: t.itemMagic },
                                                 { key: 'gumBoxPrice', icon: <SVGs.GumBox className="w-4 h-4"/>, label: t.itemGumBox },
                                                 { key: 'silvervineBoxPrice', icon: <SVGs.SilvervineBox className="w-4 h-4"/>, label: t.itemSilvervineBox }
                                             ].map(item => (
                                                 <div key={item.key} className={`p-4 rounded-2xl border flex flex-col gap-1.5 transition-colors ${theme === 'dark' ? 'bg-slate-950/50 border-slate-800 text-white' : 'bg-[#e9e6dc] border-stone-200 text-stone-900 shadow-sm'}`}>
-                                                    <span className={`text-[10px] md:text-[12px] font-medium uppercase flex items-center gap-2 ${themeClasses.textDim} font-black`}>{item.icon} {item.label}</span>
+                                                    <span className={`text-[10px] md:text-[12px] font-medium flex items-center gap-2 ${themeClasses.textDim}`}>{item.icon} {item.label}</span>
                                                     <div className="flex items-center gap-1 font-black">
                                                         <input type="number" value={globalPrices[item.key]} onFocus={(e) => e.target.select()} onChange={e => updatePrice(item.key, e.target.value)} className={`bg-transparent text-base md:text-lg font-medium outline-none w-full ${themeClasses.textMain} font-black font-black font-black`} placeholder="0" />
                                                         <span className={`text-[11px] font-medium ${themeClasses.textDim} font-black font-black`}>Z</span>
@@ -622,6 +637,7 @@
                                         </div>
                                     </section>
 
+                                    {/* GRID ROW: NET PROFIT / AVG REV / INVENTORY */}
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-black font-black font-black">
                                         
                                         {/* 1. NET PROFIT CARD */}
@@ -747,13 +763,11 @@
                                                             <button onClick={() => { setFilterMode('aogh'); setCurrentPage(1); }} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${filterMode === 'aogh' ? 'bg-rose-600 text-white shadow-md' : 'text-stone-500'}`}>AOGH</button>
                                                         </div>
                                                         <div className="relative flex-grow md:flex-grow-0 font-black font-black">
-                                                            <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40"/>
                                                             <input 
-                                                                type="text" 
-                                                                placeholder={t.searchPlaceholder}
+                                                                type="date" 
                                                                 value={searchDate}
                                                                 onChange={(e) => { setSearchDate(e.target.value); setCurrentPage(1); }}
-                                                                className={`w-full md:w-40 pl-9 pr-3 py-2 rounded-xl text-xs font-medium border outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' : 'bg-white border-stone-300 text-stone-900 focus:border-blue-400 shadow-sm'}`}
+                                                                className={`w-full md:w-auto pl-3 pr-3 py-1.5 rounded-xl text-xs font-medium border outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' : 'bg-white border-stone-300 text-stone-900 focus:border-blue-400 shadow-sm'}`}
                                                             />
                                                         </div>
                                                     </div>
@@ -839,12 +853,12 @@
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4 mt-auto font-black font-black">
                                                     {!isTimerActive || isTimerPaused ? (
-                                                        <button onClick={() => { setIsTimerActive(true); setIsTimerPaused(false); }} className="bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"><Icon name="Play" size={14} />เริ่ม</button>
+                                                        <button onClick={() => { setIsTimerActive(true); setIsTimerPaused(false); }} className="bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg font-black"><Icon name="Play" size={14} />เริ่ม</button>
                                                     ) : (
-                                                        <button onClick={() => setIsTimerPaused(true)} className="bg-amber-600 hover:bg-amber-500 text-white py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"><Icon name="Pause" size={14} />พัก</button>
+                                                        <button onClick={() => setIsTimerPaused(true)} className="bg-amber-600 hover:bg-amber-500 text-white py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg font-black"><Icon name="Pause" size={14} />พัก</button>
                                                     )}
-                                                    <button onClick={() => { setFormData(p => ({...p, minutesUsed: Math.ceil(timeInMs / 60000) || 1})); setIsTimerActive(false); setIsTimerPaused(true); setIsAdding(true); }} className={`py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-95 group shadow-lg ${theme === 'dark' ? 'bg-slate-800 hover:bg-rose-600 text-white font-black' : 'bg-stone-300 hover:bg-rose-600 hover:text-white text-stone-700 font-black'}`}><Icon name="Square" size={14} className="group-hover:text-white" />หยุด</button>
-                                                    <button onClick={() => { setTimeInMs(0); setIsTimerActive(false); setIsTimerPaused(true); }} className={`col-span-2 py-2 text-[10px] font-black uppercase transition-colors ${themeClasses.textDim} hover:text-rose-600`}>Reset Timer</button>
+                                                    <button onClick={() => { setFormData(p => ({...p, minutesUsed: Math.ceil(timeInMs / 60000) || 1})); setIsTimerActive(false); setIsTimerPaused(true); setIsAdding(true); }} className={`py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-95 group shadow-lg ${theme === 'dark' ? 'bg-slate-800 hover:bg-rose-600 text-white font-black' : 'bg-stone-300 hover:bg-rose-600 hover:text-white text-stone-700 font-black'}`}><Icon name="Square" size={14} className="group-hover:text-white font-black" />หยุด</button>
+                                                    <button onClick={() => { setTimeInMs(0); setIsTimerActive(false); setIsTimerPaused(true); }} className={`col-span-2 py-2 text-[10px] font-black uppercase transition-colors ${themeClasses.textDim} hover:text-rose-600 font-black`}>Reset Timer</button>
                                                 </div>
                                             </div>
                                         </aside>
@@ -857,7 +871,7 @@
                                 <div className="fixed inset-0 z-[900] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 font-black font-black" onClick={() => setShowSaleModal(false)}>
                                     <div className={`border w-full max-w-md p-8 md:p-10 rounded-[3rem] shadow-2xl relative transition-all ${theme === 'dark' ? 'bg-slate-900 border-slate-800 text-white font-black' : 'bg-white border-stone-300 font-black'}`} onClick={e => e.stopPropagation()}>
                                         <button onClick={() => setShowSaleModal(false)} className={`${themeClasses.textDim} absolute top-8 right-8 hover:text-rose-500 font-black`}><Icon name="X" size={24} /></button>
-                                        <h2 className="text-xl md:text-2xl font-black mb-8 text-emerald-500 italic uppercase flex items-center gap-2 font-black font-black">
+                                        <h2 className="text-xl md:text-2xl font-black mb-8 text-emerald-500 italic uppercase flex items-center gap-2 font-black">
                                             {saleItem === 'spell' ? <SVGs.Spell className="w-8 h-8 font-black"/> : <SVGs.Magic className="w-8 h-8 font-black"/>} 
                                             {t.sellPopup}
                                         </h2>
@@ -890,10 +904,10 @@
                                             <div className="grid grid-cols-1 gap-4 font-black">
                                                 <div className="flex gap-4 items-end">
                                                     <div className="flex-1 space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 flex items-center gap-1 font-black"><SVGs.Spell className="w-3.5 h-3.5 font-black"/> {t.itemSpell}</label><input type="number" value={editModalData.purpleStoneCount} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, purpleStoneCount: e.target.value})} className={`w-full p-3 rounded-xl border font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white font-black' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
-                                                    <div className={`flex p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800 font-black' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}><button type="button" onClick={() => setEditModalData({...editModalData, isSellingSpell: true})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${editModalData.isSellingSpell ? 'bg-rose-600 text-white shadow-md font-black' : 'text-stone-600'}`}>{t.sell}</button><button type="button" onClick={() => setEditModalData({...editModalData, isSellingSpell: false})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!editModalData.isSellingSpell ? 'bg-emerald-600 text-white shadow-md font-black' : 'text-stone-600'}`}>{t.storeShort}</button></div>
+                                                    <div className={`flex p-1 rounded-xl border w-32 shrink-0 h-[46px] ${theme === 'dark' ? 'bg-slate-950 border-slate-800 font-black' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}><button type="button" onClick={() => setEditModalData({...editModalData, isSellingSpell: true})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${editModalData.isSellingSpell ? 'bg-rose-600 text-white shadow-md font-black' : 'text-stone-600'}`}>{t.sell}</button><button type="button" onClick={() => setEditModalData({...editModalData, isSellingSpell: false})} className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${!editModalData.isSellingSpell ? 'bg-emerald-600 text-white shadow-md' : 'text-stone-600'}`}>{t.storeShort}</button></div>
                                                 </div>
                                                 {editModalData.isSellingSpell && (
-                                                    <div className="space-y-1.5 animate-in slide-in-from-top-1 font-black"><label className="text-[10px] font-black uppercase opacity-50 text-rose-500 font-black">ระบุราคาขายหินม่วง (ชิ้นละ)</label><input type="number" value={editModalData.customSpellPrice} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, customSpellPrice: e.target.value})} className={`w-full p-3 rounded-xl border border-rose-500/30 font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 text-rose-400 font-black' : 'bg-rose-50 text-rose-600 shadow-inner'}`} /></div>
+                                                    <div className="space-y-1.5 animate-in slide-in-from-top-1 font-black"><label className="text-[10px] font-black uppercase opacity-50 text-rose-500 font-black">ระบุราคาขายหินม่วง (ชิ้นละ)</label><input type="number" value={editModalData.customSpellPrice} onFocus={(e) => e.target.select()} onChange={e => setEditModalData({...editModalData, customSpellPrice: e.target.value})} className={`w-full p-3 rounded-xl border border-rose-500/30 font-bold outline-none ${theme === 'dark' ? 'bg-slate-950 text-rose-400' : 'bg-rose-50 text-rose-600 shadow-inner'}`} /></div>
                                                 )}
                                                 {editModalData.mode === 'aogh' && (
                                                     <React.Fragment>
@@ -906,7 +920,7 @@
                                                         )}
                                                     </React.Fragment>
                                                 )}
-                                                <div className="space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 font-black">{t.gum}</label><div className={`flex p-1 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 font-black' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}>{[0, 1, 2].map(n => (<button key={n} type="button" onClick={() => setEditModalData({...editModalData, gumUsed: n})} className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-all ${editModalData.gumUsed === n ? 'bg-blue-600 text-white shadow-md' : 'text-stone-500'}`}>{n}</button>))}</div></div>
+                                                <div className="space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 font-black">{t.gum}</label><div className={`flex p-1 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-[#e9e6dc] border-stone-300 shadow-inner'}`}>{[0, 1, 2].map(n => (<button key={n} type="button" onClick={() => setEditModalData({...editModalData, gumUsed: n})} className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-all ${editModalData.gumUsed === n ? 'bg-blue-600 text-white shadow-md' : 'text-stone-500'}`}>{n}</button>))}</div></div>
                                             </div>
                                             <div className="space-y-1.5 font-black"><label className="text-[10px] font-black uppercase opacity-50 font-black">{t.notes}</label><textarea value={editModalData.notes} onChange={e => setEditModalData({...editModalData, notes: e.target.value})} className={`w-full p-3 rounded-xl border font-medium text-xs h-24 outline-none ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-stone-50 border-stone-200 text-stone-900 shadow-inner'}`} /></div>
                                         </div>
@@ -916,7 +930,7 @@
                             )}
 
                             {showDeleteAllModal && (
-                                <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-black font-black" onClick={() => setShowDeleteAllModal(false)}>
+                                <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-black font-black font-black" onClick={() => setShowDeleteAllModal(false)}>
                                     <div className={`border w-full max-sm p-10 rounded-[3rem] shadow-2xl relative transition-all text-center ${theme === 'dark' ? 'bg-slate-900 border-slate-800 font-black' : 'bg-white border-stone-300 font-black'}`} onClick={e => e.stopPropagation()}>
                                         <div className="mx-auto w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500 mb-8 font-black"><Icon name="Trash2" size={40} /></div>
                                         <h3 className={`text-xl md:text-2xl font-black uppercase mb-5 ${themeClasses.textMain} font-black`}>{t.confirmDeleteAll}</h3>
@@ -928,6 +942,19 @@
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    )}
+                    {showManual && (
+                        <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300 font-black font-black font-black font-black font-black" onClick={() => setShowManual(false)}>
+                            <div className={`border w-full max-w-sm p-10 rounded-[3rem] shadow-2xl relative transition-all ${theme === 'dark' ? 'bg-slate-900 border-slate-800 text-white font-black' : 'bg-white border-stone-300 text-stone-900 font-black'}`} onClick={e => e.stopPropagation()}>
+                                <button onClick={() => setShowManual(false)} className={`${themeClasses.textDim} absolute top-8 right-8 hover:text-rose-600 font-black`}><Icon name="X" size={24} /></button>
+                                <h2 className="text-xl md:text-2xl font-black mb-8 text-purple-600 italic uppercase font-black font-black font-black font-black">{t.install} Guide</h2>
+                                <div className="space-y-8 text-sm text-stone-600 font-black font-black font-black font-black font-black font-black font-black">
+                                    <div className="space-y-3 font-medium font-black font-black font-black font-black font-black"><p className={`font-black uppercase text-[11px] tracking-widest ${themeClasses.textMain} font-black font-black`}>สำหรับ iOS (Safari)</p><p className={`p-5 rounded-2xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 font-black' : 'bg-white border-stone-300 shadow-sm font-black'} font-medium font-black`}>กดปุ่มแชร์ &gt; เลือก <span className="text-blue-600 font-black font-black">"เพิ่มไปยังหน้าจอโฮม"</span></p></div>
+                                    <div className="space-y-3 font-medium font-black font-black font-black font-black font-black"><p className={`font-black uppercase text-[11px] tracking-widest ${themeClasses.textMain} font-black font-black`}>สำหรับ Android (Chrome)</p><p className={`p-5 rounded-2xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 font-black' : 'bg-white border-stone-300 shadow-sm font-black'} font-medium font-black`}>กดปุ่มเมนู (จุดสามจุด) &gt; เลือก <span className="text-purple-600 font-black font-black">"ติดตั้งแอป"</span></p></div>
+                                </div>
+                                <button onClick={() => setShowManual(false)} className={`w-full mt-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white font-black' : 'bg-stone-300 hover:bg-stone-400 text-stone-700 font-black'}`}>Close</button>
+                            </div>
                         </div>
                     )}
                 </div>
