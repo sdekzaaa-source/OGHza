@@ -454,7 +454,7 @@
 
             // Handlers
             const enterOfflineMode = () => {
-                const savedName = localStorage.getItem('ogh_display_name') || 'Guest (Offline)';
+                const savedName = localStorage.getItem('ogh_display_name') || 'Guest';
                 const savedAvatar = localStorage.getItem('ogh_avatar') || null;
                 setUser({ uid: 'offline', displayName: savedName, photoURL: savedAvatar, isAnonymous: true, isOffline: true });
                 setDisplayName(savedName);
