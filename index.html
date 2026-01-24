@@ -338,7 +338,6 @@
             useEffect(() => {
                 const initialize = async () => {
                     if (!window.firebaseModules) {
-                        // รอจนกว่าโมดูลจะพร้อม
                         window.addEventListener('firebase-ready', () => initialize());
                         return;
                     }
@@ -347,21 +346,17 @@
                     
                     let firebaseConfig;
                     try {
-                        // ตรวจสอบว่ามี config จากสภาพแวดล้อมจำลองไหม
                         firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-                    } catch (e) {
-                        // ถ้าไม่มีให้ข้าม
-                    }
+                    } catch (e) {}
 
-                    // *** ถ้ายังไม่มี ให้ใช้ MANUAL_FIREBASE_CONFIG จากด้านบน ***
                     if (!firebaseConfig && MANUAL_FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY_HERE") {
                         firebaseConfig = MANUAL_FIREBASE_CONFIG;
                     }
 
                     if (!firebaseConfig) {
-                        console.warn("No Firebase Config found.");
+                        console.warn("No Firebase Config found. App will run in Offline/Limited mode.");
                         setIsLoading(false);
-                        return; // ไม่สามารถ init ได้
+                        return;
                     }
 
                     try {
@@ -370,7 +365,6 @@
                         db = getFirestore(app);
                         setFirebaseInitialized(true);
 
-                        // Authentication
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         }
@@ -382,7 +376,6 @@
                         });
                     } catch (err) {
                         console.error("Firebase init error:", err);
-                        alert("Firebase Init Error: " + err.message);
                         setIsLoading(false);
                     }
                 };
@@ -390,20 +383,25 @@
                 initialize();
             }, []);
 
-            // Data Fetching Logic (Only if user logged in)
+            // Data Fetching Logic
             useEffect(() => {
-                if (!user || !firebaseInitialized || !window.firebaseModules) return;
-                const { getFirestore, collection, onSnapshot, query, doc } = window.firebaseModules;
-                
-                // ใช้ db ที่ init แล้ว (ตัวแปร global auth/db อาจจะยังไม่ update ใน scope นี้ ถ้าไม่ได้ใช้ state)
-                // แต่เนื่องจากเราประกาศ let db ไว้นอก component และ init ใน useEffect แรก มันควรอัพเดท
-                // เพื่อความชัวร์ เรียก getFirestore() อีกทีก็ได้ หรือใช้ db ที่มี
-                
-                if (!db) return; 
+                // ถ้าเป็น User Offline ให้โหลดจาก LocalStorage
+                if (user?.isOffline) {
+                    const localRecords = JSON.parse(localStorage.getItem('ogh_records') || '[]');
+                    const localSales = JSON.parse(localStorage.getItem('ogh_sales') || '[]');
+                    const localPrices = JSON.parse(localStorage.getItem('ogh_prices') || JSON.stringify(globalPrices));
+                    setRecords(localRecords);
+                    setManualSales(localSales);
+                    setGlobalPrices(localPrices);
+                    return;
+                }
+
+                if (!user || !firebaseInitialized || !window.firebaseModules || !db) return;
+                const { collection, onSnapshot, doc } = window.firebaseModules;
 
                 const unsubRecords = onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'records'), (snap) => {
                     setRecords(snap.docs.map(d => ({ ...d.data(), id: d.id })));
-                }, (err) => console.error("Firestore Error:", err));
+                });
 
                 const unsubSales = onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'sales'), (snap) => {
                     setManualSales(snap.docs.map(d => ({ ...d.data(), id: d.id })));
@@ -417,37 +415,49 @@
             }, [user, firebaseInitialized]);
 
             // Handlers
-            const checkFirebase = () => {
-                if (!firebaseInitialized) {
-                    alert("⚠️ ยังไม่ได้ตั้งค่า Firebase!\n\nกรุณาแก้ไขโค้ดที่ตัวแปร 'MANUAL_FIREBASE_CONFIG' เพื่อใส่ค่าจาก Firebase Console ของคุณก่อนครับ");
-                    return false;
-                }
-                return true;
+            const enterOfflineMode = () => {
+                setUser({ uid: 'offline', displayName: 'Guest (Offline)', isAnonymous: true, isOffline: true, photoURL: null });
+                setIsGuestMode(true);
+                setIsLoading(false);
             };
 
             const handleLogin = async () => {
-                if (!checkFirebase()) return;
+                if (!firebaseInitialized) { alert("Firebase Config Missing!"); return; }
                 const { getAuth, signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
                 try {
-                    await signInWithPopup(auth, new GoogleAuthProvider());
+                    await signInWithPopup(getAuth(), new GoogleAuthProvider());
                 } catch (e) { 
-                    console.error("Login Error", e);
-                    alert("Login Failed: " + e.message + "\n(อย่าลืมเพิ่ม Domain ใน Firebase Authorized Domains)");
+                    alert("Login Failed: " + e.message);
                 }
             };
 
             const handleGuest = async () => {
-                if (!checkFirebase()) return;
+                if (!firebaseInitialized) {
+                     // ถ้าไม่มี Config ให้เข้า Offline Mode เลย
+                     enterOfflineMode();
+                     return;
+                }
                 const { getAuth, signInAnonymously } = window.firebaseModules;
                 try {
-                    await signInAnonymously(auth);
+                    // ใช้ getAuth() เพื่อให้แน่ใจว่าได้ Instance ที่ถูกต้อง
+                    await signInAnonymously(getAuth());
                 } catch (e) { 
-                    console.error("Guest Login Error", e); 
-                    alert("Guest Login Failed: " + e.message);
+                    console.error("Guest Login Error", e);
+                    // ถ้า Login ไม่ผ่าน (เช่น ไม่ได้เปิด Anonymous ใน Console) ให้เสนอ Offline Mode
+                    if(confirm("ไม่สามารถ Login แบบ Guest ได้ (อาจยังไม่ได้เปิดใช้งานใน Firebase Console)\n\nคุณต้องการเข้าใช้งานแบบ 'Offline Mode' แทนหรือไม่? (ข้อมูลจะบันทึกในเครื่องนี้เท่านั้น)")) {
+                        enterOfflineMode();
+                    }
                 }
             };
 
             const handleLogout = async () => {
+                if (user?.isOffline) {
+                    setUser(null);
+                    setIsGuestMode(false);
+                    setRecords([]);
+                    setManualSales([]);
+                    return;
+                }
                 if (!auth) return;
                 const { signOut } = window.firebaseModules;
                 await signOut(auth);
@@ -457,12 +467,7 @@
 
             const handleSaveInternal = async (e) => {
                 e.preventDefault();
-                if (!db || !user || !window.firebaseModules) return;
-                const { collection, addDoc, updateDoc, doc, setDoc } = window.firebaseModules;
                 
-                const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'prices');
-                await setDoc(configRef, globalPrices, { merge: true });
-
                 const entryMode = formData.runMode || activeTab;
                 const [y, m, d] = formData.date.split('-');
                 const formattedDate = `${d}/${m}/${y}`;
@@ -475,11 +480,34 @@
                     prices: { ...globalPrices } 
                 };
 
-                if (editingId) {
-                     const recordRef = doc(db, 'artifacts', appId, 'users', user.uid, 'records', editingId);
-                     await updateDoc(recordRef, entry);
+                if (user?.isOffline) {
+                    // Save to LocalStorage
+                    localStorage.setItem('ogh_prices', JSON.stringify(globalPrices));
+                    
+                    if (editingId) {
+                        const updatedRecords = records.map(r => r.id === editingId ? { ...entry, id: editingId } : r);
+                        setRecords(updatedRecords);
+                        localStorage.setItem('ogh_records', JSON.stringify(updatedRecords));
+                    } else {
+                        const newRecord = { ...entry, id: 'local_' + Date.now() };
+                        const newRecords = [...records, newRecord];
+                        setRecords(newRecords);
+                        localStorage.setItem('ogh_records', JSON.stringify(newRecords));
+                    }
                 } else {
-                     await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'records'), entry);
+                    // Save to Firebase
+                    if (!db || !user || !window.firebaseModules) return;
+                    const { collection, addDoc, updateDoc, doc, setDoc } = window.firebaseModules;
+                    
+                    const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'prices');
+                    await setDoc(configRef, globalPrices, { merge: true });
+
+                    if (editingId) {
+                         const recordRef = doc(db, 'artifacts', appId, 'users', user.uid, 'records', editingId);
+                         await updateDoc(recordRef, entry);
+                    } else {
+                         await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'records'), entry);
+                    }
                 }
 
                 setIsAdding(false); 
@@ -494,12 +522,28 @@
             };
 
             const handleDelete = async (id) => {
+                if (user?.isOffline) {
+                    const newRecords = records.filter(r => r.id !== id);
+                    setRecords(newRecords);
+                    localStorage.setItem('ogh_records', JSON.stringify(newRecords));
+                    return;
+                }
+
                 if (!db || !user || !window.firebaseModules) return;
                 const { deleteDoc, doc } = window.firebaseModules;
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'records', id));
             };
             
             const handleClearAllHistory = async () => {
+                if (user?.isOffline) {
+                    setRecords([]);
+                    setManualSales([]);
+                    localStorage.removeItem('ogh_records');
+                    localStorage.removeItem('ogh_sales');
+                    setShowDeleteAllModal(false);
+                    return;
+                }
+
                 if (!db || !user || !window.firebaseModules) return;
                 const { deleteDoc, doc } = window.firebaseModules;
                 const deletePromises = [
@@ -515,15 +559,23 @@
                 const p = Number(saleFormData.price);
                 if (isNaN(q) || q <= 0 || isNaN(p) || p < 0) return;
                 
-                if (!db || !user || !window.firebaseModules) return;
-                const { addDoc, collection } = window.firebaseModules;
-
-                await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'sales'), { 
+                const saleData = { 
                     item: saleItem, 
                     quantity: q, 
                     price: p, 
                     timestamp: Date.now() 
-                });
+                };
+
+                if (user?.isOffline) {
+                    const newSale = { ...saleData, id: 'sale_' + Date.now() };
+                    const newSales = [...manualSales, newSale];
+                    setManualSales(newSales);
+                    localStorage.setItem('ogh_sales', JSON.stringify(newSales));
+                } else {
+                    if (!db || !user || !window.firebaseModules) return;
+                    const { addDoc, collection } = window.firebaseModules;
+                    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'sales'), saleData);
+                }
 
                 setShowSaleModal(false);
                 setSaleFormData({ quantity: "", price: "" });
@@ -535,16 +587,26 @@
             };
 
             const submitEditModal = async () => {
-                 if (!db || !user || !window.firebaseModules) return;
-                 const { updateDoc, doc, setDoc } = window.firebaseModules;
-
-                 const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'prices');
-                 await setDoc(configRef, globalPrices, { merge: true });
-                
-                 const recordRef = doc(db, 'artifacts', appId, 'users', user.uid, 'records', editModalData.id);
                  const { id, revenue, profit, gumCost, silvervineCost, etcCost, totalCost, revenuePerMinute, stoneValue, timestamp, ...dataToSave } = editModalData;
                  
-                 await updateDoc(recordRef, dataToSave);
+                 if (user?.isOffline) {
+                     // Update LocalStorage
+                     const updatedRecords = records.map(r => r.id === id ? { ...r, ...dataToSave } : r);
+                     setRecords(updatedRecords);
+                     localStorage.setItem('ogh_records', JSON.stringify(updatedRecords));
+                     
+                     // Update prices as well
+                     localStorage.setItem('ogh_prices', JSON.stringify(globalPrices));
+                 } else {
+                     if (!db || !user || !window.firebaseModules) return;
+                     const { updateDoc, doc, setDoc } = window.firebaseModules;
+
+                     const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'prices');
+                     await setDoc(configRef, globalPrices, { merge: true });
+                    
+                     const recordRef = doc(db, 'artifacts', appId, 'users', user.uid, 'records', editModalData.id);
+                     await updateDoc(recordRef, dataToSave);
+                 }
                  setShowEditModal(false);
             };
 
@@ -774,7 +836,7 @@
                                                 {user && !isGuestMode ? `@${user.displayName}` : '@Guest'}
                                             </h4>
                                             <p className={`text-[10px] md:text-[12px] font-bold mt-1 opacity-60 ${themeClasses.textDim}`}>
-                                                {isGuestMode ? t.guestLogin : t.gmailLogin}
+                                                {isGuestMode ? (user.isOffline ? "Offline Mode" : t.guestLogin) : t.gmailLogin}
                                             </p>
                                         </div>
                                     </div>
