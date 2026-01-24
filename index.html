@@ -882,7 +882,8 @@
                             <header className={`border p-4 md:p-6 rounded-[2rem] backdrop-blur-md shadow-2xl flex flex-wrap justify-between items-center gap-4 ${themeClasses.card}`}>
                                 <div className="flex flex-row justify-between items-center gap-4 w-full">
                                     <div className="flex items-center gap-4">
-                                        <div onClick={() => setShowAvatarModal(true)} className="relative w-12 h-12 md:w-16 md:h-16 rounded-full bg-purple-600/20 border-2 border-purple-500/30 flex items-center justify-center overflow-hidden shadow-lg font-black cursor-pointer group hover:border-purple-400 transition-all">
+                                        {/* แก้ไข: เพิ่ม shrink-0 เพื่อป้องกันรูปเบี้ยวบนมือถือ */}
+                                        <div onClick={() => setShowAvatarModal(true)} className="relative shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full bg-purple-600/20 border-2 border-purple-500/30 flex items-center justify-center overflow-hidden shadow-lg font-black cursor-pointer group hover:border-purple-400 transition-all">
                                             {renderAvatar(displayAvatar, "w-full h-full")}
                                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <SVGs.Camera className="w-5 h-5 text-white" />
@@ -1272,7 +1273,8 @@
                                                         <div className="flex flex-col items-center gap-1 mb-10 opacity-70">
                                                             <div className={`flex items-center gap-3 text-xs font-bold uppercase tracking-[0.3em] ${theme === 'dark' ? 'text-slate-300' : 'text-stone-500'}`}>
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center border border-current">
+                                                                    {/* แก้ไข: เพิ่ม shrink-0 ที่นี่ด้วย */}
+                                                                    <div className="w-5 h-5 shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-current">
                                                                         {renderAvatar(displayAvatar, "w-full h-full")}
                                                                     </div>
                                                                     <span>@{displayName}</span>
