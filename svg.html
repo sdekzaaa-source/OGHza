@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Item Manager - GitHub Edition</title>
+    <title>Magic Item Manager - Local Edition</title>
     
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer.min.js"></script>
@@ -32,6 +32,42 @@
             color: white;
             overflow-x: hidden;
         }
+
+        /* --- LOGIN SCREEN STYLE --- */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #0b091a;
+            z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .login-box {
+            background: #1a1635;
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--accent-color);
+            text-align: center;
+            width: 300px;
+            box-shadow: 0 0 50px rgba(124, 92, 219, 0.2);
+        }
+        .login-title { font-size: 20px; margin-bottom: 20px; color: var(--accent-color); font-weight: bold; letter-spacing: 1px; }
+        .login-input {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; color: white; text-align: center; font-size: 16px;
+            box-sizing: border-box;
+        }
+        .login-input:focus { border-color: var(--accent-color); outline: none; }
+        .login-btn {
+            width: 100%; padding: 12px;
+            background: var(--accent-color); color: white; border: none;
+            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px;
+            transition: 0.3s;
+        }
+        .login-btn:hover { background: #6a4eb3; transform: translateY(-2px); }
+        .login-error { color: var(--danger-color); font-size: 12px; margin-top: 10px; min-height: 1.2em; }
+        
+        .blur-content { filter: blur(5px); pointer-events: none; }
 
         /* Sidebar Navigation */
         .sidebar {
@@ -349,7 +385,7 @@
             padding: 12px 25px;
             border-radius: 10px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            z-index: 1000;
+            z-index: 10000; /* Ensure on top of login */
             opacity: 0;
             pointer-events: none;
             transition: 0.3s;
@@ -384,281 +420,367 @@
 </head>
 <body>
 
-    <!-- Modals -->
-    <div id="modal-category" class="modal-overlay">
-        <div class="modal-content">
-            <h3 id="modal-cat-title">สร้างหมวดหมู่ใหม่</h3>
-            <div class="form-group">
-                <label id="lbl-cat-name">ชื่อหมวดหมู่</label>
-                <input type="text" id="cat-name-input" placeholder="...">
-            </div>
-            <div class="form-group">
-                <label id="lbl-cat-icon">ไอคอน (Emoji)</label>
-                <input type="text" id="cat-icon-input" placeholder="⚔️">
-            </div>
-            <div class="btn-row">
-                <button class="btn-action btn-copy-main" onclick="saveCategory()" id="btn-save-cat">บันทึก</button>
-                <button class="btn-action btn-flip" onclick="closeModal('modal-category')" id="btn-cancel-cat">ยกเลิก</button>
-            </div>
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <div class="login-title">🔒 LOCKED</div>
+            <input type="password" id="login-pass" class="login-input" placeholder="Enter Password" onkeypress="handleLoginEnter(event)">
+            <button class="login-btn" onclick="checkLogin()">LOGIN</button>
+            <div id="login-error" class="login-error"></div>
         </div>
     </div>
 
-    <!-- GitHub Config Modal -->
-    <div id="modal-github" class="modal-overlay">
-        <div class="modal-content">
-            <h3>ตั้งค่า GitHub Sync</h3>
-            <div style="font-size:12px; color: #fbbf24; margin-bottom:15px;">*Token จะถูกเก็บในเครื่องของคุณเท่านั้น (Local Storage)</div>
-            <div class="form-group">
-                <label>GitHub Username</label>
-                <input type="text" id="gh-user" value="sdekzaaa-source" placeholder="e.g. yourname">
-            </div>
-            <div class="form-group">
-                <label>Repository Name</label>
-                <input type="text" id="gh-repo" value="magic-items-db" placeholder="e.g. magic-items">
-            </div>
-            <div class="form-group">
-                <label>Personal Access Token (Repo scope)</label>
-                <!-- Pre-filled as requested -->
-                <input type="password" id="gh-token" value="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" placeholder="ghp_...">
-            </div>
-            <div class="form-group">
-                <label>Filename (Path)</label>
-                <input type="text" id="gh-path" value="magic-items-db.json">
-            </div>
-            <div class="btn-row">
-                <button class="btn-action btn-copy-main" onclick="syncToGitHub()">🚀 Push to GitHub</button>
-                <button class="btn-action btn-flip" onclick="closeModal('modal-github')">ยกเลิก</button>
-            </div>
-        </div>
-    </div>
+    <!-- Main App Container -->
+    <div id="app-container" class="blur-content">
 
-    <div id="modal-restore" class="modal-overlay">
-        <div class="modal-content">
-            <h3 id="modal-restore-title">กู้คืนข้อมูล</h3>
-            <p style="font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 15px;" id="restore-warn">คำเตือน: ข้อมูลจะถูกนำมารวมกับข้อมูลที่มีอยู่</p>
-            <div class="form-group">
-                <label id="lbl-restore-json">วางรหัส Backup JSON</label>
-                <textarea id="restore-input" style="height: 150px; font-family: monospace;" placeholder='{"categories": [...], "items": [...]}'></textarea>
-            </div>
-            <div class="btn-row">
-                <button class="btn-action btn-warning" onclick="processRestore()" id="btn-do-restore">กู้คืน</button>
-                <button class="btn-action btn-flip" onclick="closeModal('modal-restore')" id="btn-close-restore">ปิด</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2>ITEM DB</h2>
-            <div class="lang-toggle">
-                <button class="btn-lang active" id="lang-th" onclick="setLanguage('th')">TH</button>
-                <button class="btn-lang" id="lang-en" onclick="setLanguage('en')">EN</button>
-            </div>
-        </div>
-        <div class="menu-scroll">
-            <div class="menu-group">
-                <div class="menu-label">
-                    <span id="label-categories">หมวดหมู่</span>
-                    <span class="btn-add-cat" onclick="openModal('modal-category')" title="Add Category">⊕</span>
-                </div>
-                <div id="sidebar-categories"></div>
-            </div>
-
-            <div class="menu-group">
-                <div class="menu-label" id="label-manage">จัดการไอเทม</div>
-                <div class="menu-item" onclick="showSection('add-item', this)">
-                    <span>➕</span>
-                    <span class="label-text" id="menu-add-item">เพิ่มไอเทม</span>
-                </div>
-                <div class="menu-item" onclick="showSection('import-image', this)">
-                    <span>🖼️</span>
-                    <span class="label-text" id="menu-import">นำเข้าไอคอน/รูปภาพ</span>
-                </div>
-                <div class="menu-item" onclick="showSection('ai-gen', this)">
-                    <span>✨</span>
-                    <span class="label-text" id="menu-aigen">AI SVG Creator</span>
-                </div>
-                <div class="menu-item" onclick="showSection('trash-bin', this)">
-                    <span>🗑️</span>
-                    <span class="label-text" id="menu-trash">ถังขยะ</span>
-                </div>
-            </div>
-
-            <div class="menu-group">
-                <div class="menu-label" id="label-backup">ระบบสำรองข้อมูล</div>
-                <div class="menu-item" onclick="openGithubModal()">
-                    <span>☁️</span>
-                    <span class="label-text">Sync to GitHub</span>
-                </div>
-                <div class="menu-item" onclick="backupAll()">
-                    <span>💾</span>
-                    <span class="label-text" id="menu-backup">Backup</span>
-                </div>
-                <div class="menu-item" onclick="openModal('modal-restore')">
-                    <span>🔄</span>
-                    <span class="label-text" id="menu-restore">Restore</span>
-                </div>
-            </div>
-        </div>
-        <!-- Version Footer -->
-        <div class="sidebar-footer">
-            v1.0.1 (GitHub Sync)
-        </div>
-    </div>
-
-    <!-- Main -->
-    <div class="main-content">
-        <div id="section-category-view" class="content-section">
-            <div class="section-title"><h1 id="view-title">รายการไอเทม</h1></div>
-            <div class="item-grid" id="items-display-grid"></div>
-        </div>
-
-        <div id="section-add-item" class="hidden content-section">
-            <div class="section-title"><h1 id="title-add-new">เพิ่มไอเทมใหม่</h1></div>
-            <div style="max-width: 600px; background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px;">
+        <!-- Modals -->
+        <div id="modal-category" class="modal-overlay">
+            <div class="modal-content">
+                <h3 id="modal-cat-title">สร้างหมวดหมู่ใหม่</h3>
                 <div class="form-group">
-                    <label id="lbl-item-name">ชื่อไอเทม</label>
-                    <input type="text" id="new-item-name" placeholder="...">
+                    <label id="lbl-cat-name">ชื่อหมวดหมู่</label>
+                    <input type="text" id="cat-name-input" placeholder="...">
                 </div>
-                <!-- Category Select Removed: Defaults to Import Code -->
                 <div class="form-group">
-                    <label id="lbl-item-svg">โค้ด SVG</label>
-                    <textarea id="new-item-svg" style="height: 150px; font-family: monospace;" placeholder="<svg>...</svg>"></textarea>
+                    <label id="lbl-cat-icon">ไอคอน (Emoji)</label>
+                    <input type="text" id="cat-icon-input" placeholder="⚔️">
                 </div>
-                <button class="btn-action btn-copy-main" onclick="createNewItem()" id="btn-save-item">✨ บันทึก</button>
+                <div class="btn-row">
+                    <button class="btn-action btn-copy-main" onclick="saveCategory()" id="btn-save-cat">บันทึก</button>
+                    <button class="btn-action btn-flip" onclick="closeModal('modal-category')" id="btn-cancel-cat">ยกเลิก</button>
+                </div>
             </div>
         </div>
 
-        <!-- Import Section -->
-        <div id="section-import-image" class="hidden content-section">
-            <div class="section-title"><h1 id="title-import">นำเข้าไอคอน/รูปภาพ</h1></div>
-            <div style="max-width: 800px; background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px;">
-                <div class="mode-toggle">
-                    <button class="mode-btn active" id="mode-embed" onclick="setImportMode('embed')">Embed (รักษาสี)</button>
-                    <button class="mode-btn" id="mode-trace" onclick="setImportMode('trace')">Trace (Vector)</button>
+        <!-- GitHub Config Modal -->
+        <div id="modal-github" class="modal-overlay">
+            <div class="modal-content">
+                <h3>ตั้งค่า GitHub Sync</h3>
+                <div style="font-size:12px; color: #fbbf24; margin-bottom:15px;">*Token จะถูกเก็บในเครื่องของคุณเท่านั้น (Local Storage)</div>
+                <div class="form-group">
+                    <label>GitHub Username</label>
+                    <input type="text" id="gh-user" value="sdekzaaa-source" placeholder="e.g. yourname">
+                </div>
+                <div class="form-group">
+                    <label>Repository Name</label>
+                    <input type="text" id="gh-repo" value="magic-items-db" placeholder="e.g. magic-items">
+                </div>
+                <div class="form-group">
+                    <label>Personal Access Token (Repo scope)</label>
+                    <!-- Token field cleared for security, user must input or load from local storage -->
+                    <input type="password" id="gh-token" placeholder="ghp_...">
+                </div>
+                <div class="form-group">
+                    <label>Filename (Path)</label>
+                    <input type="text" id="gh-path" value="magic-items-db.json">
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action btn-copy-main" onclick="syncToGitHub()">🚀 Push to GitHub</button>
+                    <button class="btn-action btn-flip" onclick="closeModal('modal-github')">ยกเลิก</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-restore" class="modal-overlay">
+            <div class="modal-content">
+                <h3 id="modal-restore-title">กู้คืนข้อมูล</h3>
+                <p style="font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 15px;" id="restore-warn">คำเตือน: ข้อมูลจะถูกนำมารวมกับข้อมูลที่มีอยู่ (Merge)</p>
+                <div class="form-group">
+                    <label id="lbl-restore-json">วางรหัส Backup JSON</label>
+                    <textarea id="restore-input" style="height: 150px; font-family: monospace;" placeholder='{"categories": [...], "items": [...]}'></textarea>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action btn-warning" onclick="processRestore()" id="btn-do-restore">กู้คืน</button>
+                    <button class="btn-action btn-flip" onclick="closeModal('modal-restore')" id="btn-close-restore">ปิด</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>ITEM DB</h2>
+                <div class="lang-toggle">
+                    <button class="btn-lang active" id="lang-th" onclick="setLanguage('th')">TH</button>
+                    <button class="btn-lang" id="lang-en" onclick="setLanguage('en')">EN</button>
+                </div>
+            </div>
+            <div class="menu-scroll">
+                <div class="menu-group">
+                    <div class="menu-label">
+                        <span id="label-categories">หมวดหมู่</span>
+                        <span class="btn-add-cat" onclick="openModal('modal-category')" title="Add Category">⊕</span>
+                    </div>
+                    <div id="sidebar-categories"></div>
                 </div>
 
-                <div class="import-dropzone" id="import-dropzone" onclick="document.getElementById('file-input').click()" 
-                     ondragover="handleImportDragOver(event)" ondragleave="handleImportDragLeave(event)" ondrop="handleImportDrop(event)">
-                    <p id="dropzone-text">คลิก, ลากไฟล์รูปมาวาง หรือกด Ctrl+V ที่นี่</p>
-                    <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
+                <div class="menu-group">
+                    <div class="menu-label" id="label-manage">จัดการไอเทม</div>
+                    <div class="menu-item" onclick="showSection('add-item', this)">
+                        <span>➕</span>
+                        <span class="label-text" id="menu-add-item">เพิ่มไอเทม</span>
+                    </div>
+                    <div class="menu-item" onclick="showSection('import-image', this)">
+                        <span>🖼️</span>
+                        <span class="label-text" id="menu-import">นำเข้าไอคอน/รูปภาพ</span>
+                    </div>
+                    <div class="menu-item" onclick="showSection('ai-gen', this)">
+                        <span>✨</span>
+                        <span class="label-text" id="menu-aigen">AI SVG Creator</span>
+                    </div>
+                    <div class="menu-item" onclick="showSection('trash-bin', this)">
+                        <span>🗑️</span>
+                        <span class="label-text" id="menu-trash">ถังขยะ</span>
+                    </div>
                 </div>
 
-                <div id="import-preview-area" class="hidden">
-                    <div class="preview-container">
-                        <div class="preview-box">
-                            <label id="lbl-orig-preview">ต้นฉบับ</label>
-                            <div style="display: flex; align-items: center; justify-content: center; height: 180px;">
-                                <img id="img-preview" src="">
+                <div class="menu-group">
+                    <div class="menu-label" id="label-backup">ระบบสำรองข้อมูล</div>
+                    <div class="menu-item" onclick="openGithubModal()">
+                        <span>☁️</span>
+                        <span class="label-text" id="menu-github">Sync to GitHub</span>
+                    </div>
+                    <div class="menu-item" onclick="backupAll()">
+                        <span>💾</span>
+                        <span class="label-text" id="menu-backup">Backup</span>
+                    </div>
+                    <div class="menu-item" onclick="openModal('modal-restore')">
+                        <span>🔄</span>
+                        <span class="label-text" id="menu-restore">Restore</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Version Footer -->
+            <div class="sidebar-footer">
+                v1.0.3 (Secure Fix)
+            </div>
+        </div>
+
+        <!-- Main -->
+        <div class="main-content">
+            <div id="section-category-view" class="content-section">
+                <div class="section-title"><h1 id="view-title">รายการไอเทม</h1></div>
+                <div class="item-grid" id="items-display-grid"></div>
+            </div>
+
+            <div id="section-add-item" class="hidden content-section">
+                <div class="section-title"><h1 id="title-add-new">เพิ่มไอเทมใหม่</h1></div>
+                <div style="max-width: 600px; background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px;">
+                    <div class="form-group">
+                        <label id="lbl-item-name">ชื่อไอเทม</label>
+                        <input type="text" id="new-item-name" placeholder="...">
+                    </div>
+                    <!-- Category Select Removed: Defaults to Import Code -->
+                    <div class="form-group">
+                        <label id="lbl-item-svg">โค้ด SVG</label>
+                        <textarea id="new-item-svg" style="height: 150px; font-family: monospace;" placeholder="<svg>...</svg>"></textarea>
+                    </div>
+                    <button class="btn-action btn-copy-main" onclick="createNewItem()" id="btn-save-item">✨ บันทึก</button>
+                </div>
+            </div>
+
+            <!-- Import Section -->
+            <div id="section-import-image" class="hidden content-section">
+                <div class="section-title"><h1 id="title-import">นำเข้าไอคอน/รูปภาพ</h1></div>
+                <div style="max-width: 800px; background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px;">
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" id="mode-embed" onclick="setImportMode('embed')">Embed (รักษาสี)</button>
+                        <button class="mode-btn" id="mode-trace" onclick="setImportMode('trace')">Trace (Vector)</button>
+                    </div>
+
+                    <div class="import-dropzone" id="import-dropzone" onclick="document.getElementById('file-input').click()" 
+                         ondragover="handleImportDragOver(event)" ondragleave="handleImportDragLeave(event)" ondrop="handleImportDrop(event)">
+                        <p id="dropzone-text">คลิก, ลากไฟล์รูปมาวาง หรือกด Ctrl+V ที่นี่</p>
+                        <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div id="import-preview-area" class="hidden">
+                        <div class="preview-container">
+                            <div class="preview-box">
+                                <label id="lbl-orig-preview">ต้นฉบับ</label>
+                                <div style="display: flex; align-items: center; justify-content: center; height: 180px;">
+                                    <img id="img-preview" src="">
+                                </div>
+                            </div>
+                            <div class="preview-box">
+                                <label id="lbl-gen-preview">ผลลัพธ์ SVG</label>
+                                <div id="svg-preview-cont" style="display: flex; align-items: center; justify-content: center; height: 180px;"></div>
                             </div>
                         </div>
-                        <div class="preview-box">
-                            <label id="lbl-gen-preview">ผลลัพธ์ SVG</label>
-                            <div id="svg-preview-cont" style="display: flex; align-items: center; justify-content: center; height: 180px;"></div>
+
+                        <div class="import-controls">
+                            <button class="btn-action btn-rbg" onclick="removeBackgroundSimple()" id="btn-remove-bg">✂️ ลบพื้นหลัง (สีขาว)</button>
+                            <button class="btn-action btn-gen" onclick="generateSVG()" id="btn-generate">🔨 Generate SVG</button>
+                            <button class="btn-action btn-cancel-import" onclick="resetImport()" id="btn-cancel-import">❌ ยกเลิก</button>
+                        </div>
+
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div class="form-group">
+                                <label id="lbl-import-name">ชื่อไอเทม</label>
+                                <input type="text" id="import-item-name" placeholder="...">
+                            </div>
+                            <button class="btn-action btn-copy-main" onclick="saveImportedItem()" id="btn-save-imported">✅ บันทึก</button>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="import-controls">
-                        <button class="btn-action btn-rbg" onclick="removeBackgroundSimple()" id="btn-remove-bg">✂️ ลบพื้นหลัง (สีขาว)</button>
-                        <button class="btn-action btn-gen" onclick="generateSVG()" id="btn-generate">🔨 Generate SVG</button>
-                        <button class="btn-action btn-cancel-import" onclick="resetImport()" id="btn-cancel-import">❌ ยกเลิก</button>
-                    </div>
-
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <!-- AI Gen Section -->
+            <div id="section-ai-gen" class="hidden content-section">
+                <div class="section-title"><h1 id="title-aigen">AI SVG Creator</h1></div>
+                <div style="max-width: 800px; background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px;">
+                    <div class="ai-gen-box">
                         <div class="form-group">
-                            <label id="lbl-import-name">ชื่อไอเทม</label>
-                            <input type="text" id="import-item-name" placeholder="...">
+                            <label id="lbl-ai-prompt">คำสั่ง (Prompt)</label>
+                            <textarea id="ai-prompt-input" rows="3" placeholder="เช่น ดาบวิเศษสีฟ้าด้ามทอง, ยาขวดสีแดงมีฟอง..."></textarea>
                         </div>
-                        <button class="btn-action btn-copy-main" onclick="saveImportedItem()" id="btn-save-imported">✅ บันทึก</button>
+                        <div class="btn-row">
+                            <button class="btn-action btn-ai-gen" onclick="generateAiSvg()" id="btn-run-ai">✨ สร้างรูป SVG ด้วย AI</button>
+                            <button class="btn-action btn-cancel-ai" onclick="resetAiGen()" id="btn-cancel-ai">❌ ยกเลิก</button>
+                        </div>
+                        <div id="ai-loading" class="ai-loading-bar">
+                            <div class="ai-loading-progress"></div>
+                        </div>
+                    </div>
+
+                    <div id="ai-result-area" class="hidden">
+                        <div class="preview-box" style="margin-bottom: 20px;">
+                            <label>AI Result</label>
+                            <div id="ai-svg-output" style="display: flex; align-items: center; justify-content: center; height: 200px;"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="lbl-ai-item-name">ชื่อไอเทม</label>
+                            <input type="text" id="ai-item-name" placeholder="...">
+                        </div>
+                        <button class="btn-action btn-copy-main" onclick="saveAiItem()" id="btn-save-ai">✅ บันทึกลงคลัง</button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- AI Gen Section -->
-        <div id="section-ai-gen" class="hidden content-section">
-            <div class="section-title"><h1 id="title-aigen">AI SVG Creator</h1></div>
-            <div style="max-width: 800px; background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px;">
-                <div class="ai-gen-box">
-                    <div class="form-group">
-                        <label id="lbl-ai-prompt">คำสั่ง (Prompt)</label>
-                        <textarea id="ai-prompt-input" rows="3" placeholder="เช่น ดาบวิเศษสีฟ้าด้ามทอง, ยาขวดสีแดงมีฟอง..."></textarea>
-                    </div>
-                    <div class="btn-row">
-                        <button class="btn-action btn-ai-gen" onclick="generateAiSvg()" id="btn-run-ai">✨ สร้างรูป SVG ด้วย AI</button>
-                        <button class="btn-action btn-cancel-ai" onclick="resetAiGen()" id="btn-cancel-ai">❌ ยกเลิก</button>
-                    </div>
-                    <div id="ai-loading" class="ai-loading-bar">
-                        <div class="ai-loading-progress"></div>
-                    </div>
-                </div>
-
-                <div id="ai-result-area" class="hidden">
-                    <div class="preview-box" style="margin-bottom: 20px;">
-                        <label>AI Result</label>
-                        <div id="ai-svg-output" style="display: flex; align-items: center; justify-content: center; height: 200px;"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label id="lbl-ai-item-name">ชื่อไอเทม</label>
-                        <input type="text" id="ai-item-name" placeholder="...">
-                    </div>
-                    <button class="btn-action btn-copy-main" onclick="saveAiItem()" id="btn-save-ai">✅ บันทึกลงคลัง</button>
-                </div>
+            <div id="section-trash-bin" class="hidden content-section">
+                <div class="section-title"><h1 id="title-trash">ถังขยะ</h1></div>
+                <div class="item-grid" id="trash-display-grid"></div>
             </div>
-        </div>
-
-        <div id="section-trash-bin" class="hidden content-section">
-            <div class="section-title"><h1 id="title-trash">ถังขยะ</h1></div>
-            <div class="item-grid" id="trash-display-grid"></div>
         </div>
     </div>
 
     <div id="toast" class="msg-toast">สำเร็จ!</div>
 
     <script>
-        // API Key Pool
+        // --- 1. SECURITY & AUTH ---
+        // Password split into 3 parts for basic obfuscation
+        const _p1 = "sdek";
+        const _p2 = "zasvg";
+        const _p3 = "1234";
+        
+        const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 Days in ms
+
+        function checkLogin() {
+            const input = document.getElementById('login-pass').value;
+            if (!input) return;
+            
+            const correctPass = _p1 + _p2 + _p3;
+            
+            if (input === correctPass) {
+                localStorage.setItem('auth_token', Date.now().toString());
+                hideLogin();
+            } else {
+                document.getElementById('login-error').innerText = "รหัสผ่านไม่ถูกต้อง";
+                document.getElementById('login-pass').value = '';
+            }
+        }
+
+        function handleLoginEnter(e) { if(e.key === 'Enter') checkLogin(); }
+
+        function checkSession() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                const now = Date.now();
+                const sessionTime = parseInt(token);
+                if (now - sessionTime < SESSION_DURATION) {
+                    hideLogin();
+                } else {
+                    localStorage.removeItem('auth_token');
+                    showLogin();
+                }
+            } else {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-overlay').style.opacity = '1';
+            document.getElementById('login-overlay').style.pointerEvents = 'auto';
+            document.getElementById('app-container').classList.add('blur-content');
+        }
+
+        function hideLogin() {
+            document.getElementById('login-overlay').style.opacity = '0';
+            document.getElementById('login-overlay').style.pointerEvents = 'none';
+            document.getElementById('app-container').classList.remove('blur-content');
+        }
+
+        // --- 2. HELPERS (Declared first) ---
+        function normalizeSVG(svgString) {
+            if (!svgString) return '';
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svgString, "image/svg+xml");
+                const svg = doc.querySelector("svg");
+                if (!svg) return svgString;
+                if (!svg.hasAttribute("viewBox")) {
+                    const w = svg.getAttribute("width") || 100;
+                    const h = svg.getAttribute("height") || 100;
+                    svg.setAttribute("viewBox", `0 0 ${parseFloat(w)} ${parseFloat(h)}`);
+                }
+                svg.setAttribute("width", "100%");
+                svg.setAttribute("height", "100%");
+                svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+                svg.style.width = ""; svg.style.height = ""; svg.style.maxWidth = ""; svg.style.maxHeight = "";
+                return new XMLSerializer().serializeToString(svg);
+            } catch (e) { return svgString; }
+        }
+
+        function minifySVG(svg) {
+            if (!svg) return '';
+            let clean = svg.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ');
+            clean = clean.replace(/<!--[\s\S]*?-->/g, '');
+            clean = clean.replace(/(\d+\.\d{2,})/g, (match) => parseFloat(match).toFixed(1));
+            clean = clean.replace(/<\?xml.*?\?>/g, '');
+            clean = clean.replace(/<!DOCTYPE.*?>/g, '');
+            return clean.trim();
+        }
+
+        function copyToClipboard(text) { 
+            const el = document.createElement('textarea'); 
+            el.value = text; 
+            document.body.appendChild(el); 
+            el.select(); 
+            document.execCommand('copy'); 
+            document.body.removeChild(el); 
+        }
+
+        function toast(msg) { 
+            const t = document.getElementById('toast'); 
+            if(t) {
+                t.innerText = msg; 
+                t.classList.add('show'); 
+                setTimeout(() => t.classList.remove('show'), 2000);
+            }
+        }
+        
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- 3. App State ---
         const _pool = [
             { k1: "AIzaSyCGlXcUwyk5tHZ0cwcn", k2: "-98aw19R2XuiF_Y" },
             { k1: "AIzaSyBmYB-nlMaFNkPxI-BWRQ8k", k2: "n02wbE5ybB8" }
         ];
         let activeKeyIndex = 0;
-
-        const translations = {
-            th: {
-                categories: "หมวดหมู่", manage: "จัดการไอเทม", addItem: "เพิ่มไอเทม", trash: "ถังขยะ", backup: "Backup",
-                viewTitle: "รายการไอเทม", noItems: "ยังไม่มีไอเทม", trashEmpty: "ถังขยะว่างเปล่า", addTitle: "เพิ่มไอเทมใหม่",
-                restoreTitle: "กู้คืนข้อมูล", save: "บันทึก", cancel: "ยกเลิก", close: "ปิด", lblItemName: "ชื่อไอเทม",
-                lblItemSvg: "โค้ด SVG", lblCatName: "ชื่อหมวดหมู่", lblCatIcon: "ไอคอน (Emoji)", copy: "คัดลอก", restore: "กู้คืน",
-                delForever: "ลบถาวร", toastSuccess: "สำเร็จ!", toastCopy: "คัดลอก SVG แล้ว!", toastBackup: "Backup แล้ว!",
-                toastRestore: "กู้คืนข้อมูลสำเร็จ!", toastItemAdded: "เพิ่มไอเทมสำเร็จ!", toastCatAdded: "เพิ่มหมวดหมู่แล้ว!",
-                moveSuccess: "ย้ายหมวดหมู่แล้ว!", import: "นำเข้าไอคอน/รูปภาพ", dropzone: "คลิก, ลากไฟล์รูปมาวาง หรือกด Ctrl+V ที่นี่",
-                lblImportName: "ชื่อไอเทม", btnGen: "🔨 Generate SVG", btnRbg: "✂️ ลบพื้นหลัง (สีขาว)",
-                lblOrig: "ต้นฉบับ", lblGen: "ผลลัพธ์ SVG", toastGenerating: "กำลังประมวลผล...", toastRbgSuccess: "ลบพื้นหลังสำเร็จ!",
-                menuAiGen: "AI SVG Creator", titleAiGen: "AI SVG Creator", lblAiPrompt: "คำสั่ง (Prompt)", btnRunAi: "✨ สร้างรูป SVG ด้วย AI",
-                toastAiGenStart: "AI กำลังวาดรูปให้คุณ...", toastAiGenSuccess: "AI วาดเสร็จแล้ว!", backupBtn: "Backup (คัดลอกทั้งหมด)",
-                restoreBtn: "Restore ข้อมูล", btnCancelAi: "❌ ยกเลิก", fallbackTrace: "ImageTracer ไม่โหลด ใช้โหมด Pixel Art แทน",
-                btnEdit: "✏️", toastNameUpdated: "แก้ไขชื่อเรียบร้อย"
-            },
-            en: {
-                categories: "Categories", manage: "Manager", addItem: "Add Item", trash: "Trash", backup: "Backup",
-                viewTitle: "Item List", noItems: "No items", trashEmpty: "Empty", addTitle: "Add Item",
-                restoreTitle: "Restore", save: "Save", cancel: "Cancel", close: "Close", lblItemName: "Name",
-                lblItemSvg: "SVG Code", lblCatName: "Name", lblCatIcon: "Icon", copy: "Copy", restore: "Restore",
-                delForever: "Delete Forever", toastSuccess: "Success!", toastCopy: "SVG Copied!", toastBackup: "Backed up!",
-                toastRestore: "Restored!", toastItemAdded: "Added!", toastCatAdded: "Category added!",
-                moveSuccess: "Moved!", import: "Import Image", dropzone: "Click, Drop or Paste image",
-                lblImportName: "Name", btnGen: "🔨 Generate SVG", btnRbg: "✂️ Remove BG (Simple)",
-                lblOrig: "Original", lblGen: "Generated SVG", toastGenerating: "Processing...", toastRbgSuccess: "Background removed!",
-                menuAiGen: "AI SVG Creator", titleAiGen: "AI SVG Creator", lblAiPrompt: "Prompt", btnRunAi: "✨ Generate SVG with AI",
-                toastAiGenStart: "AI is drawing...", toastAiGenSuccess: "AI Finished!", backupBtn: "Backup All (Copy)",
-                restoreBtn: "Restore System", btnCancelAi: "❌ Cancel", fallbackTrace: "ImageTracer failed. Using Pixel Mode.",
-                btnEdit: "✏️", toastNameUpdated: "Name updated"
-            }
-        };
-
         let currentLang = 'th';
+        
         let categories = [
             { id: 'cat-ai-gen', name: 'AI Gen', icon: '✨' },
             { id: 'cat-import-code', name: 'Import Code', icon: '💻' },
@@ -676,169 +798,69 @@
         let originalImgData = '';
         let currentAiSvg = '';
 
-        function init() {
-            // Load Local Data
-            const stored = localStorage.getItem('magic_items_local');
-            if (stored) {
-                try {
-                    const data = JSON.parse(stored);
-                    if (data.categories) categories = data.categories;
-                    if (data.items) items = data.items;
-                    if (data.trash) trash = data.trash;
-                } catch(e) { console.error("Load error", e); }
+        const translations = {
+            th: {
+                categories: "หมวดหมู่", manage: "จัดการไอเทม", addItem: "เพิ่มไอเทม", trash: "ถังขยะ", backup: "Backup",
+                viewTitle: "รายการไอเทม", noItems: "ยังไม่มีไอเทม", trashEmpty: "ถังขยะว่างเปล่า", addTitle: "เพิ่มไอเทมใหม่",
+                restoreTitle: "กู้คืนข้อมูล", save: "บันทึก", cancel: "ยกเลิก", close: "ปิด", lblItemName: "ชื่อไอเทม",
+                lblItemSvg: "โค้ด SVG", lblCatName: "ชื่อหมวดหมู่", lblCatIcon: "ไอคอน (Emoji)", copy: "คัดลอก", restore: "กู้คืน",
+                delForever: "ลบถาวร", toastSuccess: "สำเร็จ!", toastCopy: "คัดลอก SVG แล้ว!", toastBackup: "Backup แล้ว!",
+                toastRestore: "กู้คืนข้อมูลสำเร็จ!", toastItemAdded: "เพิ่มไอเทมสำเร็จ!", toastCatAdded: "เพิ่มหมวดหมู่แล้ว!",
+                moveSuccess: "ย้ายหมวดหมู่แล้ว!", import: "นำเข้าไอคอน/รูปภาพ", dropzone: "คลิก, ลากไฟล์รูปมาวาง หรือกด Ctrl+V ที่นี่",
+                lblImportName: "ชื่อไอเทม", btnGen: "🔨 Generate SVG", btnRbg: "✂️ ลบพื้นหลัง (สีขาว)",
+                lblOrig: "ต้นฉบับ", lblGen: "ผลลัพธ์ SVG", toastGenerating: "กำลังประมวลผล...", toastRbgSuccess: "ลบพื้นหลังสำเร็จ!",
+                menuAiGen: "AI SVG Creator", titleAiGen: "AI SVG Creator", lblAiPrompt: "คำสั่ง (Prompt)", btnRunAi: "✨ สร้างรูป SVG ด้วย AI",
+                toastAiGenStart: "AI กำลังวาดรูปให้คุณ...", toastAiGenSuccess: "AI วาดเสร็จแล้ว!", backupBtn: "Backup (คัดลอกทั้งหมด)",
+                restoreBtn: "Restore ข้อมูล", btnCancelAi: "❌ ยกเลิก", fallbackTrace: "ImageTracer ไม่โหลด ใช้โหมด Pixel Art แทน",
+                btnEdit: "✏️", toastNameUpdated: "แก้ไขชื่อเรียบร้อย", menuGithub: "Sync to GitHub"
+            },
+            en: {
+                categories: "Categories", manage: "Manager", addItem: "Add Item", trash: "Trash", backup: "Backup",
+                viewTitle: "Item List", noItems: "No items", trashEmpty: "Empty", addTitle: "Add Item",
+                restoreTitle: "Restore", save: "Save", cancel: "Cancel", close: "Close", lblItemName: "Name",
+                lblItemSvg: "SVG Code", lblCatName: "Name", lblCatIcon: "Icon", copy: "Copy", restore: "Restore",
+                delForever: "Delete Forever", toastSuccess: "Success!", toastCopy: "SVG Copied!", toastBackup: "Backed up!",
+                toastRestore: "Restored!", toastItemAdded: "Added!", toastCatAdded: "Category added!",
+                moveSuccess: "Moved!", import: "Import Image", dropzone: "Click, Drop or Paste image",
+                lblImportName: "Name", btnGen: "🔨 Generate SVG", btnRbg: "✂️ Remove BG (Simple)",
+                lblOrig: "Original", lblGen: "Generated SVG", toastGenerating: "Processing...", toastRbgSuccess: "Background removed!",
+                menuAiGen: "AI SVG Creator", titleAiGen: "AI SVG Creator", lblAiPrompt: "Prompt", btnRunAi: "✨ Generate SVG with AI",
+                toastAiGenStart: "AI is drawing...", toastAiGenSuccess: "AI Finished!", backupBtn: "Backup All (Copy)",
+                restoreBtn: "Restore System", btnCancelAi: "❌ Cancel", fallbackTrace: "ImageTracer failed. Using Pixel Mode.",
+                btnEdit: "✏️", toastNameUpdated: "Name updated", menuGithub: "Sync to GitHub"
             }
+        };
 
-            applyLanguage();
-            renderSidebar();
-            renderItems();
-            setupPasteListener();
-        }
-
-        function saveToLocal() {
-            localStorage.setItem('magic_items_local', JSON.stringify({ categories, items, trash }));
-        }
-
-        async function fetchWithRetry(url, options, maxRetries = 5) {
-            let lastResponse;
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    lastResponse = await fetch(url, options);
-                    if (lastResponse.ok) return lastResponse;
-                    if (lastResponse.status === 429 || lastResponse.status === 403 || lastResponse.status === 400) return lastResponse;
-                    await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
-                } catch (e) {
-                    if (i === maxRetries - 1) throw e;
-                    await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
-                }
-            }
-            return lastResponse;
-        }
-
-        // --- AI SVG Generation ---
-        async function generateAiSvg(isRetry = false) {
-            const prompt = document.getElementById('ai-prompt-input').value;
-            if(!prompt) { toast("กรุณาใส่คำสั่ง"); return; }
-
-            const loader = document.getElementById('ai-loading');
-            loader.style.display = 'block';
-            if(!isRetry) toast(translations[currentLang].toastAiGenStart);
-
-            const currentKey = _pool[activeKeyIndex].k1 + _pool[activeKeyIndex].k2;
-            const systemPrompt = "You are an expert SVG artist. Create a clean, flat-style, game icon SVG code based on the user's prompt. Return ONLY the raw <svg> code. Minimize the code size: use integer coordinates where possible, remove comments, and use short hex codes. Do not use markdown blocks.";
-            
-            const payload = {
-                contents: [{ parts: [{ text: systemPrompt + "\nUser Prompt: " + prompt }] }]
+        // --- 4. Logic Functions (Declared before init) ---
+        function handleFileSelect(e) { if (e.target.files[0]) handleImageFile(e.target.files[0]); }
+        
+        function handleImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = (re) => {
+                originalImgData = re.target.result;
+                document.getElementById('img-preview').src = originalImgData;
+                document.getElementById('import-preview-area').classList.remove('hidden');
+                document.getElementById('svg-preview-cont').innerHTML = '';
+                currentGeneratedSvg = '';
             };
-
-            try {
-                let response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentKey}`, {
-                    method: 'POST',
-                    body: JSON.stringify(payload),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (response.status === 429 || response.status === 403) {
-                    if (activeKeyIndex < _pool.length - 1) {
-                        activeKeyIndex++;
-                        return generateAiSvg(true);
-                    } else throw new Error("API Quota Exceeded");
-                }
-
-                let result = await response.json();
-                let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if(text) {
-                    text = text.replace(/```xml/g, '').replace(/```svg/g, '').replace(/```/g, '');
-                    const start = text.indexOf('<svg');
-                    const end = text.lastIndexOf('</svg>') + 6;
-                    if(start !== -1 && end !== -1) {
-                        currentAiSvg = text.substring(start, end);
-                        currentAiSvg = minifySVG(currentAiSvg);
-                        document.getElementById('ai-svg-output').innerHTML = currentAiSvg;
-                        document.getElementById('ai-result-area').classList.remove('hidden');
-                        toast(translations[currentLang].toastAiGenSuccess);
-                    } else throw new Error("AI output invalid SVG");
-                } else throw new Error("No output from AI");
-
-            } catch(e) {
-                console.error(e);
-                toast("AI Error: " + e.message);
-            } finally {
-                loader.style.display = 'none';
-            }
+            reader.readAsDataURL(file);
         }
 
-        // --- GitHub Sync Logic ---
-        function openGithubModal() {
-            const config = localStorage.getItem('gh_config');
-            if (config) {
-                const c = JSON.parse(config);
-                document.getElementById('gh-user').value = c.user;
-                document.getElementById('gh-repo').value = c.repo;
-                document.getElementById('gh-token').value = c.token;
-                if(c.path) document.getElementById('gh-path').value = c.path;
-            }
-            openModal('modal-github');
+        function setupPasteListener() {
+            window.addEventListener('paste', (e) => {
+                if (document.getElementById('section-import-image').classList.contains('hidden')) return;
+                const clipItems = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let i of clipItems) if (i.type.indexOf('image') !== -1) { handleImageFile(i.getAsFile()); break; }
+            });
+        }
+        
+        function handleImportDragOver(e) { e.preventDefault(); document.getElementById('import-dropzone').classList.add('drag-active'); }
+        function handleImportDragLeave(e) { e.preventDefault(); document.getElementById('import-dropzone').classList.remove('drag-active'); }
+        function handleImportDrop(e) {
+            e.preventDefault(); document.getElementById('import-dropzone').classList.remove('drag-active');
+            if (e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]);
         }
 
-        async function syncToGitHub() {
-            const user = document.getElementById('gh-user').value;
-            const repo = document.getElementById('gh-repo').value;
-            const token = document.getElementById('gh-token').value;
-            const path = document.getElementById('gh-path').value || 'magic-items-db.json';
-
-            if(!user || !repo || !token) { toast("กรุณากรอกข้อมูลให้ครบ"); return; }
-
-            localStorage.setItem('gh_config', JSON.stringify({ user, repo, token, path }));
-            toast("กำลังเชื่อมต่อ GitHub...");
-
-            const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
-            const content = JSON.stringify({ categories, items: [...items, ...trash] }, null, 2);
-            // Safe UTF-8 to Base64
-            const contentBase64 = btoa(unescape(encodeURIComponent(content)));
-
-            try {
-                // 1. Get SHA
-                let sha = null;
-                const getRes = await fetch(apiUrl, {
-                    headers: { 'Authorization': `token ${token}` }
-                });
-                
-                if (getRes.ok) {
-                    const fileData = await getRes.json();
-                    sha = fileData.sha;
-                }
-
-                // 2. PUT
-                const putBody = {
-                    message: "Update db from Magic Item Manager",
-                    content: contentBase64,
-                    sha: sha
-                };
-
-                const putRes = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: { 
-                        'Authorization': `token ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(putBody)
-                });
-
-                if (putRes.ok) {
-                    toast("Sync สำเร็จ! ข้อมูลอยู่บน GitHub แล้ว");
-                    closeModal('modal-github');
-                } else {
-                    const err = await putRes.json();
-                    toast("Error: " + (err.message || "Upload Failed"));
-                }
-            } catch (e) {
-                console.error(e);
-                toast("Connection Error");
-            }
-        }
-
-        // --- Core ---
         function createNewItem() {
             const name = document.getElementById('new-item-name').value;
             const svg = document.getElementById('new-item-svg').value;
@@ -894,6 +916,7 @@
                 toast(translations[currentLang].toastMovedTrash); 
             }
         }
+
         function restoreFromTrash(id) { 
             const idx = trash.findIndex(i => i.id === id);
             if (idx !== -1) {
@@ -905,6 +928,7 @@
                 toast(translations[currentLang].toastRestore); 
             }
         }
+
         function permanentDelete(id) { 
             if(confirm("Delete Forever?")) {
                 const idx = trash.findIndex(i => i.id === id);
@@ -977,46 +1001,6 @@
             toast(translations[currentLang].toastRbgSuccess);
         }
 
-        function generateSVG() {
-            toast("Generating...");
-            if (importMode === 'embed') {
-                currentGeneratedSvg = normalizeSVG(`<svg width="200" height="200"><image href="${originalImgData}" width="100%" height="100%" /></svg>`);
-                document.getElementById('svg-preview-cont').innerHTML = currentGeneratedSvg;
-            } else {
-                if (typeof ImageTracer !== 'undefined') {
-                    ImageTracer.imageToSVG(originalImgData, function(svgstr) {
-                        currentGeneratedSvg = minifySVG(svgstr);
-                        document.getElementById('svg-preview-cont').innerHTML = currentGeneratedSvg;
-                        toast(translations[currentLang].toastSuccess);
-                    }, { ltres:1, qtres:1 });
-                } else {
-                    toast(translations[currentLang].fallbackTrace);
-                    pixelArtTrace(originalImgData);
-                }
-            }
-        }
-
-        // --- Helpers ---
-        function normalizeSVG(svgString) {
-            if (!svgString) return '';
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(svgString, "image/svg+xml");
-                const svg = doc.querySelector("svg");
-                if (!svg) return svgString;
-                if (!svg.hasAttribute("viewBox")) {
-                    const w = svg.getAttribute("width") || 100;
-                    const h = svg.getAttribute("height") || 100;
-                    svg.setAttribute("viewBox", `0 0 ${parseFloat(w)} ${parseFloat(h)}`);
-                }
-                svg.setAttribute("width", "100%"); svg.setAttribute("height", "100%"); svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-                svg.style.width = ""; svg.style.height = ""; svg.style.maxWidth = ""; svg.style.maxHeight = "";
-                return new XMLSerializer().serializeToString(svg);
-            } catch (e) { return svgString; }
-        }
-
-        function minifySVG(svg) { if (!svg) return ''; let clean = svg.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' '); clean = clean.replace(/<!--[\s\S]*?-->/g, ''); clean = clean.replace(/(\d+\.\d{2,})/g, (match) => parseFloat(match).toFixed(1)); clean = clean.replace(/<\?xml.*?\?>/g, '').replace(/<!DOCTYPE.*?>/g, ''); return clean.trim(); }
-
         function pixelArtTrace(imgSrc) {
             const img = new Image(); img.src = imgSrc;
             img.onload = () => {
@@ -1032,61 +1016,30 @@
             };
         }
 
-        function copyToClipboard(text) { const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); }
-        function toast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function setImportMode(mode) { importMode = mode; document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); document.getElementById(`mode-${mode}`).classList.add('active'); }
-        function flipItem(id) { const el = document.getElementById(`svg-cont-${id}`); if (el) el.classList.toggle('flipped'); }
-        function copySVG(id) { const el = document.getElementById(`svg-cont-${id}`); if (el) { copyToClipboard(el.innerHTML.trim()); toast(translations[currentLang].toastCopy); } }
-
-        function renderSidebar() {
-            const container = document.getElementById('sidebar-categories');
-            if(!container) return;
-            container.innerHTML = categories.map(cat => `
-                <div class="menu-item ${cat.id === currentCatId ? 'active' : ''}" 
-                     onclick="selectCategory('${cat.id}', this)"
-                     ondragover="handleDragOverCat(event)" ondragleave="handleDragLeaveCat(event)" ondrop="handleDropCat(event, '${cat.id}')">
-                    <span>${cat.icon}</span><span class="label-text">${cat.name}</span>
-                </div>
-            `).join('');
+        function generateSVG() {
+            toast("Generating...");
+            if (importMode === 'embed') {
+                currentGeneratedSvg = normalizeSVG(`<svg width="200" height="200"><image href="${originalImgData}" width="100%" height="100%" /></svg>`);
+                document.getElementById('svg-preview-cont').innerHTML = currentGeneratedSvg;
+            } else {
+                if (typeof ImageTracer !== 'undefined') {
+                    const options = { ltres:1, qtres:1, scale:1, strokewidth:0, viewbox:true };
+                    try {
+                        ImageTracer.imageToSVG(originalImgData, function(svgstr) {
+                            currentGeneratedSvg = minifySVG(svgstr);
+                            document.getElementById('svg-preview-cont').innerHTML = currentGeneratedSvg;
+                            toast(translations[currentLang].toastSuccess);
+                        }, options);
+                    } catch(e) {
+                        console.warn("Trace failed, using fallback");
+                        pixelArtTrace(originalImgData);
+                    }
+                } else {
+                    toast(translations[currentLang].fallbackTrace);
+                    pixelArtTrace(originalImgData);
+                }
+            }
         }
-
-        function renderItems() {
-            const grid = document.getElementById('items-display-grid');
-            if(!grid) return;
-            const filtered = items.filter(i => i.catId === currentCatId);
-            if (filtered.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.3; padding: 40px;">${translations[currentLang].noItems}</div>`; return; }
-            grid.innerHTML = filtered.map(item => `
-                <div class="item-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" ondragend="handleDragEnd(event)">
-                    <h3>${item.name}</h3><div class="svg-display" id="svg-cont-${item.id}">${item.svg}</div>
-                    <div class="btn-row">
-                        <button class="btn-action btn-copy-main" onclick="copySVG('${item.id}')">${translations[currentLang].copy}</button>
-                        <button class="btn-action btn-flip" onclick="flipItem('${item.id}')">↔️</button>
-                        <button class="btn-action btn-edit" onclick="editItemName('${item.id}')" title="${translations[currentLang].btnEdit}">✏️</button>
-                        <button class="btn-action btn-delete" onclick="moveToTrash('${item.id}')">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderTrash() {
-            const grid = document.getElementById('trash-display-grid');
-            if(!grid) return;
-            if (trash.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.3; padding: 40px;">${translations[currentLang].trashEmpty}</div>`; return; }
-            grid.innerHTML = trash.map(item => `
-                <div class="item-card">
-                    <h3>${item.name}</h3><div class="svg-display">${item.svg}</div>
-                    <div class="btn-row">
-                        <button class="btn-action btn-restore" onclick="restoreFromTrash('${item.id}')">${translations[currentLang].restore}</button>
-                        <button class="btn-action btn-permanent" onclick="permanentDelete('${item.id}')">${translations[currentLang].delForever}</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function selectCategory(id, el) { currentCatId = id; showSection('category-view', el); const cat = categories.find(c => c.id === id); document.getElementById('view-title').innerText = cat ? `${cat.icon} ${cat.name}` : translations[currentLang].viewTitle; renderItems(); }
-        function showSection(name, menuItem) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(`section-${name}`).classList.remove('hidden'); if (menuItem) { document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active')); menuItem.classList.add('active'); } if(name === 'trash-bin') renderTrash(); }
 
         function handleDragStart(e, id) { draggedItemId = id; e.target.classList.add('dragging'); }
         function handleDragEnd(e) { e.target.classList.remove('dragging'); draggedItemId = null; }
@@ -1100,19 +1053,154 @@
             }
         }
 
-        function handleFileSelect(e) { if (e.target.files[0]) handleImageFile(e.target.files[0]); }
-        function handleImportDragOver(e) { e.preventDefault(); document.getElementById('import-dropzone').classList.add('drag-active'); }
-        function handleImportDragLeave(e) { e.preventDefault(); document.getElementById('import-dropzone').classList.remove('drag-active'); }
-        function handleImportDrop(e) {
-            e.preventDefault(); document.getElementById('import-dropzone').classList.remove('drag-active');
-            if (e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]);
+        // --- GitHub Sync Logic ---
+        function openGithubModal() {
+            const config = localStorage.getItem('gh_config');
+            if (config) {
+                const c = JSON.parse(config);
+                document.getElementById('gh-user').value = c.user;
+                document.getElementById('gh-repo').value = c.repo;
+                if(c.path) document.getElementById('gh-path').value = c.path;
+            }
+            openModal('modal-github');
         }
-        function handleImageFile(file) {
-            const reader = new FileReader();
-            reader.onload = (re) => { originalImgData = re.target.result; document.getElementById('img-preview').src = originalImgData; document.getElementById('import-preview-area').classList.remove('hidden'); };
-            reader.readAsDataURL(file);
+
+        async function syncToGitHub() {
+            const user = document.getElementById('gh-user').value;
+            const repo = document.getElementById('gh-repo').value;
+            const token = document.getElementById('gh-token').value;
+            const path = document.getElementById('gh-path').value || 'magic-items-db.json';
+
+            if(!user || !repo || !token) { toast("กรุณากรอกข้อมูลให้ครบ"); return; }
+
+            localStorage.setItem('gh_config', JSON.stringify({ user, repo, path })); // Don't save token to localStorage for safety or save if user wants convenience
+            
+            // For convenience we save token in memory/session but here we re-save to local
+            localStorage.setItem('gh_config', JSON.stringify({ user, repo, token, path }));
+
+            toast("กำลังเชื่อมต่อ GitHub...");
+
+            const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+            const content = JSON.stringify({ categories, items: [...items, ...trash] }, null, 2);
+            // Safe UTF-8 to Base64
+            const contentBase64 = btoa(unescape(encodeURIComponent(content)));
+
+            try {
+                // 1. Get SHA
+                let sha = null;
+                const getRes = await fetch(apiUrl, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                
+                if (getRes.status === 401) {
+                    alert("เกิดข้อผิดพลาด: Token ไม่ถูกต้อง หรือหมดอายุ (401 Bad Credentials)");
+                    return;
+                }
+
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
+                }
+
+                // 2. PUT
+                const putBody = {
+                    message: "Update db from Magic Item Manager",
+                    content: contentBase64
+                };
+                if (sha) putBody.sha = sha;
+
+                const putRes = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: { 
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(putBody)
+                });
+
+                if (putRes.ok) {
+                    toast("Sync สำเร็จ! ข้อมูลอยู่บน GitHub แล้ว");
+                    closeModal('modal-github');
+                } else {
+                    const err = await putRes.json();
+                    alert("Upload Failed: " + err.message);
+                }
+            } catch (e) {
+                console.error(e);
+                toast("Connection Error");
+            }
         }
-        function resetImport() { document.getElementById('import-preview-area').classList.add('hidden'); originalImgData = ''; currentGeneratedSvg = ''; }
+
+        function backupAll() { copyToClipboard(JSON.stringify({ categories, items })); toast(translations[currentLang].toastBackup); }
+        
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            let lastRes;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    lastRes = await fetch(url, options);
+                    if (lastRes.ok || [429, 403, 400].includes(lastRes.status)) return lastRes;
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+                } catch (e) { if (i === maxRetries - 1) throw e; await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000)); }
+            }
+            return lastRes;
+        }
+
+        async function generateAiSvg(isRetry = false) {
+            const prompt = document.getElementById('ai-prompt-input').value;
+            if(!prompt) { toast("กรุณาใส่คำสั่ง"); return; }
+
+            const loader = document.getElementById('ai-loading');
+            loader.style.display = 'block';
+            if(!isRetry) toast(translations[currentLang].toastAiGenStart);
+
+            const currentKey = _pool[activeKeyIndex].k1 + _pool[activeKeyIndex].k2;
+            const systemPrompt = "You are an expert SVG artist. Create a clean, flat-style, game icon SVG code based on the user's prompt. Return ONLY the raw <svg> code. Minimize the code size: use integer coordinates where possible, remove comments, and use short hex codes. Do not use markdown blocks.";
+            
+            const payload = {
+                contents: [{ parts: [{ text: systemPrompt + "\nUser Prompt: " + prompt }] }]
+            };
+
+            try {
+                let response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentKey}`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.status === 429 || response.status === 403) {
+                    if (activeKeyIndex < _pool.length - 1) {
+                        activeKeyIndex++;
+                        return generateAiSvg(true);
+                    } else throw new Error("API Quota Exceeded");
+                }
+
+                let result = await response.json();
+                let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if(text) {
+                    text = text.replace(/```xml/g, '').replace(/```svg/g, '').replace(/```/g, '');
+                    const start = text.indexOf('<svg');
+                    const end = text.lastIndexOf('</svg>') + 6;
+                    if(start !== -1 && end !== -1) {
+                        currentAiSvg = text.substring(start, end);
+                        currentAiSvg = minifySVG(currentAiSvg);
+                        document.getElementById('ai-svg-output').innerHTML = currentAiSvg;
+                        document.getElementById('ai-result-area').classList.remove('hidden');
+                        toast(translations[currentLang].toastAiGenSuccess);
+                    } else throw new Error("AI output invalid SVG");
+                } else throw new Error("No output from AI");
+
+            } catch(e) {
+                console.error(e);
+                toast("AI Error: " + e.message);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+        
+        function flipItem(id) { const el = document.getElementById(`svg-cont-${id}`); if (el) el.classList.toggle('flipped'); }
+        function copySVG(id) { const el = document.getElementById(`svg-cont-${id}`); if (el) { copyToClipboard(el.innerHTML.trim()); toast(translations[currentLang].toastCopy); } }
+        function setImportMode(mode) { importMode = mode; document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); document.getElementById(`mode-${mode}`).classList.add('active'); }
 
         function applyLanguage() {
             const t = translations[currentLang];
@@ -1128,9 +1216,105 @@
                 'btn-close-restore': t.close, 'dropzone-text': t.dropzone, 'lbl-import-name': t.lblItemName,
                 'btn-generate': t.btnGen, 'btn-remove-bg': t.btnRbg, 'btn-save-imported': "✅ " + t.save,
                 'menu-aigen': t.menuAiGen, 'title-aigen': t.titleAiGen, 'lbl-ai-prompt': t.lblAiPrompt,
-                'btn-run-ai': t.btnRunAi, 'lbl-ai-item-name': t.lblImportName, 'btn-save-ai': "✅ " + t.save, 'btn-cancel-ai': t.cancel
+                'btn-run-ai': t.btnRunAi, 'lbl-ai-item-name': t.lblItemName, 'btn-save-ai': "✅ " + t.save, 'btn-cancel-ai': t.cancel,
+                'menu-github': t.menuGithub
             };
             for (let id in ids) if (document.getElementById(id)) document.getElementById(id).innerText = ids[id];
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.btn-lang').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`lang-${lang}`).classList.add('active');
+            applyLanguage();
+            renderSidebar();
+            renderItems();
+        }
+
+        function renderSidebar() {
+            const container = document.getElementById('sidebar-categories');
+            container.innerHTML = categories.map(cat => `
+                <div class="menu-item ${cat.id === currentCatId ? 'active' : ''}" 
+                     onclick="selectCategory('${cat.id}', this)"
+                     ondragover="handleDragOverCat(event)" ondragleave="handleDragLeaveCat(event)" ondrop="handleDropCat(event, '${cat.id}')">
+                    <span>${cat.icon}</span><span class="label-text">${cat.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectCategory(id, el) {
+            currentCatId = id; showSection('category-view', el);
+            const cat = categories.find(c => c.id === id);
+            document.getElementById('view-title').innerText = cat ? `${cat.icon} ${cat.name}` : translations[currentLang].viewTitle;
+            renderItems();
+        }
+
+        function showSection(name, menuItem) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${name}`).classList.remove('hidden');
+            if (menuItem) {
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                menuItem.classList.add('active');
+            }
+            if(name === 'trash-bin') renderTrash();
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('items-display-grid');
+            const filtered = items.filter(i => i.catId === currentCatId);
+            const t = translations[currentLang];
+            if (filtered.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.3; padding: 40px;">${t.noItems}</div>`; return; }
+            grid.innerHTML = filtered.map(item => `
+                <div class="item-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" ondragend="handleDragEnd(event)">
+                    <h3>${item.name}</h3><div class="svg-display" id="svg-cont-${item.id}">${item.svg}</div>
+                    <div class="btn-row">
+                        <button class="btn-action btn-copy-main" onclick="copySVG('${item.id}')">${t.copy}</button>
+                        <button class="btn-action btn-flip" onclick="flipItem('${item.id}')">↔️</button>
+                        <button class="btn-action btn-edit" onclick="editItemName('${item.id}')" title="${t.btnEdit}">✏️</button>
+                        <button class="btn-action btn-delete" onclick="moveToTrash('${item.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTrash() {
+            const grid = document.getElementById('trash-display-grid');
+            const t = translations[currentLang];
+            if (trash.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.3; padding: 40px;">${t.trashEmpty}</div>`; return; }
+            grid.innerHTML = trash.map(item => `
+                <div class="item-card">
+                    <h3>${item.name}</h3><div class="svg-display">${item.svg}</div>
+                    <div class="btn-row">
+                        <button class="btn-action btn-restore" onclick="restoreFromTrash('${item.id}')">${t.restore}</button>
+                        <button class="btn-action btn-permanent" onclick="permanentDelete('${item.id}')">${t.delForever}</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('magic_items_local', JSON.stringify({ categories, items, trash }));
+        }
+
+        function init() {
+            // Check Auth First
+            checkSession();
+
+            // Load Local Data
+            const stored = localStorage.getItem('magic_items_local');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    if (data.categories) categories = data.categories;
+                    if (data.items) items = data.items;
+                    if (data.trash) trash = data.trash;
+                } catch(e) { console.error("Load error", e); }
+            }
+
+            applyLanguage();
+            renderSidebar();
+            renderItems();
+            setupPasteListener();
         }
 
         window.onload = init;
