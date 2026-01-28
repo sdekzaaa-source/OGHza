@@ -30,6 +30,7 @@
             --border-color: #e5e5e5;
             
             --sidebar-width: 260px;
+            --header-h: 64px;
         }
 
         * { box-sizing: border-box; outline: none; }
@@ -94,10 +95,15 @@
         }
         .sidebar-header h2 { margin: 0; font-size: 18px; color: var(--text-main); font-weight: 500; letter-spacing: 1px; }
 
-        .lang-toggle { margin-top: 10px; display: flex; justify-content: center; gap: 5px; }
+        .header-controls {
+            display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px;
+        }
+        .version-tag { font-size: 10px; color: var(--text-muted); background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; }
+        
+        .lang-toggle { display: flex; gap: 4px; }
         .btn-lang {
             background: transparent; border: 1px solid #d1d5db; color: var(--text-muted);
-            padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s;
+            padding: 3px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; transition: 0.2s;
         }
         .btn-lang.active { background: var(--primary); color: white; border-color: var(--primary); }
 
@@ -119,6 +125,13 @@
         .menu-item.active { background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.03); color: var(--primary); font-weight: 500; }
         .menu-item.drag-over-cat { background: #e0f2fe; color: #0284c7; }
         .nav-icon { width: 24px; text-align: center; margin-right: 8px; display: inline-block; }
+        
+        .btn-del-cat {
+            opacity: 0; font-size: 14px; color: var(--text-muted); cursor: pointer; padding: 2px 6px; border-radius: 4px;
+            transition: 0.2s;
+        }
+        .menu-item:hover .btn-del-cat { opacity: 1; }
+        .btn-del-cat:hover { background: #fee2e2; color: var(--danger); }
 
         .sidebar-footer { padding: 15px; background: rgba(0,0,0,0.02); display: flex; gap: 8px; border-top: 1px solid rgba(0,0,0,0.05); }
         .footer-btn {
@@ -300,7 +313,7 @@
             <div class="sidebar-header">
                 <h2>Magic Item Manager</h2>
                 <div class="header-controls">
-                    <span class="version-tag">v1.1</span>
+                    <span class="version-tag">v1.6</span>
                     <div class="lang-toggle">
                         <button class="btn-lang active" id="lang-th" onclick="setLanguage('th')">TH</button>
                         <button class="btn-lang" id="lang-en" onclick="setLanguage('en')">EN</button>
@@ -334,6 +347,9 @@
                     <div class="menu-label">SYSTEM</div>
                     <div class="menu-item" onclick="openGithubModal()">
                         <div class="menu-item-content"><span class="nav-icon">⚙️</span> <span>Config GitHub</span></div>
+                    </div>
+                    <div class="menu-item" onclick="openAiConfigModal()">
+                        <div class="menu-item-content"><span class="nav-icon">🔑</span> <span id="menu-ai-config">AI Config</span></div>
                     </div>
                     <div class="menu-item" onclick="backupAll()">
                         <div class="menu-item-content"><span class="nav-icon">💾</span> <span id="menu-backup">Backup JSON</span></div>
@@ -371,12 +387,12 @@
             <div id="section-import-unified" class="content-section hidden">
                 <div class="content-card">
                     <div class="tab-header">
-                        <button class="tab-btn active" onclick="switchImportTab('img', this)" id="tab-img-btn">รูปภาพ (Image)</button>
-                        <button class="tab-btn" onclick="switchImportTab('code', this)" id="tab-code-btn">โค้ด (SVG Code)</button>
+                        <button class="tab-btn active" onclick="switchImportTab('code', this)" id="tab-code-btn">โค้ด (SVG Code)</button>
+                        <button class="tab-btn" onclick="switchImportTab('img', this)" id="tab-img-btn">รูปภาพ (Image)</button>
                     </div>
 
                     <!-- Image Tab -->
-                    <div id="tab-img-content">
+                    <div id="tab-img-content" class="hidden">
                         <div style="display:flex; gap:10px; margin-bottom:20px;">
                             <button class="btn-outline active mode-btn" id="mode-embed" onclick="setImportMode('embed')">Embed (สีเดิม)</button>
                             <button class="btn-outline mode-btn" id="mode-trace" onclick="setImportMode('trace')">Vector (ลายเส้น)</button>
@@ -412,12 +428,15 @@
                                 <label>ชื่อไอเทม</label>
                                 <input type="text" id="import-img-name" class="form-control" placeholder="ตั้งชื่อไอเทม...">
                             </div>
-                            <button class="main-btn" onclick="saveImportedItem()">บันทึก (Save)</button>
+                            <div style="display:flex; gap:10px;">
+                                <button class="main-btn" style="flex:2;" onclick="saveImportedItem()">บันทึก (Save)</button>
+                                <button class="btn-outline" style="flex:1; color:var(--danger); border-color:var(--danger);" onclick="resetImport()">ยกเลิก</button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Code Tab -->
-                    <div id="tab-code-content" class="hidden">
+                    <!-- Code Tab (Default) -->
+                    <div id="tab-code-content">
                         <div class="form-group">
                             <label>ชื่อไอเทม</label>
                             <input type="text" id="code-item-name" class="form-control">
@@ -426,7 +445,10 @@
                             <label>SVG Code</label>
                             <textarea id="code-item-svg" class="form-control" style="height:200px; font-family:monospace;" placeholder="<svg>...</svg>"></textarea>
                         </div>
-                        <button class="main-btn" onclick="saveCodeItem()">บันทึก (Save)</button>
+                        <div style="display:flex; gap:10px;">
+                            <button class="main-btn" style="flex:2;" onclick="saveCodeItem()">บันทึก (Save)</button>
+                            <button class="btn-outline" style="flex:1; color:var(--danger); border-color:var(--danger);" onclick="clearCodeImport()">ยกเลิก</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -510,6 +532,21 @@
         </div>
     </div>
 
+    <div id="modal-ai-config" class="modal-overlay">
+        <div class="modal-content">
+            <h3>AI Configuration</h3>
+            <div style="font-size:12px; color:#666; margin-bottom:15px;">ใส่ API Key ของคุณเองเพื่อใช้งานได้ไม่จำกัด (หรือเว้นว่างเพื่อใช้ Default)</div>
+            <div class="form-group">
+                <label>Gemini API Key</label>
+                <input type="password" id="gemini-api-key" class="form-control" placeholder="AIzaSy...">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="main-btn" onclick="saveAiConfig()">Save</button>
+                <button class="btn-outline" onclick="closeModal('modal-ai-config')">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-restore" class="modal-overlay">
         <div class="modal-content">
             <h3>Restore JSON</h3>
@@ -527,7 +564,10 @@
         // --- 1. CONFIG & AUTH ---
         const _p1="sdek", _p2="zasvg", _p3="1234";
         const SESSION_MS = 7*24*60*60*1000;
-        const _pool = [{ k1: "AIzaSyCGlXcUwyk5tHZ0cwcn", k2: "-98aw19R2XuiF_Y" }, { k1: "AIzaSyBmYB-nlMaFNkPxI-BWRQ8k", k2: "n02wbE5ybB8" }];
+        const _pool = [
+            { k1: "AIzaSyDyyR4vfovqTD7WsuKg", k2: "jyNmS5HT3-GCtow" },
+            { k1: "AIzaSyBmYB-nlMaFNkPxI-BWRQ8k", k2: "n02wbE5ybB8" }
+        ];
         let activeKeyIndex = 0;
 
         // --- EMOJIS FOR CATEGORIES ---
@@ -712,13 +752,18 @@
             else document.getElementById(`tab-${tab}-btn`).classList.add('active');
         }
 
+        function clearCodeImport() {
+            document.getElementById('code-item-name').value = '';
+            document.getElementById('code-item-svg').value = '';
+        }
+
         function saveCodeItem() {
             const name = document.getElementById('code-item-name').value;
             const svg = document.getElementById('code-item-svg').value;
             if(!name || !svg) return;
             items.unshift({ id:'item-'+Date.now(), catId:'cat-imports', name, svg: normalizeSVG(svg) });
             saveLocal(); toast('Item Added');
-            document.getElementById('code-item-name').value = ''; document.getElementById('code-item-svg').value = '';
+            clearCodeImport();
         }
 
         function saveImportedItem() {
@@ -787,15 +832,34 @@
                 return new XMLSerializer().serializeToString(s);
             } catch(e){ return str; }
         }
+        
         function copySVG(id) { 
-            const el = document.getElementById(`svg-cont-${id}`); 
-            navigator.clipboard.writeText(el.innerHTML).then(()=>toast("Copied!"));
+            // ค้นหาไอเทมจาก ID เพื่อเอา SVG Code ต้นฉบับ
+            const item = items.find(i => i.id === id);
+            if(item && item.svg) {
+                copyToClipboard(item.svg);
+                toast("SVG Code Copied!");
+            } else {
+                toast("No SVG Code found");
+            }
         }
+
         function flipItem(id) { document.getElementById(`svg-cont-${id}`).classList.toggle('flipped'); }
         function toast(msg) { 
             const t=document.getElementById('toast'); t.innerText=msg; t.classList.add('show'); 
             setTimeout(()=>t.classList.remove('show'),2000); 
         }
+        
+        // --- 7.1 HELPER: copyToClipboard ---
+        function copyToClipboard(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        }
+
         function openModal(id) { document.getElementById(id).style.display='flex'; }
         function closeModal(id) { document.getElementById(id).style.display='none'; }
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.sidebar-overlay').classList.toggle('show'); }
@@ -831,6 +895,25 @@
         }
         function resetImport() { document.getElementById('import-preview-area').classList.add('hidden'); document.getElementById('import-img-name').value=''; originalImgData=''; currentGeneratedSvg=''; }
         
+        // --- AI CONFIG ---
+        function openAiConfigModal() {
+            const key = localStorage.getItem('gemini_api_key') || '';
+            document.getElementById('gemini-api-key').value = key;
+            openModal('modal-ai-config');
+        }
+
+        function saveAiConfig() {
+            const key = document.getElementById('gemini-api-key').value.trim();
+            if (key) {
+                localStorage.setItem('gemini_api_key', key);
+                toast("API Key Saved");
+            } else {
+                localStorage.removeItem('gemini_api_key');
+                toast("API Key Removed");
+            }
+            closeModal('modal-ai-config');
+        }
+
         async function generateAiSvg() {
             const name = document.getElementById('ai-prompt-name').value;
             const ref = document.getElementById('ai-prompt-ref').value;
@@ -842,18 +925,61 @@
             const prompt = `Item Name: ${name}. Style Ref: ${ref}. Details: ${detail}.`;
 
             document.getElementById('ai-loading').classList.remove('hidden');
-            const key = _pool[activeKeyIndex].k1 + _pool[activeKeyIndex].k2;
+            
+            // Check for User Key first, else use Pool
+            let key = localStorage.getItem('gemini_api_key');
+            if (!key) {
+                 key = _pool[activeKeyIndex].k1 + _pool[activeKeyIndex].k2;
+            }
+
             try {
+                // CHANGED MODEL to gemini-2.5-flash-preview-09-2025:generateContent to support public keys
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
-                    method:'POST', body:JSON.stringify({contents:[{parts:[{text:"Create SVG icon for game item. " + prompt + " Return raw SVG only. Minimize code."}]}]}), headers:{'Content-Type':'application/json'}
+                    method:'POST', 
+                    body:JSON.stringify({
+                        contents:[{parts:[{text:"Create SVG icon for game item. " + prompt + " Return raw SVG only. Minimize code."}]}],
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        ]
+                    }), 
+                    headers:{'Content-Type':'application/json'}
                 });
+                
+                if (!res.ok) {
+                    const errData = await res.json();
+                    // Rotation logic only if using Pool keys
+                    if(!localStorage.getItem('gemini_api_key') && res.status === 429 && activeKeyIndex < _pool.length -1) {
+                         activeKeyIndex++;
+                         generateAiSvg(); 
+                         return;
+                    }
+                    throw new Error(errData.error?.message || res.statusText);
+                }
+
                 const j = await res.json();
+                if (!j.candidates || !j.candidates[0].content) {
+                    throw new Error("AI Safety Block or No Response");
+                }
+
                 let txt = j.candidates[0].content.parts[0].text.replace(/```xml|```svg|```/g,'');
-                currentAiSvg = normalizeSVG(txt.substring(txt.indexOf('<svg'), txt.lastIndexOf('</svg>')+6));
+                const start = txt.indexOf('<svg'); 
+                const end = txt.lastIndexOf('</svg>')+6;
+                
+                if (start === -1 || end === -1) throw new Error("No SVG found in response");
+
+                currentAiSvg = normalizeSVG(txt.substring(start, end));
                 document.getElementById('ai-svg-output').innerHTML = currentAiSvg;
                 document.getElementById('ai-result-area').classList.remove('hidden');
                 document.getElementById('ai-item-name').value = name || "New Item";
-            } catch(e) { toast("AI Error"); } finally { document.getElementById('ai-loading').classList.add('hidden'); }
+            } catch(e) { 
+                console.error(e);
+                toast("AI Error: " + e.message); 
+            } finally { 
+                document.getElementById('ai-loading').classList.add('hidden'); 
+            }
         }
         
         function resetAiGen() { 
@@ -880,7 +1006,7 @@
         // --- 10. SYNC ---
         function openGithubModal() {
             const c = localStorage.getItem('gh_config');
-            if(c) {
+            if (c) {
                 const j = JSON.parse(c);
                 document.getElementById('gh-user').value=j.user; document.getElementById('gh-repo').value=j.repo;
                 document.getElementById('gh-token').value=j.token; document.getElementById('gh-path').value=j.path;
@@ -941,12 +1067,13 @@
         
         function applyLanguage() {
             const t = {
-                th: { manage:"จัดการ", backup:"สำรองข้อมูล", system:"ระบบ", restore:"กู้คืน", items:"รายการไอเทม" },
-                en: { manage:"Manage", backup:"Backup", system:"System", restore:"Restore", items:"Item List" }
+                th: { manage:"จัดการ", backup:"สำรองข้อมูล", system:"ระบบ", restore:"กู้คืน", items:"รายการไอเทม", menuAiConfig: "AI Config" },
+                en: { manage:"Manage", backup:"Backup", system:"System", restore:"Restore", items:"Item List", menuAiConfig: "AI Config" }
             };
             const lang = t[currentLang];
             document.getElementById('label-manage').innerText = lang.manage;
             document.getElementById('view-title').innerText = lang.items;
+            document.getElementById('menu-ai-config').innerText = lang.menuAiConfig;
         }
 
         function saveCategory() {
