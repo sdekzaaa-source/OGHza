@@ -3,38 +3,1343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OGHza</title>
+    <title>OGHza Tracker V2</title>
     
-    <!-- App Icon -->
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Libraries -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Add Prop-Types for Recharts -->
     <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
     <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, getDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        window.firebaseModules = {
-            initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken,
-            getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, getDoc, getDocs, writeBatch
-        };
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Kanit:wght@300;400;500;700;900&display=swap');
         
-        window.dispatchEvent(new Event('firebase-ready'));
-    </script>
+        :root {
+            --app-bg: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.95);
+        }
 
+        body { 
+            font-family: 'Inter', 'Kanit', sans-serif; 
+            background-color: var(--app-bg); 
+            color: #f1f5f9; 
+            overflow-x: hidden; 
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .glass-panel { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+        }
+
+        .view-content {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 120px) !important;
+        }
+
+        .nav-bar-padding {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+        }
+
+        .progress-bar { transition: width 0.5s ease-out; }
+
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { transform: opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.2s ease-in-out forwards; }
+
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        @keyframes huginFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .animate-hugin { animation: huginFloat 3s ease-in-out infinite; }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, limit } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- Global Constants ---
+        var APP_VERSION = "Ver.2.18.3 (Compact Layout)";
+        
+        var CHANGELOGS = [
+            { ver: "2.18.3", date: "Latest", desc: "จัดหน้า New Run ใหม่: รวม Time, Gum, Silvervine ไว้ในกรอบเดียว" },
+            { ver: "2.18.2", date: "Previous", desc: "แก้ไขรูป Gum, เปลี่ยนไอคอน Settings เป็นประแจ, แก้ปุ่มลบ History, ปรับหน้า Share เน้นรูปภาพ" },
+            { ver: "2.18.1", date: "Old", desc: "ปรับปรุง UI ใหม่ทั้งหมดให้มุมโค้งมนเท่ากัน (Unified Border Radius)" }
+        ];
+
+        var MANUAL_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAbWzr8o_OhkjGbEetBYq_nzYmVZ2fTf40",
+            authDomain: "rocogh-88a38.firebaseapp.com",
+            projectId: "rocogh-88a38",
+            storageBucket: "rocogh-88a38.firebasestorage.app",
+            messagingSenderId: "1025971309206",
+            appId: "1:1025971309206:web:d4f9e0ab6bb016dde590b7"
+        };
+
+        var INITIAL_STATS = { 
+            baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, 
+            jobClass: 'Novice', coins: 0, zeny: 0, isHighClass: false,
+            virtual_inventory: {} 
+        };
+
+        var DROP_TABLE = [
+            { id: 'elu', name: 'Elunium', rate: 0.4, min: 1, max: 2, icon: 'Elunium' },
+            { id: 'ori', name: 'Oridecon', rate: 0.4, min: 1, max: 2, icon: 'Oridecon' },
+            { id: 'card_wk', name: 'White Knight Card', rarity: 'Rare', rate: 0.05, min: 1, max: 1, icon: 'Card', rare: true },
+            { id: 'card_kk', name: 'Khalitzburg Knight Card', rarity: 'Rare', rate: 0.05, min: 1, max: 1, icon: 'Card', rare: true },
+            { id: 'card_ogh', name: 'Old Glast Heim Card', rarity: 'Legendary', rate: 0.001, min: 1, max: 1, icon: 'Card', rare: true, legendary: true }
+        ];
+
+        var ITEM_DETAILS = {
+            'spell': { name: 'Coagulated Spell', desc: 'ผลึกเวทมนตร์สีม่วงที่ควบแน่นเป็นก้อน ใช้สำหรับแลกเปลี่ยนอุปกรณ์ระดับสูงใน Glast Heim', type: 'Etc', rarity: 'Common' },
+            'magic': { name: 'Contaminated Magic', desc: 'พลังงานเวทมนตร์ที่ปนเปื้อนความมืด มีค่ามากสำหรับนักวิจัยเพื่อสร้างอุปกรณ์ในตำนาน', type: 'Etc', rarity: 'Uncommon' },
+            'elu': { name: 'Elunium', desc: 'แร่ธาตุหายากที่มีความแข็งแกร่งเป็นเลิศ ใช้สำหรับตีบวกอุปกรณ์ป้องกัน (Armor)', type: 'Ore', rarity: 'Common' },
+            'ori': { name: 'Oridecon', desc: 'แร่ธาตุที่เปี่ยมไปด้วยพลังทำลายล้าง ใช้สำหรับตีบวกอาวุธ (Weapon)', type: 'Ore', rarity: 'Common' },
+            'card_wk': { name: 'White Knight Card', desc: 'การ์ดระดับ Rare ของอัศวินขาว เพิ่มพลังโจมตีมอนสเตอร์ประเภทขนาดกลางและใหญ่ 20%', type: 'Card', rarity: 'Rare' },
+            'card_kk': { name: 'Khalitzburg Knight Card', desc: 'การ์ดระดับ Rare ของคาลิทซ์เบิร์ก ลดความเสียหายจากมอนสเตอร์ขนาดกลางและใหญ่ 25%', type: 'Card', rarity: 'Rare' },
+            'card_ogh': { name: 'Old Glast Heim Card', desc: 'การ์ดระดับตำนานที่พบได้ยากยิ่งในซากปรักหักพังของ Glast Heim มอบพลังมหาศาลแก่ผู้ครอบครอง', type: 'Card', rarity: 'Legendary' }
+        };
+
+        // --- Helper Functions ---
+        function formatMoney(n) { return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(n || 0); }
+        function formatFullMoney(n) { return new Intl.NumberFormat('th-TH').format(n || 0); }
+        function getExpReq(lv, type) { return Math.floor(100 * Math.pow(lv || 1, 1.5)); }
+
+        function handleNumberInput(e, field, setter) {
+            const val = e.target.value.replace(/[^0-9]/g, '');
+            setter(prev => ({ ...prev, [field]: val }));
+        }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try { document.execCommand('copy'); return true; } catch (err) { return false; } finally { document.body.removeChild(textArea); }
+        }
+
+        function simulateDrops() {
+            const drops = [];
+            DROP_TABLE.forEach(item => {
+                if (Math.random() <= item.rate) {
+                    const qty = Math.floor(Math.random() * (item.max - item.min + 1)) + item.min;
+                    drops.push({ ...item, qty });
+                }
+            });
+            return drops;
+        }
+
+        // --- SVGs ---
+        var SVGs = {
+            Hugin: ({className}) => (<svg viewBox="0 0 120 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M35,45 Q30,80 60,95 Q90,80 85,45" fill="#f5d0a9" stroke="#5a3a29" strokeWidth="2.5" /><path d="M30,60 Q25,65 32,70" fill="#f5d0a9" stroke="#5a3a29" strokeWidth="2" /><path d="M90,60 Q95,65 88,70" fill="#f5d0a9" stroke="#5a3a29" strokeWidth="2" /><path d="M25,50 C10,20 110,20 95,50 C100,30 90,10 60,10 C30,10 20,30 25,50" fill="#fbbf24" stroke="#92400e" strokeWidth="2.5" /><circle cx="50" cy="58" r="2.5" fill="#1e293b" /><circle cx="70" cy="58" r="2.5" fill="#1e293b" /><path d="M52,82 Q60,85 68,82" stroke="#5a3a29" strokeWidth="2" fill="none" strokeLinecap="round" /></svg>),
+            Spell: ({className}) => (
+                <svg viewBox="0 0 100 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="#4b3a8a"/>
+                    <polygon points="50,5 8,30 8,90 50,115 50,60" fill="#6a4eb3"/>
+                    <polygon points="50,5 92,30 92,90 50,115 50,60" fill="#8464d1"/>
+                    <polygon points="50,20 80,40 80,80 50,100 20,80 20,40" fill="#a68af0"/>
+                    <g stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.3">
+                        <line x1="50" y1="5" x2="50" y2="20"/>
+                        <line x1="8" y1="30" x2="20" y2="40"/>
+                        <line x1="92" y1="30" x2="80" y2="40"/>
+                        <line x1="8" y1="90" x2="20" y2="80"/>
+                        <line x1="92" y1="90" x2="80" y2="80"/>
+                        <line x1="50" y1="115" x2="50" y2="100"/>
+                    </g>
+                    <rect x="30" y="35" width="8" height="8" fill="white" opacity="0.6" rx="1"/>
+                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="none" stroke="#9d81e1" strokeWidth="2" strokeLinejoin="round"/>
+                </svg>
+            ),
+            Magic: ({className}) => (
+                <svg viewBox="0 0 100 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="#7a1a1a"/>
+                    <polygon points="50,5 8,30 8,90 50,115 50,60" fill="#a32929"/>
+                    <polygon points="50,5 92,30 92,90 50,115 50,60" fill="#c43333"/>
+                    <polygon points="50,20 80,40 80,80 50,100 20,80 20,40" fill="#ff5757"/>
+                    <g stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.3">
+                        <line x1="50" y1="5" x2="50" y2="20"/>
+                        <line x1="8" y1="30" x2="20" y2="40"/>
+                        <line x1="92" y1="30" x2="80" y2="40"/>
+                        <line x1="8" y1="90" x2="20" y2="80"/>
+                        <line x1="92" y1="90" x2="80" y2="80"/>
+                        <line x1="50" y1="115" x2="50" y2="100"/>
+                    </g>
+                    <rect x="30" y="35" width="8" height="8" fill="white" opacity="0.6" rx="1"/>
+                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="none" stroke="#ff7a7a" strokeWidth="2" strokeLinejoin="round"/>
+                </svg>
+            ),
+            Oridecon: ({className}) => (
+                <svg viewBox="0 0 300 400" className={className} xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="crystalBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#dbeafe"></stop>
+                            <stop offset="50%" stopColor="#60a5fa"></stop>
+                            <stop offset="100%" stopColor="#2563eb"></stop>
+                        </linearGradient>
+                        <linearGradient id="crystalSide" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#93c5fd"></stop>
+                            <stop offset="100%" stopColor="#1e40af"></stop>
+                        </linearGradient>
+                        <linearGradient id="sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="white" stopOpacity="0.9"></stop>
+                            <stop offset="100%" stopColor="white" stopOpacity="0.1"></stop>
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"></feGaussianBlur>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"></feMergeNode>
+                                <feMergeNode in="SourceGraphic"></feMergeNode>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <g transform="scale(1.2) translate(10, 10)">
+                        <g transform="translate(60, 200) rotate(-25) scale(0.8)">
+                            <path d="M 0,0 L -40,100 L 0,200 L 0,0" fill="url(#crystalSide)" stroke="#60a5fa" strokeWidth="1"></path>
+                            <path d="M 0,0 L 40,80 L 0,200 L 0,0" fill="url(#crystalBody)" stroke="#bfdbfe" strokeWidth="1"></path>
+                            <path d="M -5,20 L -25,90 L -15,95 L 0,30" fill="white" opacity="0.4"></path>
+                            <path d="M 0,0 L 0,200" stroke="#bfdbfe" strokeWidth="1" opacity="0.6"></path>
+                        </g>
+                        <g transform="translate(100, 320) rotate(-15) scale(0.4)">
+                            <path d="M 0,-50 L -30,20 L 0,80 L 30,10 L 0,-50" fill="url(#crystalBody)" stroke="#60a5fa" strokeWidth="2"></path>
+                            <path d="M 0,-50 L 0,80" stroke="white" strokeWidth="3" opacity="0.5"></path>
+                        </g>
+                        <g transform="translate(150, 50)">
+                            <path d="M 0,0 L -50,150 L 0,320" fill="none" stroke="#1d4ed8" strokeWidth="1"></path>
+                            <path d="M 0,0 L -50,150 L 0,320 L 0,0" fill="url(#crystalSide)" stroke="#3b82f6" strokeWidth="0.5"></path>
+                            <path d="M 0,0 L 50,130 L 0,320 L 0,0" fill="url(#crystalBody)" stroke="#93c5fd" strokeWidth="0.5"></path>
+                            <path d="M 0,0 L 0,320" stroke="white" strokeWidth="2" opacity="0.4"></path>
+                            <path d="M 5,40 L 40,130 L 10,250 L 2,260" fill="url(#sheen)" opacity="0.3"></path>
+                            <path d="M 10,50 L 35,120" stroke="white" strokeWidth="3" opacity="0.6" strokeLinecap="round"></path>
+                            <path d="M -5,60 L -40,150 L -10,200" fill="white" opacity="0.15"></path>
+                            <path d="M -15,100 L -35,150" stroke="white" strokeWidth="2" opacity="0.5" strokeLinecap="round"></path>
+                        </g>
+                        <g transform="translate(230, 220) rotate(10) scale(0.5)">
+                            <path d="M 0,-60 L -30,20 L 0,90 L 30,10 L 0,-60" fill="url(#crystalBody)" stroke="#93c5fd" strokeWidth="2"></path>
+                            <path d="M 0,-60 L 0,90" stroke="white" strokeWidth="2" opacity="0.7"></path>
+                            <path d="M 5,-30 L 20,10" stroke="white" strokeWidth="4" opacity="0.5" strokeLinecap="round"></path>
+                        </g>
+                        <g filter="url(#glow)">
+                            <circle cx="150" cy="50" r="3" fill="white"></circle>
+                            <path d="M 150,40 L 150,60 M 140,50 L 160,50" stroke="white" strokeWidth="2"></path>
+                            <circle cx="90" cy="180" r="2" fill="white" opacity="0.8"></circle>
+                            <circle cx="230" cy="180" r="2" fill="white" opacity="0.8"></circle>
+                            <circle cx="170" cy="120" r="1.5" fill="white" opacity="0.6"></circle>
+                            <circle cx="130" cy="250" r="1" fill="white" opacity="0.5"></circle>
+                            <circle cx="210" cy="250" r="1.5" fill="white" opacity="0.4"></circle>
+                        </g>
+                    </g>
+                </svg>
+            ),
+            Elunium: ({className}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <radialGradient id="oreGrad" cx="40%" cy="40%" r="60%">
+                            <stop offset="0%" stopColor="#d1d1e9"/>
+                            <stop offset="40%" stopColor="#a8a4c1"/>
+                            <stop offset="80%" stopColor="#7b7593"/>
+                            <stop offset="100%" stopColor="#5a5470"/>
+                        </radialGradient>
+                        <filter id="oreTexture" x="0" y="0" width="100%" height="100%">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" result="noise"/>
+                            <feDiffuseLighting in="noise" lightingColor="#ffffff" surfaceScale="1">
+                                <feDistantLight azimuth="45" elevation="35"/>
+                            </feDiffuseLighting>
+                            <feComposite in2="SourceGraphic" operator="in"/>
+                        </filter>
+                        <filter id="innerGlow">
+                            <feGaussianBlur stdDeviation="3" in="SourceAlpha" result="blur"/>
+                            <feOffset dx="2" dy="2" result="offsetBlur"/>
+                            <feComposite in="SourceGraphic" in2="offsetBlur" operator="out" result="innerShadow"/>
+                            <feFlood floodColor="black" floodOpacity="0.3" result="color"/>
+                            <feComposite in="color" in2="innerShadow" operator="in" result="shadow"/>
+                            <feComposite in="shadow" in2="SourceGraphic" operator="over"/>
+                        </filter>
+                    </defs>
+                    <ellipse cx="100" cy="175" rx="60" ry="12" fill="#000" opacity="0.2"/>
+                    <path d="M100,30 C140,30 175,65 175,100 C175,140 135,170 100,170 C60,170 25,140 25,100 C25,60 60,30 100,30 Z" fill="url(#oreGrad)" stroke="#4a445e" strokeWidth="1.5" filter="url(#innerGlow)"/>
+                    <g opacity="0.4">
+                        <circle cx="70" cy="70" r="8" fill="#5a5470"/>
+                        <circle cx="120" cy="60" r="6" fill="#6d6684"/>
+                        <circle cx="140" cy="110" r="10" fill="#4a445e"/>
+                        <circle cx="90" cy="130" r="7" fill="#5a5470"/>
+                        <circle cx="60" cy="115" r="5" fill="#6d6684"/>
+                        <circle cx="110" cy="95" r="4" fill="#4a445e"/>
+                        <circle cx="150" cy="80" r="3" fill="#5a5470"/>
+                    </g>
+                    <ellipse cx="80" cy="70" rx="30" ry="20" fill="white" opacity="0.15" transform="rotate(-20, 80, 70)"/>
+                    <path d="M130,140 Q135,150 145,145" fill="none" stroke="#2d2a3a" strokeWidth="1" opacity="0.3"/>
+                </svg>
+            ),
+            Card: ({className}) => (
+                <svg viewBox="0 0 300 400" className={className} xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <clipPath id="inner-frame-clip"><rect x="8" y="8" width="284" height="384" rx="6" ry="6"></rect></clipPath>
+                        <filter id="ray-blur"><feGaussianBlur stdDeviation="5.5"></feGaussianBlur></filter>
+                        <filter id="grain">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise"></feTurbulence>
+                            <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.25 0" in="noise" result="coloredNoise"></feColorMatrix>
+                            <feComposite operator="in" in="coloredNoise" in2="SourceGraphic" result="composite"></feComposite>
+                            <feBlend mode="multiply" in="composite" in2="SourceGraphic"></feBlend>
+                        </filter>
+                        <filter id="inner-shadow"><feGaussianBlur stdDeviation="2.5"></feGaussianBlur></filter>
+                        <radialGradient id="irisGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                            <stop offset="0%" stopColor="#d0d0d0"></stop>
+                            <stop offset="80%" stopColor="#a0958d"></stop>
+                            <stop offset="100%" stopColor="#807570"></stop>
+                        </radialGradient>
+                    </defs>
+                    <rect x="0" y="0" width="300" height="400" fill="#a18a80" rx="12" ry="12"></rect>
+                    <g clipPath="url(#inner-frame-clip)">
+                        <rect x="0" y="0" width="300" height="400" fill="url(#grain)" opacity="0.6" pointerEvents="none"></rect>
+                        <g stroke="#1a1a1a" strokeWidth="13" strokeLinecap="round" opacity="0.7" filter="url(#ray-blur)">
+                            <line x1="0" y1="0" x2="110" y2="120"></line>
+                            <line x1="150" y1="-20" x2="150" y2="110"></line>
+                            <line x1="300" y1="0" x2="190" y2="120"></line>
+                            <line x1="0" y1="400" x2="110" y2="280"></line>
+                            <line x1="150" y1="420" x2="150" y2="290"></line>
+                            <line x1="300" y1="400" x2="190" y2="280"></line>
+                        </g>
+                        <g transform="translate(0, 10)">
+                            <path d="M 50,200 Q 150,90 250,200 Q 150,300 50,200 Z" fill="#f2f2f2" stroke="none"></path>
+                            <path d="M 50,200 Q 150,90 250,200 Q 150,115 50,200 Z" fill="#000" opacity="0.15" filter="url(#inner-shadow)"></path>
+                            <path d="M 50,200 Q 150,300 250,200 Q 150,275 50,200 Z" fill="#000" opacity="0.1" filter="url(#inner-shadow)"></path>
+                            <circle cx="150" cy="200" r="44" fill="url(#irisGradient)" stroke="#6b6058" strokeWidth="1" opacity="0.95"></circle>
+                            <circle cx="150" cy="200" r="19" fill="#111"></circle>
+                            <ellipse cx="140" cy="190" rx="7" ry="5" fill="#fff" opacity="0.6" transform="rotate(-45 140 190)" filter="url(#inner-shadow)"></ellipse>
+                            <path id="upperLid" d="M 45,200 Q 150,90 255,200" fill="none" stroke="#1a1a1a" strokeWidth="3.5" strokeLinecap="round"></path>
+                            <path d="M 50,200 Q 150,300 245,200" fill="none" stroke="#4a3e3e" strokeWidth="2" strokeLinecap="round" opacity="0.6"></path>
+                            <path d="M 70,250 Q 150,285 230,250" fill="none" stroke="#4a3e3e" strokeWidth="1.5" strokeLinecap="round" opacity="0.4"></path>
+                            <path d="M 253,198 C 275,212 288,205 285,190 C 282,185 275,185 272,192" fill="none" stroke="#1a1a1a" strokeWidth="5.5" strokeLinecap="round"></path>
+                            <g stroke="#1a1a1a" strokeWidth="1" fill="none" strokeLinecap="round">
+                                <path d="M 65,170 C 55,145 60,125 70,110"></path>
+                                <path d="M 100,135 C 98,110 102,90 110,80"></path>
+                                <path d="M 150,108 C 150,90 155,75 160,65"></path>
+                                <path d="M 200,130 C 205,110 210,95 220,85"></path>
+                            </g>
+                            <g stroke="#1a1a1a" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.6">
+                                <path d="M 70,230 Q 65,245 70,250"></path>
+                                <path d="M 110,250 Q 105,265 110,270"></path>
+                                <path d="M 150,260 Q 150,275 155,280"></path>
+                                <path d="M 190,250 Q 195,265 200,270"></path>
+                            </g>
+                        </g>
+                    </g>
+                    <rect x="8" y="8" width="284" height="384" rx="6" ry="6" fill="none" stroke="#f0f0f0" strokeWidth="4" pointerEvents="none"></rect>
+                    <rect x="0" y="0" width="300" height="400" rx="12" ry="12" fill="none" stroke="#1a1a1a" strokeWidth="8" pointerEvents="none"></rect>
+                </svg>
+            ),
+            Zeny: ({className}) => (
+                <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
+            ),
+            Crown: ({className}) => (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}><path d="M15 70 L25 30 L45 60 L50 20 L55 60 L75 30 L85 70 L85 85 Q85 90 80 90 L20 90 Q15 90 15 85 Z" fill="#fbbf24" stroke="#d97706" strokeWidth="3"/><circle cx="25" cy="30" r="5" fill="#ef4444" stroke="#991b1b" strokeWidth="2"/><circle cx="50" cy="20" r="5" fill="#3b82f6" stroke="#1e3a8a" strokeWidth="2"/><circle cx="75" cy="30" r="5" fill="#ef4444" stroke="#991b1b" strokeWidth="2"/></svg>
+            ),
+            Poring: ({className}) => (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}><path d="M50 15 C25 15 5 35 5 60 C5 85 25 95 50 95 C75 95 95 85 95 60 C95 35 75 15 50 15 Z" fill="#f472b6" stroke="#db2777" strokeWidth="3"/><ellipse cx="35" cy="55" rx="4" ry="9" fill="#1e293b"/><ellipse cx="65" cy="55" rx="4" ry="9" fill="#1e293b"/><path d="M45 68 Q50 73 55 68" stroke="#1e293b" strokeWidth="3" strokeLinecap="round"/></svg>
+            ),
+            Skull: ({className}) => (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}><path d="M50 10 C30 10 15 25 15 45 C15 55 20 65 25 70 L25 85 C25 88 28 90 32 90 L68 90 C72 90 75 88 75 85 L75 70 C80 65 85 55 85 45 C85 25 70 10 50 10 Z" fill="#cbd5e1" stroke="#475569" strokeWidth="3"/><circle cx="35" cy="45" r="8" fill="#1e293b"/><circle cx="65" cy="45" r="8" fill="#1e293b"/><path d="M46 65 L50 60 L54 65 L50 72 Z" fill="#1e293b"/></svg>
+            ),
+            Gum: ({className}) => (
+                <svg viewBox="0 0 160 160" className={className} fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(15, 80, 100)"><rect x="30" y="80" width="100" height="35" rx="3" fill="#ffb38a" stroke="#d18a66" strokeWidth="1.5"></rect><rect x="35" y="83" width="90" height="29" rx="2" fill="#ffe0cf"></rect><circle cx="50" cy="97" r="6" fill="#ff7da1"></circle></g><g transform="rotate(-30, 80, 70)"><rect x="30" y="45" width="100" height="35" rx="3" fill="#a0d8f5" stroke="#6ba8cc" strokeWidth="1.5"></rect><rect x="35" y="48" width="90" height="29" rx="2" fill="#def4ff"></rect><circle cx="55" cy="62" r="5" fill="#ff9aa2"></circle><circle cx="70" cy="58" r="6" fill="#fff5ba"></circle><rect x="95" y="55" width="12" height="15" rx="1" fill="#4d3b2c" opacity="0.8"></rect></g></svg>
+            ),
+            Silvervine: ({className}) => (
+                <svg viewBox="0 0 120 160" className={className} fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60,10 L60,25" stroke="#4a7729" strokeWidth="4" strokeLinecap="round"></path><path d="M60,25 C75,25 75,45 75,60 C75,80 95,90 95,115 C95,145 75,155 60,155 C45,155 25,145 25,115 C25,90 45,80 45,60 C45,45 45,25 60,25 Z" fill="#8cc63f"></path></svg>
+            ),
+            Camera: ({className}) => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            ),
+            GumBox: ({className}) => (
+                <svg viewBox="0 0 150 150" className={className} fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30,50 L120,50 L125,120 L25,120 Z" fill="#b1a5cc" stroke="#7e709e" strokeWidth="2"></path><path d="M25,55 L125,55 L125,35 C125,35 75,30 25,35 Z" fill="#c9bddb" stroke="#7e709e" strokeWidth="2"></path><path d="M90,120 C100,105 125,110 125,95 L125,120 Z" fill="#d4af37" opacity="0.6"></path><path d="M30,50 L45,50 L30,65 Z" fill="#d4af37" opacity="0.8"></path><path d="M120,50 L105,50 L120,65 Z" fill="#d4af37" opacity="0.8"></path></svg>
+            ),
+            SilvervineBox: ({className}) => (
+                <svg viewBox="0 0 250 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40,80 L210,80 L220,160 L30,160 Z" fill="#b19cd9" stroke="#5e449e" strokeWidth="2"></path><path d="M30,85 C30,30 220,30 220,85 L220,95 L30,95 Z" fill="#c3b1e1" stroke="#5e449e" strokeWidth="2"></path><path d="M45,85 C45,45 205,45 205,85" fill="none" stroke="white" strokeWidth="3" strokeOpacity="0.3"></path><rect x="35" y="80" width="10" height="85" fill="#f9e498" rx="2"></rect><rect x="205" y="80" width="10" height="85" fill="#f9e498" rx="2"></rect><rect x="35" y="85" width="180" height="8" fill="#f9e498"></rect><circle cx="125" cy="95" r="22" fill="#fdf2d0" stroke="#d4a017" strokeWidth="2"></circle><circle cx="125" cy="82" r="5" fill="#ff44cc" stroke="white" strokeWidth="1"></circle><path d="M110,105 Q125,120 140,105" fill="none" stroke="#d4a017" strokeWidth="2"></path></svg>
+            ),
+            Cost: ({className}) => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            ),
+            Clock: ({className}) => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            )
+        };
+
+        function Icon({ name, size = 20, className = "" }) {
+            const icons = {
+                Home: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+                History: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+                Box: <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>,
+                Settings: <><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></>,
+                Plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+                Copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></>,
+                Warp: <><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" opacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10 10 10 0 0 1-10-10A10 10 0 0 1 12 2m0 2a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8z"/><path d="M12 8a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 2a2 2 0 0 0-2 2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2z"/></>,
+                Lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+                ChevronDown: <polyline points="6 9 12 15 18 9"/>,
+                ChevronUp: <polyline points="18 15 12 9 6 15"/>,
+                ToggleOn: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#4ade80"/><circle cx="16" cy="12" r="5" fill="white"/></>,
+                ToggleOff: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#475569"/><circle cx="8" cy="12" r="5" fill="white"/></>,
+                Trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></>,
+                Refresh: <><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></>,
+                Key: <><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></>,
+                Pen: <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>,
+                TrendingUp: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
+                Check: <polyline points="20 6 9 17 4 12"/>,
+                AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>,
+                Sparkles: <path d="M12 3v1m0 16v1m5-15-1 1m-10 10-1 1M21 12h-1M4 12H3m15.364 6.364-1 1m-10.728-10.728-1 1M12 8l-2 4 2 4 2-4-2-4z"/>,
+                Loader: <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>,
+                X: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>,
+                Share: <><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></>
+            };
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name]}
+                </svg>
+            );
+        }
+
+        // --- UI Components ---
+        function Toast({ message, onClose }) {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 2500);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            return (
+                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] animate-slide-down pointer-events-none w-full max-w-sm px-4">
+                    <div className="bg-slate-800/95 backdrop-blur-md border border-white/10 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 justify-center">
+                        <div className="bg-emerald-500/20 p-1 rounded-full text-emerald-400">
+                            <Icon name="Check" size={14} />
+                        </div>
+                        <span className="text-xs font-bold tracking-wide">{message}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        function RewardPopup({ data, onClose }) {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 4000);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            const current = data.profit;
+            const avg = data.average || 0;
+            let iconType = 'Poring';
+            let message = "Normal Luck";
+            let color = "text-emerald-400";
+            
+            if (avg > 0) {
+                const ratio = current / avg;
+                if (ratio > 1.15) {
+                    iconType = 'Crown';
+                    message = "Great Fortune!";
+                    color = "text-amber-400";
+                } else if (ratio < 0.85) {
+                    iconType = 'Skull';
+                    message = "Bad Luck...";
+                    color = "text-slate-400";
+                }
+            }
+
+            const IconComp = SVGs[iconType] || SVGs.Poring;
+
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+                    <div className="bg-slate-900 border border-yellow-500/30 p-8 rounded-3xl text-center relative overflow-hidden animate-pop-in shadow-2xl shadow-yellow-500/20 max-w-xs w-full">
+                        <div className="absolute inset-0 bg-yellow-500/5 mix-blend-overlay"></div>
+                        <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce bg-black/20 border-2 border-white/10">
+                            <IconComp className={`w-16 h-16 drop-shadow-xl ${color}`} />
+                        </div>
+                        <h3 className={`text-2xl font-black mb-1 ${color}`}>{message}</h3>
+                        <p className="text-xs text-slate-400 font-bold tracking-widest uppercase mb-6">Profit: {formatMoney(current)} z</p>
+                        
+                        <div className="flex justify-center gap-4 mb-4">
+                            <div className="bg-slate-800 p-3 rounded-2xl min-w-[80px]">
+                                <p className="text-[10px] opacity-50 uppercase">Exp</p>
+                                <p className="text-lg font-black text-white">+50</p>
+                            </div>
+                            <div className="bg-slate-800 p-3 rounded-2xl min-w-[80px] border border-emerald-500/30">
+                                <p className="text-[10px] opacity-50 uppercase text-emerald-400">DEK</p>
+                                <p className="text-lg font-black text-emerald-400">+{data.dekEarned}</p>
+                            </div>
+                        </div>
+                        
+                        {data.drops && data.drops.length > 0 && (
+                            <div className="bg-slate-800/50 p-3 rounded-2xl mb-4 border border-indigo-500/30">
+                                <p className="text-[10px] opacity-50 uppercase mb-2">Item Obtained</p>
+                                <div className="flex gap-2 justify-center flex-wrap">
+                                    {data.drops.map((item, i) => (
+                                        <div key={i} className="flex flex-col items-center">
+                                            <div className="w-8 h-8 flex items-center justify-center">
+                                                {SVGs[item.icon] ? React.createElement(SVGs[item.icon], { className: "w-6 h-6 drop-shadow" }) : <Icon name="Box" size={20}/>}
+                                            </div>
+                                            <span className="text-[9px] font-bold text-white">x{item.qty}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <p className="text-[9px] opacity-30 uppercase mt-4">Avg: {formatMoney(avg)} z</p>
+                    </div>
+                </div>
+            );
+        }
+
+        function ShareCardModal({ record, onClose, prices }) {
+            const profitValue = record.profit || 0;
+            const trashValue = parseInt(record.trashAmount || 0);
+            
+            // Calculate Total Cost based on recorded data
+            let totalCost = 0;
+            if (record.gumUsed > 0) totalCost += record.gumUsed * (prices.gumBoxPrice / 10);
+            if (record.useSilvervine) totalCost += (prices.silvervineBoxPrice / 5);
+            if (record.otherCosts) totalCost += record.otherCosts.reduce((sum, c) => sum + parseInt(c.amount || 0), 0);
+            
+            const realizedStoneIncome = profitValue + totalCost - trashValue;
+            const minutes = record.minutesUsed || 60;
+
+            const handleShare = async () => {
+                const shareData = {
+                    title: 'OGHza Tracker Summary',
+                    text: `⚔️ OGH Run Summary [${record.date}]\n\n💎 Stone Income: ${formatMoney(realizedStoneIncome)} z\n🗑️ Trash: ${formatMoney(trashValue)} z\n📉 Cost: ${formatMoney(totalCost)} z\n\n💰 NET PROFIT: ${formatFullMoney(profitValue)} z`,
+                };
+
+                if (navigator.share) {
+                    try {
+                        await navigator.share(shareData);
+                    } catch (err) {
+                        console.log('Share failed:', err);
+                    }
+                } else {
+                    copyToClipboard(shareData.text);
+                    alert("Copied to clipboard!");
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center p-6 animate-fade-in">
+                    <div className="relative w-full max-w-sm bg-gradient-to-br from-slate-900 to-indigo-950 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden flex flex-col items-center text-center">
+                        
+                        <div className="absolute top-[-20%] right-[-20%] w-60 h-60 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                        <div className="absolute bottom-[-10%] left-[-10%] w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                        <div className="z-10 w-full">
+                            <h2 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-1">OGH RESULT</h2>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40 mb-6">{record.date}</p>
+
+                            {/* Profit Big */}
+                            <div className="mb-6">
+                                <p className="text-[10px] opacity-40 uppercase font-bold tracking-widest mb-1">Net Profit</p>
+                                <p className="text-5xl font-black text-emerald-400 tracking-tighter drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">{formatMoney(profitValue)}</p>
+                                <p className="text-[10px] opacity-30 uppercase mt-1">Zeny</p>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <div className="bg-white/5 p-3 rounded-2xl border border-white/5 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <SVGs.Cost className="w-5 h-5 text-rose-400"/>
+                                        <span className="text-[10px] opacity-50 uppercase font-bold">Cost</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">{formatMoney(totalCost)}</span>
+                                </div>
+                                <div className="bg-white/5 p-3 rounded-2xl border border-white/5 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <SVGs.Clock className="w-5 h-5 text-blue-400"/>
+                                        <span className="text-[10px] opacity-50 uppercase font-bold">Time</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">{minutes}m</span>
+                                </div>
+                            </div>
+
+                            {/* Items Grid */}
+                            <div className="flex justify-between items-center bg-black/20 p-4 rounded-3xl border border-white/5 mb-8">
+                                <div className="flex flex-col items-center">
+                                    <SVGs.Spell className="w-8 h-8 drop-shadow-md mb-1"/>
+                                    <span className="text-xs font-black">{record.purpleStoneCount}</span>
+                                </div>
+                                <div className="w-px h-8 bg-white/10"></div>
+                                <div className="flex flex-col items-center">
+                                    <SVGs.Magic className="w-8 h-8 drop-shadow-md mb-1"/>
+                                    <span className="text-xs font-black">{record.contMagicCount}</span>
+                                </div>
+                                <div className="w-px h-8 bg-white/10"></div>
+                                <div className="flex flex-col items-center">
+                                    <SVGs.Gum className="w-8 h-8 drop-shadow-md mb-1"/>
+                                    <span className="text-xs font-black">{record.gumUsed}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button onClick={onClose} className="flex-1 py-4 bg-slate-800 rounded-2xl text-xs font-bold uppercase hover:bg-slate-700 transition-all">Close</button>
+                                <button onClick={handleShare} className="flex-[2] py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl text-xs font-black uppercase shadow-lg shadow-purple-500/30 hover:scale-105 transition-all flex items-center justify-center gap-2">
+                                    <SVGs.Camera className="w-4 h-4"/> Capture & Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-white/30 text-[10px] mt-6 font-bold uppercase tracking-widest animate-pulse">Screenshot this card to share</p>
+                </div>
+            );
+        }
+
+        function Modal({ children, onClose }) {
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+                    <div className="w-full max-w-sm bg-[#1e293b] rounded-3xl p-6 relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                            <Icon name="X" size={20}/>
+                        </button>
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+
+        function ItemDetailModal({ item, onClose }) {
+            const detail = ITEM_DETAILS[item.id] || { name: "Unknown", desc: "No data available.", type: "Etc", rarity: "Common" };
+            const rarityColors = { Common: "text-slate-400 border-slate-500", Uncommon: "text-emerald-400 border-emerald-500", Rare: "text-indigo-400 border-indigo-500", Legendary: "text-amber-400 border-amber-500" };
+            const rColor = rarityColors[detail.rarity] || rarityColors.Common;
+            const rarityBgs = { Common: "bg-slate-500/10", Uncommon: "bg-emerald-500/10", Rare: "bg-indigo-500/10", Legendary: "bg-amber-500/10" };
+
+            return (
+                <Modal onClose={onClose}>
+                    <div className="text-center">
+                        <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 ${rarityBgs[detail.rarity]} border-2 border-white/5 shadow-2xl`}>
+                            {React.cloneElement(item.iconComp, { className: "w-12 h-12" })}
+                        </div>
+                        <h3 className={`text-lg font-black uppercase italic ${rColor.split(' ')[0]}`}>{detail.name}</h3>
+                        <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mb-4">{detail.type} • {detail.rarity}</p>
+                        <div className="bg-black/20 p-4 rounded-2xl text-left border border-white/5">
+                            <p className="text-xs text-slate-300 leading-relaxed italic">"{detail.desc}"</p>
+                        </div>
+                        <div className="mt-6 flex justify-between items-center px-2">
+                             <span className="text-xs font-bold opacity-40">จำนวนที่มี</span>
+                             <span className="text-lg font-black">{item.count}</span>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        }
+
+        function AiAnalysisModal({ onClose, analysisResult }) {
+            return (
+                <Modal onClose={onClose}>
+                    <div className="text-center">
+                        <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-yellow-500 shadow-xl overflow-hidden relative">
+                             <div className="absolute inset-0 bg-yellow-500/10"></div>
+                             <SVGs.Hugin className="w-16 h-16"/>
+                        </div>
+                        <h3 className="text-xl font-black text-amber-400 mb-2">Hugin's Report</h3>
+                        <div className="bg-slate-800/50 p-4 rounded-2xl text-left border border-slate-700 max-h-60 overflow-y-auto">
+                             <p className="text-sm leading-relaxed opacity-90 text-slate-200 whitespace-pre-wrap font-medium">{analysisResult}</p>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        }
+
+        function NumberStepper({ value, onChange, label, step = 1, disabled = false }) {
+            return (
+                <div className={`flex items-center justify-between p-1.5 rounded-2xl transition-colors ${disabled ? 'bg-slate-800/20 opacity-30 cursor-not-allowed' : 'bg-slate-800'}`}>
+                    <button type="button" disabled={disabled} onClick={() => onChange(Math.max(0, parseInt(value || 0) - step))} className="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center hover:bg-rose-500/20">
+                        <span className="text-lg font-black">-</span>
+                    </button>
+                    <div className="text-center flex-1">
+                        <input 
+                            type="text" 
+                            inputMode="numeric" 
+                            disabled={disabled} 
+                            value={value} 
+                            onFocus={(e) => e.target.value === '0' && onChange('')} 
+                            onBlur={(e) => e.target.value === '' && onChange(0)}
+                            onChange={e => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                onChange(val === '' ? '' : parseInt(val));
+                            }} 
+                            className="w-full bg-transparent text-center text-lg font-black outline-none" 
+                        />
+                        {label && <p className="text-[8px] opacity-40 font-bold uppercase tracking-widest leading-none">{label}</p>}
+                    </div>
+                    <button type="button" disabled={disabled} onClick={() => onChange(parseInt(value || 0) + step)} className="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center hover:bg-emerald-500/20">
+                        <span className="text-lg font-black">+</span>
+                    </button>
+                </div>
+            );
+        }
+
+        // --- Core Gemini API ---
+        const callGemini = async (prompt, specificKey = null) => {
+            const savedKey = localStorage.getItem('ogh_gemini_key');
+            const apiKey = specificKey || savedKey || ""; 
+            const model = "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: "You are Hugin, the researcher NPC from RO. Use Thai." }] } };
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error.message);
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Hugin กำลังยุ่ง...";
+                } catch (e) { await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000)); }
+            }
+            return "Server Busy!";
+        };
+
+        // --- Application Views ---
+        function HomeView({ records, stats, goToTab }) {
+            const totalProfit = records.reduce((acc, r) => acc + (r.profit || 0), 0);
+            
+            // Safe access to Recharts
+            if (!window.Recharts) return <div className="p-6 text-center opacity-40">Loading Charts...</div>;
+            const { ResponsiveContainer, AreaChart, Area } = window.Recharts;
+            const chartData = [...records].reverse().slice(-7).map((r, i) => ({ name: `Run ${i+1}`, profit: r.profit }));
+
+            return (
+                <div className="p-6 animate-fade-in view-content">
+                    <header className="flex justify-between items-center mb-6">
+                        <div onClick={() => goToTab('profile')} className="flex items-center gap-3 bg-white/5 p-2 rounded-full pr-4 cursor-pointer hover:bg-white/10">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black bg-slate-600`}>{stats.jobClass.substring(0, 1)}</div>
+                            <div><p className="text-[10px] font-bold opacity-50 uppercase tracking-tighter">LV.{stats.baseLv}</p><p className="text-xs font-black">{stats.jobClass}</p></div>
+                        </div>
+                        <div className="text-right"><p className="text-[10px] opacity-50 font-bold uppercase">Total Profit</p><p className="text-2xl font-black text-emerald-400">{formatMoney(totalProfit)}</p></div>
+                    </header>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="glass-panel p-4 rounded-3xl"><Icon name="TrendingUp" className="text-blue-400 mb-2"/><p className="text-2xl font-black">{records.length}</p><p className="text-[10px] opacity-40 font-bold uppercase">Runs</p></div>
+                        <div className="glass-panel p-4 rounded-3xl"><Icon name="History" className="text-amber-400 mb-2"/><p className="text-lg font-black truncate">{records[0]?.date || '-'}</p><p className="text-[10px] opacity-40 font-bold uppercase">Latest</p></div>
+                    </div>
+                    {window.Recharts && (
+                        <div className="glass-panel p-4 rounded-3xl h-48 mb-4">
+                            <p className="text-[10px] font-bold opacity-40 mb-2 uppercase">Profit Trend</p>
+                            <ResponsiveContainer width="100%" height="90%">
+                                <AreaChart data={chartData}><Area type="monotone" dataKey="profit" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} strokeWidth={3} /></AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                    <div className="space-y-3">
+                        <h4 className="text-[10px] font-bold opacity-40 px-2 uppercase tracking-widest">Recent Activity</h4>
+                        {records.slice(0, 3).map(r => (
+                            <div key={r.id} className="glass-panel p-4 rounded-2xl flex justify-between items-center animate-slide-up">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${r.isSaleRecord ? 'bg-emerald-500' : 'bg-purple-600'}`}>{r.isSaleRecord ? '$' : 'D'}</div>
+                                    <div><p className="font-bold text-sm">{r.date}</p><p className="text-[10px] opacity-40 uppercase tracking-tighter">{r.isSaleRecord ? 'Market Sale' : 'Dungeon Run'}</p></div>
+                                </div>
+                                <p className="font-black text-emerald-400">{formatMoney(r.profit)}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function AddDataView({ db, uid, prices, stats, onSuccess, isSaving, setGlobalIsSaving, records }) {
+            const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], runMode: 'ogh', trashAmount: '', gumUsed: 1, useSilvervine: true, purpleStoneCount: 0, contMagicCount: 0, isSellingSpell: false, isSellingMagic: false, customSpellPrice: '', customMagicPrice: '', otherCosts: [], notes: '', minutesUsed: 60 });
+
+            // Calculate Average Profit from History
+            const averageProfit = useMemo(() => {
+                if (!records || records.length === 0) return 0;
+                const total = records.filter(r => !r.isSaleRecord).reduce((acc, r) => acc + (r.profit || 0), 0);
+                const count = records.filter(r => !r.isSaleRecord).length;
+                return count > 0 ? total / count : 0;
+            }, [records]);
+
+            const calculateCurrentProfit = () => {
+                const trash = parseInt(form.trashAmount) || 0;
+                const spellPrice = form.isSellingSpell ? (parseInt(form.customSpellPrice) || prices.purpleStonePrice) : 0;
+                const magicPrice = form.isSellingMagic ? (parseInt(form.customMagicPrice) || prices.contMagicPrice) : 0;
+                const spells = (parseInt(form.purpleStoneCount) || 0) * spellPrice;
+                const magics = (parseInt(form.contMagicCount) || 0) * magicPrice;
+                const gumCost = (parseInt(form.gumUsed) || 0) * (prices.gumBoxPrice / 10);
+                const svCost = form.useSilvervine ? (prices.silvervineBoxPrice / 5) : 0;
+                const otherCostTotal = form.otherCosts.reduce((acc, c) => acc + (parseInt(c.amount) || 0), 0);
+                return (trash + spells + magics) - (gumCost + svCost + otherCostTotal);
+            };
+
+            const handleSubmit = async (e) => {
+                if(e) e.preventDefault();
+                if (!form.trashAmount) return;
+                setGlobalIsSaving(true);
+                const profit = calculateCurrentProfit();
+                const drops = simulateDrops();
+                const newVirtualInventory = { ...(stats.virtual_inventory || {}) };
+                drops.forEach(d => newVirtualInventory[d.id] = (newVirtualInventory[d.id] || 0) + d.qty);
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+                    await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'records'), { ...form, profit, timestamp: Date.now() });
+                    const newBaseExp = stats.baseExp + 50; 
+                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'), { ...stats, baseExp: newBaseExp, coins: stats.coins + 1, virtual_inventory: newVirtualInventory });
+                    
+                    // Pass average profit to onSuccess
+                    onSuccess({ profit, dekEarned: Math.floor(profit/1000), drops, average: averageProfit });
+                    
+                    setForm({ ...form, trashAmount: '', purpleStoneCount: 0, contMagicCount: 0, notes: '', otherCosts: [] }); 
+                } catch (err) { console.error(err); } finally { setGlobalIsSaving(false); }
+            };
+
+            const addCost = () => setForm(p => ({...p, otherCosts: [...p.otherCosts, {id: Date.now(), name: '', amount: ''}]}));
+            const updateCost = (id, field, val) => {
+                if (field === 'amount') val = val.replace(/[^0-9]/g, '');
+                setForm(p => ({...p, otherCosts: p.otherCosts.map(c => c.id === id ? {...c, [field]: val} : c)}));
+            };
+            const removeCost = (id) => setForm(p => ({...p, otherCosts: p.otherCosts.filter(c => c.id !== id)}));
+
+            return (
+                <div className="p-6 animate-fade-in view-content space-y-6">
+                    <h2 className="text-2xl font-black italic mb-6 tracking-tighter">New Run</h2>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="flex bg-slate-800 p-1 rounded-2xl shadow-inner">
+                            <button type="button" onClick={() => setForm({...form, runMode: 'ogh'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${form.runMode === 'ogh' ? 'bg-purple-600 shadow-lg' : 'opacity-40'}`}>OGH (Normal)</button>
+                            <button type="button" onClick={() => setForm({...form, runMode: 'aogh'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${form.runMode === 'aogh' ? 'bg-rose-600 shadow-lg' : 'opacity-40'}`}>AOGH (Hard)</button>
+                        </div>
+                        <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 text-center shadow-xl">
+                            <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-2">Trash Sale (Zeny)</p>
+                            <input type="text" inputMode="numeric" placeholder="0" value={form.trashAmount} onChange={e => handleNumberInput(e, 'trashAmount', setForm)} className="w-full bg-transparent text-center text-5xl font-black outline-none placeholder-white/5" />
+                        </div>
+                        
+                        {/* Time, Gum & Silvervine Container */}
+                        <div className="glass-panel p-6 rounded-[2rem] space-y-4">
+                            {/* Row 1: Time */}
+                            <div className="flex justify-between items-center p-2">
+                                 <div className="flex items-center gap-2">
+                                    <SVGs.Clock className="w-5 h-5 text-indigo-400"/>
+                                    <span className="text-xs font-bold opacity-50 uppercase tracking-widest">Time Used</span>
+                                 </div>
+                                 <div className="w-32">
+                                     <NumberStepper value={form.minutesUsed} onChange={v => setForm({...form, minutesUsed: v})} step={5} />
+                                 </div>
+                            </div>
+
+                            {/* Separator */}
+                            <div className="h-px bg-white/5 w-full"></div>
+
+                            {/* Row 2: Gum & Silvervine */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Gum */}
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest flex items-center gap-2">
+                                        <SVGs.Gum className="w-4 h-4"/> Gum
+                                    </span>
+                                    <div className="flex gap-1">
+                                        {[0, 1, 2].map(n => (
+                                            <button key={n} type="button" onClick={() => setForm({...form, gumUsed: n})} 
+                                            className={`flex-1 py-2 rounded-xl font-bold text-xs transition-all ${form.gumUsed === n ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                                            {n}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Silvervine */}
+                                <div className="flex flex-col gap-2 items-end">
+                                    <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest flex items-center gap-2">
+                                        <SVGs.Silvervine className="w-4 h-4"/> Silvervine
+                                    </span>
+                                    <button type="button" onClick={() => setForm({...form, useSilvervine: !form.useSilvervine})} className="text-blue-400 scale-110">
+                                        <Icon name={form.useSilvervine ? "ToggleOn" : "ToggleOff"} size={32}/>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-slate-800/50 p-4 rounded-3xl flex flex-col justify-between">
+                                <div className="flex justify-between items-center mb-2"><SVGs.Spell className="w-6 h-6"/><button type="button" onClick={() => setForm(p => ({...p, isSellingSpell: !p.isSellingSpell}))} className={`px-2 py-1 rounded text-[8px] font-bold uppercase ${form.isSellingSpell ? 'bg-emerald-500' : 'bg-slate-700 opacity-40'}`}>{form.isSellingSpell ? 'Sell' : 'Keep'}</button></div>
+                                <NumberStepper value={form.purpleStoneCount} onChange={v => setForm({...form, purpleStoneCount: v})} />
+                                <input type="text" placeholder={prices.purpleStonePrice} value={form.customSpellPrice} onChange={e => handleNumberInput(e, 'customSpellPrice', setForm)} disabled={!form.isSellingSpell} className="mt-2 bg-slate-900 rounded-lg p-2 text-[10px] text-center w-full outline-none" />
+                            </div>
+                            <div className={`bg-slate-800/50 p-4 rounded-3xl flex flex-col justify-between ${form.runMode === 'ogh' ? 'opacity-30' : ''}`}>
+                                <div className="flex justify-between items-center mb-2"><SVGs.Magic className="w-6 h-6"/><button type="button" onClick={() => setForm(p => ({...p, isSellingMagic: !p.isSellingMagic}))} className={`px-2 py-1 rounded text-[8px] font-bold uppercase ${form.isSellingMagic ? 'bg-emerald-500' : 'bg-slate-700 opacity-40'}`}>{form.isSellingMagic ? 'Sell' : 'Keep'}</button></div>
+                                <NumberStepper value={form.contMagicCount} onChange={v => setForm({...form, contMagicCount: v})} disabled={form.runMode === 'ogh'} />
+                                <input type="text" placeholder={prices.contMagicPrice} value={form.customMagicPrice} onChange={e => handleNumberInput(e, 'customMagicPrice', setForm)} disabled={!form.isSellingMagic} className="mt-2 bg-slate-900 rounded-lg p-2 text-[10px] text-center w-full outline-none" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Etc. Costs</span><button type="button" onClick={addCost} className="text-[10px] text-blue-400 font-black uppercase tracking-tighter">+ Add Cost</button></div>
+                            {form.otherCosts.map(c => (
+                                <div key={c.id} className="flex gap-2 mb-2 animate-fade-in">
+                                    <input type="text" placeholder="รายการ" value={c.name} onChange={e => updateCost(c.id, 'name', e.target.value)} className="flex-1 bg-slate-800 rounded-xl px-4 py-2 text-xs outline-none" />
+                                    <input type="text" inputMode="numeric" placeholder="0" value={c.amount} onChange={e => updateCost(c.id, 'amount', e.target.value)} className="w-24 bg-slate-800 rounded-lg px-3 py-2 text-xs outline-none text-right" />
+                                    <button type="button" onClick={() => removeCost(c.id)} className="text-rose-500"><Icon name="Trash" size={14}/></button>
+                                </div>
+                            ))}
+                        </div>
+                        <button type="submit" disabled={isSaving || !form.trashAmount} className="w-full py-5 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-[1.5rem] font-black text-lg shadow-xl shadow-purple-500/20 active:scale-95 transition-transform disabled:opacity-50">SAVE RECORD</button>
+                    </form>
+                </div>
+            );
+        }
+
+        function InventoryView({ records, prices, db, uid, showToast, stats }) {
+            const [detailModal, setDetailModal] = useState(null);
+            const [sellModal, setSellModal] = useState(null);
+            const [sellQty, setSellQty] = useState("");
+            const [sellPrice, setSellPrice] = useState("");
+            const longPressTimer = useRef(null);
+            const isLongPressActive = useRef(false);
+            const totalSpells = records.reduce((acc, r) => acc + (parseInt(r.purpleStoneCount) || 0), 0);
+            const totalMagics = records.reduce((acc, r) => acc + (parseInt(r.contMagicCount) || 0), 0);
+            const vInv = stats.virtual_inventory || {};
+
+            const handleSell = async () => {
+                if(!sellModal || !sellQty || !sellPrice) return;
+                const qty = parseInt(sellQty);
+                const price = parseInt(sellPrice);
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+                    await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'records'), { date: new Date().toISOString().split('T')[0], runMode: 'SALE', trashAmount: 0, purpleStoneCount: sellModal.item === 'spell' ? -qty : 0, contMagicCount: sellModal.item === 'magic' ? -qty : 0, profit: qty * price, isSaleRecord: true, timestamp: Date.now() });
+                    showToast(`ขาย ${sellModal.item} x${qty} สำเร็จ!`);
+                    setSellModal(null); setSellQty(""); setSellPrice("");
+                } catch(e) { console.error(e); }
+            };
+
+            const slots = Array.from({ length: 24 });
+            const onSlotStart = (content) => { if (!content) return; isLongPressActive.current = false; longPressTimer.current = setTimeout(() => { isLongPressActive.current = true; setDetailModal(content); }, 500); };
+            const onSlotEnd = (content) => { clearTimeout(longPressTimer.current); if (!isLongPressActive.current && content) { if (content.id === 'spell' || content.id === 'magic') { setSellModal({item: content.id, max: content.count}); setSellPrice(content.price); } else { setDetailModal(content); } } };
+
+            return (
+                <div className="p-6 animate-fade-in view-content h-full">
+                    <h2 className="text-2xl font-black italic mb-6 tracking-tighter">Inventory</h2>
+                    <div className="bg-[#1e293b] p-5 rounded-[2.5rem] shadow-2xl border border-slate-700/50">
+                        <div className="grid grid-cols-4 gap-3">
+                            {slots.map((_, index) => {
+                                let content = null;
+                                if (index === 0) content = { id: 'spell', iconComp: <SVGs.Spell/>, count: totalSpells, price: prices.purpleStonePrice };
+                                else if (index === 1) content = { id: 'magic', iconComp: <SVGs.Magic/>, count: totalMagics, price: prices.contMagicPrice };
+                                else {
+                                    const vKeys = Object.keys(vInv);
+                                    if (index - 2 < vKeys.length) {
+                                        const itemId = vKeys[index - 2];
+                                        const itemDef = DROP_TABLE.find(d => d.id === itemId);
+                                        if (itemDef) content = { id: itemId, iconComp: React.createElement(SVGs[itemDef.icon] || Icon, { name: itemDef.icon }), count: vInv[itemId], isSim: true, rare: itemDef.rare };
+                                    }
+                                }
+                                return (
+                                     <div key={index} 
+                                        onMouseDown={() => onSlotStart(content)} onMouseUp={() => onSlotEnd(content)} onMouseLeave={() => clearTimeout(longPressTimer.current)} onTouchStart={() => onSlotStart(content)} onTouchEnd={() => onSlotEnd(content)}
+                                        className={`aspect-square rounded-2xl relative flex items-center justify-center transition-all ${content ? 'bg-slate-800 border border-slate-600 active:scale-95' : 'bg-slate-800/20 border-2 border-dashed border-slate-700/50'}`}>
+                                        {content && <>
+                                            {content.isSim && <span className="absolute top-0.5 right-1 text-[8px] font-black text-amber-400 opacity-70">SIM</span>}
+                                            <div className="w-10 h-10 flex items-center justify-center">{React.cloneElement(content.iconComp, { className: "w-8 h-8" })}</div>
+                                            <span className="absolute bottom-1 right-1.5 text-[10px] font-black text-white bg-black/60 px-1.5 rounded-md">{content.count}</span>
+                                        </>}
+                                     </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    {detailModal && <ItemDetailModal item={detailModal} onClose={() => setDetailModal(null)} />}
+                    {sellModal && (
+                        <Modal onClose={() => setSellModal(null)}>
+                            <h3 className="text-xl font-black mb-4 uppercase">Sell {sellModal.item}</h3>
+                            <div className="space-y-4">
+                                <div><label className="text-[10px] opacity-50 uppercase">Quantity (Max: {sellModal.max})</label><input type="text" inputMode="numeric" value={sellQty} onChange={e => { let val = parseInt(e.target.value.replace(/\D/g, '')) || ''; if(val > sellModal.max) val = sellModal.max; setSellQty(val); }} className="w-full bg-slate-800 p-3 rounded-xl outline-none font-bold text-lg" autoFocus/></div>
+                                <div><label className="text-[10px] opacity-50 uppercase">Price / Unit</label><input type="text" inputMode="numeric" value={sellPrice} onChange={e => handleNumberInput(e, '', setSellPrice)} className="w-full bg-slate-800 p-3 rounded-xl outline-none font-bold text-lg"/></div>
+                                <div className="flex gap-2 pt-2"><button onClick={() => setSellModal(null)} className="flex-1 py-3 bg-slate-800 rounded-xl font-bold text-xs">Cancel</button><button onClick={handleSell} className="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-xs">Confirm Sale</button></div>
+                            </div>
+                        </Modal>
+                    )}
+                </div>
+            );
+        }
+
+        function HistoryView({ records, db, uid, showToast, prices }) {
+            const [expandedId, setExpandedId] = useState(null);
+            const [shareModalData, setShareModalData] = useState(null);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+
+            return (
+                <div className="p-6 animate-fade-in view-content space-y-4">
+                    <h2 className="text-2xl font-black italic mb-6 tracking-tighter">History Logs</h2>
+                    <div className="space-y-3">
+                        {records.map(r => {
+                            const isExpanded = expandedId === r.id;
+                            const profitValue = r.profit || 0;
+                            
+                            let totalCost = (r.gumUsed || 0) * (prices.gumBoxPrice/10);
+                            if (r.useSilvervine) totalCost += (prices.silvervineBoxPrice/5);
+                            if (r.otherCosts) totalCost += r.otherCosts.reduce((a,c)=>a+parseInt(c.amount||0),0);
+                            
+                            const realizedStoneIncome = profitValue + totalCost - (r.trashAmount || 0);
+
+                            return (
+                                <div key={r.id} className={`glass-panel rounded-[1.5rem] overflow-hidden transition-all duration-300 ${isExpanded ? 'bg-slate-800/80 ring-2 ring-purple-500/50' : ''}`}>
+                                    <div 
+                                        onClick={() => setExpandedId(isExpanded ? null : r.id)}
+                                        className="p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 active:bg-white/10"
+                                    >
+                                        <div className="flex gap-3">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${r.isSaleRecord ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-purple-600 shadow-purple-500/20'} shadow-lg`}>
+                                                {r.isSaleRecord ? '$' : 'D'}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm tracking-tight">{r.date}</p>
+                                                <p className="text-[10px] opacity-40 uppercase font-bold tracking-widest">{r.isSaleRecord ? 'Market Sale' : `Run [${r.runMode?.toUpperCase()}]`}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                                <p className="text-emerald-400 font-black text-sm tracking-tight">{formatMoney(profitValue)}</p>
+                                                <p className="text-[8px] opacity-20 uppercase font-bold tracking-[0.2em]">Breakdown</p>
+                                            </div>
+                                            <Icon name={isExpanded ? "ChevronUp" : "ChevronDown"} size={14} className="opacity-20" />
+                                        </div>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div className="px-4 pb-4 animate-slide-up bg-black/10">
+                                            <div className="pt-4 space-y-3 border-t border-white/5">
+                                                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                                    <div className="bg-white/5 p-2 rounded-xl text-center"><p className="opacity-40 uppercase text-[9px] mb-0.5">รายรับจากหิน</p><p className="font-bold text-white">{formatFullMoney(realizedStoneIncome)} z</p></div>
+                                                    <div className="bg-white/5 p-2 rounded-xl text-center"><p className="opacity-40 uppercase text-[9px] mb-0.5">ต้นทุนรวม</p><p className="font-bold text-rose-400">-{formatFullMoney(totalCost)} z</p></div>
+                                                </div>
+                                                <div className="bg-white/5 p-3 rounded-2xl flex flex-wrap gap-4 items-center justify-around border border-white/5">
+                                                    <div className="text-center flex flex-col items-center">
+                                                        <SVGs.Spell className="w-6 h-6 mb-1 drop-shadow"/>
+                                                        <p className="font-black text-purple-400">{r.purpleStoneCount || 0}</p>
+                                                    </div>
+                                                    <div className="text-center flex flex-col items-center">
+                                                        <SVGs.Magic className="w-6 h-6 mb-1 drop-shadow"/>
+                                                        <p className="font-black text-rose-400">{r.contMagicCount || 0}</p>
+                                                    </div>
+                                                    <div className="text-center flex flex-col items-center">
+                                                        <SVGs.Gum className="w-6 h-6 mb-1 drop-shadow"/>
+                                                        <p className="font-black text-blue-400">{r.gumUsed || 0}</p>
+                                                    </div>
+                                                </div>
+                                                {r.notes && <div className="bg-black/20 p-3 rounded-xl border border-white/5"><p className="text-[9px] opacity-30 font-bold uppercase mb-1 tracking-widest">Memo</p><p className="text-xs opacity-70 italic text-slate-300">"{r.notes}"</p></div>}
+                                                <div className="flex gap-2 pt-2">
+                                                    <button onClick={() => setShareModalData(r)} className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-colors rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"><Icon name="Share" size={14}/> Share Card</button>
+                                                    <button onClick={async (e) => { 
+                                                        e.stopPropagation(); // Fixed: Stop event propagation
+                                                        if(confirm("ลบประวัติรายการนี้ถาวร?")) {
+                                                            await deleteDoc(doc(dbRef.current, 'artifacts', appId, 'users', uid, 'records', r.id));
+                                                            showToast("ลบข้อมูลเรียบร้อยแล้ว");
+                                                        }
+                                                    }} className="py-2.5 px-4 border border-rose-500/20 text-rose-400 rounded-xl text-[10px] font-black uppercase hover:bg-rose-500/10">Del</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {shareModalData && <ShareCardModal record={shareModalData} prices={prices} onClose={() => setShareModalData(null)} />}
+                </div>
+            );
+        }
+
+        function SettingsView({ uid, defaultUid, prices, setPrices, db, onResetUid, onRestoreUid, showToast, showAiFab, setShowAiFab }) {
+            const [localPrices, setLocalPrices] = useState(prices);
+            const [isSaving, setIsSaving] = useState(false);
+            const [restoreInput, setRestoreInput] = useState("");
+            const [apiKeyInput, setApiKeyInput] = useState(localStorage.getItem('ogh_gemini_key') || "");
+            const [isRestoring, setIsRestoring] = useState(false);
+            const [showChangelog, setShowChangelog] = useState(false);
+            const [isDeleting, setIsDeleting] = useState(false); 
+
+            const savePrices = async () => {
+                setIsSaving(true);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+                await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'config', 'prices'), localPrices);
+                setPrices(localPrices);
+                setIsSaving(false);
+                showToast("บันทึกราคาเรียบร้อยแล้ว");
+            };
+
+            const handleSaveApiKey = async () => {
+                if (!apiKeyInput) return;
+                const check = await callGemini("Say Hello", apiKeyInput);
+                if (check.startsWith("API Key ไม่ถูกต้อง") || check.startsWith("Error")) {
+                    alert("API Key ไม่สามารถใช้งานได้จริง: " + check);
+                    return;
+                }
+                localStorage.setItem('ogh_gemini_key', apiKeyInput);
+                showToast("บันทึก API Key แล้ว");
+            };
+
+            const handleRestore = async () => {
+                if (!restoreInput.trim() || restoreInput.length < 5) return alert("UID สั้นเกินไป");
+                setIsRestoring(true);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+                try {
+                    const statsRef = doc(db, 'artifacts', appId, 'users', restoreInput, 'gamification', 'stats');
+                    const statsSnap = await getDoc(statsRef);
+                    if (!statsSnap.exists()) alert("❌ ไม่พบ UID นี้ในระบบ");
+                    else {
+                        const userData = statsSnap.data();
+                        if(confirm(`✅ ค้นพบข้อมูล!\nClass: ${userData.jobClass || 'Novice'}\nCoins: ${userData.coins || 0}\n\nต้องการกู้คืนข้อมูลนี้ใช่หรือไม่?`)) {
+                            onRestoreUid(restoreInput);
+                            setRestoreInput("");
+                        }
+                    }
+                } catch (e) { alert("Error: " + e.message); } finally { setIsRestoring(false); }
+            };
+
+            const handleDeleteAll = async () => {
+                if (!confirm("⚠️ คำเตือน: คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?")) return;
+                const confirm2 = prompt("พิมพ์คำว่า 'DELETE' เพื่อยืนยัน");
+                if (confirm2 !== 'DELETE') return;
+                
+                setIsDeleting(true); 
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+                try {
+                    const q = query(collection(db, 'artifacts', appId, 'users', uid, 'records'));
+                    const snap = await getDocs(q);
+                    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'), INITIAL_STATS);
+                    showToast("ลบข้อมูลทั้งหมดเรียบร้อยแล้ว");
+                    window.location.reload();
+                } catch(e) { alert("Error: " + e.message); }
+                finally { setIsDeleting(false); } 
+            };
+
+            const configLabels = {
+                purpleStonePrice: "Coagulated Spell",
+                contMagicPrice: "Contaminated Magic",
+                gumBoxPrice: "Bubble Gum Box",
+                silvervineBoxPrice: "Silvervine Box"
+            };
+
+            const configItems = [
+                { id: 'purpleStonePrice', icon: <SVGs.Spell className="w-5 h-5"/> },
+                { id: 'contMagicPrice', icon: <SVGs.Magic className="w-5 h-5"/> },
+                { id: 'gumBoxPrice', icon: <SVGs.GumBox className="w-5 h-5"/> },
+                { id: 'silvervineBoxPrice', icon: <SVGs.SilvervineBox className="w-5 h-5"/> }
+            ];
+
+            return (
+                <div className="p-6 animate-fade-in view-content space-y-8">
+                    <h2 className="text-2xl font-black italic tracking-tighter">Settings</h2>
+                    <div className="glass-panel p-6 rounded-[2rem] space-y-4">
+                        <span className="text-[10px] font-black uppercase opacity-50 tracking-[0.2em]">UID Management</span>
+                        <div className="bg-black/30 p-3 rounded-2xl flex items-center justify-between gap-2 overflow-hidden border border-white/5">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Your Private UID</p>
+                                <code className="text-xs font-mono opacity-80 truncate block">{uid}</code>
+                            </div>
+                            <button onClick={() => { copyToClipboard(uid); showToast("คัดลอก UID แล้ว"); }} className="p-2 bg-white/5 rounded-xl active:scale-95"><Icon name="Copy" size={14}/></button>
+                        </div>
+                        <div className="text-right">
+                            <button onClick={onResetUid} className="text-[10px] text-slate-400 hover:text-white underline">กลับสู่ UID เริ่มต้น</button>
+                        </div>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={restoreInput} 
+                                onChange={e => setRestoreInput(e.target.value)} 
+                                placeholder="Restore UID..." 
+                                className="flex-1 bg-slate-800 rounded-xl px-4 text-xs outline-none focus:ring-1 focus:ring-blue-500/50 transition-all" 
+                            />
+                            <button 
+                                onClick={handleRestore} 
+                                disabled={isRestoring || !restoreInput}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                                    isRestoring || !restoreInput 
+                                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed' 
+                                    : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 active:scale-95 hover:bg-blue-500'
+                                }`}
+                            >
+                                {isRestoring ? <Icon name="Loader" className="animate-spin" size={16}/> : <><Icon name="Refresh" size={16}/> Restore</>}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="glass-panel p-6 rounded-[2rem] space-y-4">
+                        <div className="flex justify-between items-center"><span className="text-[10px] font-black uppercase opacity-50 tracking-widest">Hugin Service (AI)</span><button onClick={() => setShowAiFab(!showAiFab)} className="text-indigo-400">{showAiFab ? <Icon name="ToggleOn" size={28}/> : <Icon name="ToggleOff" size={28}/>}</button></div>
+                        <div className="flex gap-2">
+                            <input type="password" value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="Paste Key..." className="flex-1 bg-slate-800 rounded-xl px-4 text-xs outline-none h-10 border border-white/5" />
+                            <button onClick={() => { localStorage.setItem('ogh_gemini_key', apiKeyInput); showToast("Saved API Key"); }} className="px-4 rounded-xl bg-slate-700 text-[10px] font-black uppercase active:scale-95">Save</button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h3 className="text-[10px] font-black opacity-40 px-2 uppercase tracking-[0.2em]">Market Prices</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            {configItems.map(item => (
+                                <div key={item.id} className="glass-panel p-4 rounded-2xl border border-white/5">
+                                    <p className="text-[9px] font-bold opacity-50 uppercase mb-2 truncate tracking-widest flex items-center gap-2">
+                                        {item.icon} {configLabels[item.id]}
+                                    </p>
+                                    <input 
+                                        type="text" 
+                                        inputMode="numeric" 
+                                        value={localPrices[item.id]} 
+                                        onChange={e => setLocalPrices({...localPrices, [item.id]: parseInt(e.target.value.replace(/\D/g,'')) || 0})} 
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xl font-black outline-none focus:border-indigo-500/50 transition-colors text-center" 
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={savePrices} disabled={isSaving} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-black text-lg active:scale-95 transition-all shadow-xl shadow-emerald-500/20">{isSaving ? "SAVING..." : "SAVE PRICES"}</button>
+                    </div>
+
+                    <div className="pt-8 border-t border-white/5">
+                        <button onClick={handleDeleteAll} disabled={isDeleting} className="w-full py-4 border border-rose-500/30 text-rose-400 rounded-2xl font-bold text-xs uppercase hover:bg-rose-500/10 flex justify-center gap-2">
+                            {isDeleting ? <Icon name="Loader" className="animate-spin" size={16}/> : <><Icon name="Trash" size={16}/> DELETE ALL DATA</>}
+                        </button>
+                    </div>
+
+                    <div className="text-center pt-8 border-t border-white/5">
+                        <button onClick={() => setShowChangelog(true)} className="opacity-20 hover:opacity-100 text-[10px] font-bold uppercase tracking-[0.3em] transition-opacity">{APP_VERSION}</button>
+                    </div>
+
+                    {showChangelog && (
+                        <Modal onClose={() => setShowChangelog(false)}>
+                            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                                <h3 className="text-xl font-black italic">Changelog</h3>
+                                {CHANGELOGS.map((log, idx) => (
+                                    <div key={idx} className="bg-slate-800/50 p-4 rounded-2xl border border-white/5"><div className="flex justify-between items-end mb-1"><span className="text-lg font-black text-white">{log.ver}</span><span className="text-[9px] opacity-40 uppercase font-bold">{log.date}</span></div><p className="text-xs opacity-70 leading-relaxed">{log.desc}</p></div>
+                                ))}
+                            </div>
+                        </Modal>
+                    )}
+                </div>
+            );
+        }
+
+        function App() {
+            const [authUser, setAuthUser] = useState(null);
+            const [targetUid, setTargetUid] = useState(null);
+            const [activeTab, setActiveTab] = useState('home');
+            const [records, setRecords] = useState([]);
+            const [prices, setPrices] = useState({ purpleStonePrice: 150000, contMagicPrice: 450000, gumBoxPrice: 1500000, silvervineBoxPrice: 2500000 });
+            const [stats, setStats] = useState(INITIAL_STATS);
+            const [loading, setLoading] = useState(true);
+            const [toast, setToast] = useState(null);
+            const [isSaving, setIsSaving] = useState(false);
+            const [rewardData, setRewardData] = useState(null);
+            const [showAiFab, setShowAiFab] = useState(false);
+            const [aiResult, setAiResult] = useState(null);
+            const [isAnalysing, setIsAnalysing] = useState(false);
+
+            const dbRef = useRef(null);
+            const authRef = useRef(null);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+
+            const showToast = (message) => setToast(message);
+            const handleRestoreUid = (newUid) => { localStorage.setItem('ogh_target_uid', newUid); setTargetUid(newUid); showToast("Restored UID: " + newUid); };
+            const handleResetUid = () => { localStorage.removeItem('ogh_target_uid'); if (authUser) setTargetUid(authUser.uid); showToast("Reset to Default"); };
+
+            useEffect(() => {
+                const initFirebase = async () => {
+                    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : MANUAL_FIREBASE_CONFIG;
+                    const app = initializeApp(firebaseConfig);
+                    authRef.current = getAuth(app);
+                    dbRef.current = getFirestore(app);
+                    await signInAnonymously(authRef.current);
+                    onAuthStateChanged(authRef.current, (u) => {
+                        setAuthUser(u);
+                        setTargetUid(localStorage.getItem('ogh_target_uid') || u?.uid);
+                        setLoading(false);
+                    });
+                };
+                initFirebase();
+            }, []);
+
+            useEffect(() => {
+                if (!dbRef.current || !targetUid) return;
+                const unsubRecords = onSnapshot(query(collection(dbRef.current, 'artifacts', appId, 'users', targetUid, 'records'), orderBy('timestamp', 'desc')), (snap) => setRecords(snap.docs.map(d => ({ ...d.data(), id: d.id }))), (err) => console.log(err));
+                const unsubPrices = onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', targetUid, 'config', 'prices'), d => { if (d.exists()) setPrices(d.data()); }, (err) => console.log(err));
+                const unsubStats = onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', targetUid, 'gamification', 'stats'), d => { if (d.exists()) setStats(d.data()); else setStats(INITIAL_STATS); }, (err) => console.log(err));
+                return () => { unsubRecords(); unsubPrices(); unsubStats(); };
+            }, [targetUid]);
+
+            const triggerAiAnalysis = async () => {
+                if (records.length < 5) return showToast(`🔒 ยังไม่ปลดล็อค: ต้องบันทึกข้อมูลให้ครบ 5 รอบ (ขาดอีก ${5 - records.length} รอบ)`);
+                if (stats.coins < 1) return showToast("ไม่สามารถวิเคราะห์ได้: Coins ไม่พอ (ต้องการ 1 Coin)");
+                setIsAnalysing(true);
+                try {
+                    await setDoc(doc(dbRef.current, 'artifacts', appId, 'users', targetUid, 'gamification', 'stats'), { ...stats, coins: stats.coins - 1 });
+                    const totalSpells = records.reduce((acc, r) => acc + (parseInt(r.purpleStoneCount) || 0), 0);
+                    const totalMagics = records.reduce((acc, r) => acc + (parseInt(r.contMagicCount) || 0), 0);
+                    const totalValue = (totalSpells * prices.purpleStonePrice) + (totalMagics * prices.contMagicPrice);
+                    const prompt = `คลัง: หินม่วง ${totalSpells}, หินแดง ${totalMagics}, มูลค่า ${totalValue}. ประวัติ 5 รอบ: ${JSON.stringify(records.slice(0, 5).map(r => r.profit))}. สวมบท Hugin นักวิจัย OGH วิเคราะห์ดวงและแนะนำการขายสั้นๆ ภาษาไทย`;
+                    const result = await callGemini(prompt);
+                    setAiResult(result);
+                } catch (e) { console.error(e); } finally { setIsAnalysing(false); }
+            };
+
+            if (loading) return <div className="h-screen flex items-center justify-center bg-[#0f172a]"><Icon name="Loader" className="animate-spin text-purple-500" size={40} /></div>;
+
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'home': return <HomeView records={records} stats={stats} goToTab={setActiveTab} />;
+                    case 'add': return <AddDataView db={dbRef.current} uid={targetUid} prices={prices} stats={stats} onSuccess={setRewardData} isSaving={isSaving} setGlobalIsSaving={setIsSaving} records={records} />;
+                    case 'inventory': return <InventoryView records={records} prices={prices} db={dbRef.current} uid={targetUid} showToast={setToast} stats={stats}/>;
+                    case 'settings': return <SettingsView uid={targetUid} defaultUid={authUser?.uid} prices={prices} setPrices={setPrices} db={dbRef.current} onResetUid={() => setTargetUid(authUser.uid)} onRestoreUid={setTargetUid} showToast={setToast} showAiFab={showAiFab} setShowAiFab={setShowAiFab} />;
+                    case 'history': return <HistoryView records={records} db={dbRef.current} uid={targetUid} showToast={setToast} prices={prices} />;
+                    case 'profile': return (
+                        <div className="p-6 animate-fade-in view-content space-y-8">
+                            <div className="text-center space-y-4">
+                                <div className={`w-32 h-32 mx-auto rounded-[3rem] flex items-center justify-center text-4xl font-black shadow-2xl ${stats.isHighClass ? 'bg-amber-500' : 'bg-slate-700'}`}>{stats.jobClass.substring(0, 2).toUpperCase()}</div>
+                                <h2 className="text-3xl font-black italic">{stats.jobClass}</h2>
+                                <div className="bg-slate-800 p-2 rounded-2xl inline-block px-6 border border-white/5">
+                                    <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest leading-none mb-1">Base Experience</p>
+                                    <p className="text-sm font-black">{stats.baseExp} / {getExpReq(stats.baseLv, 'base')}</p>
+                                </div>
+                                <p className="text-xs font-bold opacity-40 uppercase tracking-[0.2em]">Base Lv. {stats.baseLv}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="glass-panel p-6 rounded-3xl text-center"><p className="text-2xl font-black text-amber-500">{stats.coins}</p><p className="text-[10px] font-bold opacity-40 uppercase">Coins</p></div>
+                                <div className="glass-panel p-6 rounded-3xl text-center"><p className="text-xl font-black text-blue-400 truncate">{formatMoney(stats.zeny)}</p><p className="text-[10px] font-bold opacity-40 uppercase">DEKZA Coin</p></div>
+                            </div>
+                        </div>
+                    );
+                    default: return <HomeView records={records} stats={stats} goToTab={setActiveTab} />;
+                }
+            };
+
+            return (
+                <div className="max-w-md mx-auto relative min-h-screen">
+                    {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+                    {rewardData && <RewardPopup data={rewardData} onClose={() => setRewardData(null)} />}
+                    {aiResult && <AiAnalysisModal analysisResult={aiResult} onClose={() => setAiResult(null)} />}
+                    
+                    {showAiFab && (
+                        <button onClick={triggerAiAnalysis} disabled={isAnalysing} className={`fixed bottom-24 right-6 w-16 h-16 rounded-full shadow-lg flex items-center justify-center animate-hugin active:scale-90 transition-transform z-50 border-2 border-white/20 ${isAiLocked ? 'bg-slate-700 grayscale' : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-orange-500/40'}`}>
+                            {isAnalysing ? <Icon name="Loader" className="animate-spin text-white" size={28}/> : (isAiLocked ? <Icon name="Lock" className="text-white/50" size={24}/> : <SVGs.Hugin className="w-10 h-10"/>)}
+                        </button>
+                    )}
+
+                    {renderContent()}
+
+                    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto glass-panel border-t border-white/5 nav-bar-padding pt-2 px-2 flex justify-between items-end z-40 rounded-t-[2rem]">
+                        <button onClick={() => setActiveTab('home')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'home' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Home" size={24}/><span className="text-[9px] font-bold uppercase">Home</span></button>
+                        <button onClick={() => setActiveTab('add')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'add' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Warp" size={24}/><span className="text-[9px] font-bold uppercase tracking-tighter">Dungeon</span></button>
+                        <button onClick={() => setActiveTab('history')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'history' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="History" size={24}/><span className="text-[9px] font-bold uppercase">History</span></button>
+                        <button onClick={() => setActiveTab('inventory')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'inventory' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Box" size={24}/><span className="text-[9px] font-bold uppercase">Stock</span></button>
+                        <button onClick={() => setActiveTab('settings')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'settings' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Settings" size={24}/><span className="text-[9px] font-bold uppercase">Setting</span></button>
+                    </nav>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Kanit:wght@300;400;500;700;900&display=swap');
         
@@ -1090,3 +2395,4 @@
     </script>
 </body>
 </html>
+
