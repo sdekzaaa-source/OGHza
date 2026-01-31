@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OGHza Tracker V2</title>
+    <title>OGHza Tracker V4.1 (Full Restore)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -14,80 +14,110 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Kanit:wght@300;400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kanit:wght@300;400;500;600&display=swap');
         
         :root {
-            --app-bg: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.95);
+            --app-bg: #18181b; /* Zinc-950 */
+            --glass-bg: rgba(39, 39, 42, 0.95); /* Zinc-800/95 */
         }
 
         body { 
             font-family: 'Inter', 'Kanit', sans-serif; 
             background-color: var(--app-bg); 
-            color: #f1f5f9; 
+            color: #f4f4f5; 
             overflow-x: hidden; 
             margin: 0;
             padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .glass-panel { 
             background: var(--glass-bg); 
-            backdrop-filter: blur(16px); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid #3f3f46; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
         }
 
-        /* สำหรับเนื้อหาหน้าจอ (View Content) ให้เว้นด้านล่างเผื่อเมนู */
         .view-content {
-            padding-bottom: calc(env(safe-area-inset-bottom) + 120px) !important;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 100px) !important;
         }
 
-        /* สำหรับเมนูบาร์ (Nav Bar) ให้เว้นด้านล่างแค่พอดี Safe Area */
         .nav-bar-padding {
             padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
         }
 
-        .progress-bar { transition: width 0.5s ease-out; }
-
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
         
         @keyframes fadeIn { from { opacity: 0; } to { transform: opacity: 1; } }
         .animate-fade-in { animation: fadeIn 0.2s ease-in-out forwards; }
+        
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop-in { animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-        @keyframes slideDown { from { transform: translate(-50%, -150%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
-        .animate-slide-down { animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-
-        /* Hugin Animation */
-        @keyframes huginFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        .animate-hugin { animation: huginFloat 3s ease-in-out infinite; }
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #3f3f46;
+            border-radius: 2px;
+        }
 
         ::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        .slate-input {
+            background-color: #09090b; 
+            border: 1px solid #3f3f46;
+            color: white;
+            transition: border-color 0.2s;
+        }
+        .slate-input:focus {
+            border-color: #71717a;
+            outline: none;
+        }
+
+        .no-context-menu {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Delete Button Animation */
+        .delete-progress {
+            transition: width linear;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        const { useState, useEffect, useMemo, useRef } = React;
-        const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } = window.Recharts;
-
-        // --- Firebase Modules ---
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, limit } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, onSnapshot, addDoc, deleteDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // --- Configuration & Constants ---
-        const APP_VERSION = "Ver.2.13.3 (Hugin's Quest)";
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- Configuration ---
+        const APP_VERSION = "Ver.4.1.0 (Full Restore)";
         
-        const CHANGELOGS = [
-            { ver: "2.13.3", date: "Latest", desc: "เพิ่มเงื่อนไขปลดล็อค AI (ต้องบันทึก 5 รอบ), ปรับปรุงปุ่ม Reset UID เป็นลิงก์เล็กๆ และจัดเรียงเมนูใหม่" },
-            { ver: "2.13.2", date: "Previous", desc: "เพิ่มระบบตรวจสอบ UID ก่อนกู้คืน (ป้องกันการกรอกผิด) และปรับปุ่ม Restore ให้ Interactive" },
-            { ver: "2.13.0", date: "Old", desc: "เพิ่ม NPC Hugin สำหรับวิเคราะห์ข้อมูล" }
-        ];
-
         const MANUAL_FIREBASE_CONFIG = {
             apiKey: "AIzaSyAbWzr8o_OhkjGbEetBYq_nzYmVZ2fTf40",
             authDomain: "rocogh-88a38.firebaseapp.com",
@@ -99,1136 +129,904 @@
 
         const INITIAL_STATS = { 
             baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, 
-            jobClass: 'Novice', coins: 0, zeny: 0, isHighClass: false 
+            jobClass: 'Novice', coins: 0, zeny: 0, isHighClass: false,
+            virtual_inventory: {} 
         };
+
+        const SHOP_ITEMS = [
+            { id: 'premium_box', name: 'Premium Box (30d)', duration: 30, type: 'buff_box', icon: 'Premium', desc: 'VIP Buff 30 Days', rarity: 'Rare' },
+            { id: 'kafra_box', name: 'Kafra Buff (7d)', duration: 7, type: 'buff_box', icon: 'Kafra', desc: 'Kafra Buff 7 Days', rarity: 'Uncommon' },
+            { id: 'silvervine_box', name: 'Silvervine Box (10ea)', qty: 10, type: 'consumable_box', subType: 'silvervine', icon: 'SilvervineBox', desc: 'Open to get 10 Silvervines', rarity: 'Uncommon' },
+            { id: 'gum_box', name: 'Bubble Gum Box (10ea)', qty: 10, type: 'consumable_box', subType: 'gum', icon: 'GumBox', desc: 'Open to get 10 Gums', rarity: 'Common' },
+            { id: 'he_gum_box', name: 'HE Bubble Gum Box (5ea)', qty: 5, type: 'consumable_box', subType: 'he_gum', icon: 'HeGumBox', desc: 'Open to get 5 HE Gums', rarity: 'Rare' }
+        ];
+        
+        const ITEM_DETAILS = {
+            'spell': { name: 'Coagulated Spell', desc: 'ผลึกเวทมนตร์สีม่วง', type: 'Etc', rarity: 'Common' },
+            'magic': { name: 'Contaminated Magic', desc: 'พลังงานเวทมนตร์สีแดง', type: 'Etc', rarity: 'Uncommon' },
+            'gum': { name: 'Bubble Gum', desc: 'หมากฝรั่งเพิ่มอัตราการดรอปไอเทม 100% เป็นเวลา 30 นาที', type: 'Consumable', rarity: 'Common' },
+            'he_gum': { name: 'HE Bubble Gum', desc: 'หมากฝรั่งประสิทธิภาพสูง เพิ่มอัตราการดรอปไอเทม 200% เป็นเวลา 15 นาที', type: 'Consumable', rarity: 'Rare' },
+            'silvervine': { name: 'Silvervine', desc: 'ผลไม้แมว ใช้สำหรับแลกเปลี่ยนหรือเปิดใช้งานบริการพิเศษ', type: 'Etc', rarity: 'Common' },
+            'premium_staff': { name: 'Premium Staff', desc: 'คฑาสำหรับสมาชิก VIP ใช้สำหรับเปิดใช้งาน Silvervine Buff', type: 'Tool', rarity: 'Legendary' }
+        };
+
+        const DROP_TABLE = [
+            { id: 'elu', name: 'Elunium', rate: 0.4, min: 1, max: 2, icon: 'Elunium', desc: 'แร่ธาตุหายากที่มีความแข็งแกร่งเป็นเลิศ ใช้สำหรับตีบวกอุปกรณ์ป้องกัน (Armor)', type: 'Ore', rarity: 'Common' },
+            { id: 'ori', name: 'Oridecon', rate: 0.4, min: 1, max: 2, icon: 'Oridecon', desc: 'แร่ธาตุที่เปี่ยมไปด้วยพลังทำลายล้าง ใช้สำหรับตีบวกอาวุธ (Weapon)', type: 'Ore', rarity: 'Common' },
+            { id: 'card_wk', name: 'White Knight Card', rarity: 'Rare', rate: 0.05, min: 1, max: 1, icon: 'Card', desc: 'การ์ดระดับ Rare ของอัศวินขาว เพิ่มพลังโจมตีมอนสเตอร์ประเภทขนาดกลางและใหญ่ 20%', type: 'Card' },
+            { id: 'card_kk', name: 'Khalitzburg Knight Card', rarity: 'Rare', rate: 0.05, min: 1, max: 1, icon: 'Card', desc: 'การ์ดระดับ Rare ของคาลิทซ์เบิร์ก ลดความเสียหายจากมอนสเตอร์ขนาดกลางและใหญ่ 25%', type: 'Card' },
+            { id: 'card_ogh', name: 'Old Glast Heim Card', rarity: 'Legendary', rate: 0.001, min: 1, max: 1, icon: 'Card', desc: 'การ์ดระดับตำนานของ Glast Heim', type: 'Card' }
+        ];
 
         // --- Helper Functions ---
-        const formatMoney = (n) => new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(n);
-        const formatFullMoney = (n) => new Intl.NumberFormat('th-TH').format(n);
-        
-        const getExpReq = (lv, type) => {
-            if (type === 'base') return Math.floor(100 * Math.pow(lv, 1.5));
-            return Math.floor(50 * Math.pow(lv, 1.3));
-        };
-
+        const formatMoney = (n) => new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(n || 0);
+        const formatFullMoney = (n) => new Intl.NumberFormat('th-TH').format(n || 0);
+        const getExpReq = (lv) => Math.floor(100 * Math.pow(lv || 1, 1.5));
         const handleNumberInput = (e, field, setter) => {
             const val = e.target.value.replace(/[^0-9]/g, '');
             setter(prev => ({ ...prev, [field]: val }));
         };
-
+        const simulateDrops = () => {
+             const drops = [];
+             DROP_TABLE.forEach(item => {
+                 if (Math.random() <= item.rate) {
+                     const qty = Math.floor(Math.random() * (item.max - item.min + 1)) + item.min;
+                     drops.push({ ...item, qty });
+                 }
+             });
+             return drops;
+        };
         const copyToClipboard = (text) => {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.top = "0";
-            textArea.style.left = "0";
-            textArea.style.position = "fixed";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try { document.execCommand('copy'); } catch (err) { console.error('Fallback copy failed', err); }
-            document.body.removeChild(textArea);
+             const textArea = document.createElement("textarea");
+             textArea.value = text;
+             document.body.appendChild(textArea);
+             textArea.select();
+             try { document.execCommand('copy'); } catch (err) {}
+             document.body.removeChild(textArea);
+        };
+        
+        const getItemInfo = (id) => {
+            if (ITEM_DETAILS[id]) return { ...ITEM_DETAILS[id], icon: id };
+            const dropItem = DROP_TABLE.find(d => d.id === id);
+            if (dropItem) return dropItem;
+            const shopItem = SHOP_ITEMS.find(s => s.id === id);
+            if (shopItem) return { ...shopItem, type: 'Box', rarity: shopItem.rarity || 'Common' };
+            if (id === 'premium_staff') return { ...ITEM_DETAILS['premium_staff'], icon: 'PremiumStaff' };
+            
+            return { name: 'Unknown Item', desc: 'No description available.', type: 'Etc', rarity: 'Common', icon: 'Box' };
         };
 
         // --- SVGs & Icons ---
         const SVGs = {
-            Hugin: ({className}) => (
-                <svg viewBox="0 0 120 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M35,45 Q30,80 60,95 Q90,80 85,45" fill="#f5d0a9" stroke="#5a3a29" strokeWidth="2.5" />
-                    <path d="M30,60 Q25,65 32,70" fill="#f5d0a9" stroke="#5a3a29" strokeWidth="2" />
-                    <path d="M90,60 Q95,65 88,70" fill="#f5d0a9" stroke="#5a3a29" strokeWidth="2" />
-                    <path d="M25,50 C10,20 110,20 95,50 C100,30 90,10 60,10 C30,10 20,30 25,50" fill="#fbbf24" stroke="#92400e" strokeWidth="2.5" />
-                    <path d="M35,15 Q60,5 85,15" fill="none" stroke="#fbbf24" strokeWidth="2" opacity="0.6"/>
-                    <path d="M60,10 Q60,25 50,30" fill="none" stroke="#b45309" strokeWidth="2" />
-                    <path d="M60,10 Q65,25 75,28" fill="none" stroke="#b45309" strokeWidth="2" />
-                    <path d="M45,55 Q50,53 55,55" stroke="#3e2723" strokeWidth="2" fill="none" />
-                    <path d="M65,55 Q70,53 75,55" stroke="#3e2723" strokeWidth="2" fill="none" />
-                    <circle cx="50" cy="58" r="2.5" fill="#1e293b" />
-                    <circle cx="70" cy="58" r="2.5" fill="#1e293b" />
-                    <path d="M42,65 Q50,68 58,65" stroke="#d4a373" strokeWidth="1" fill="none" opacity="0.6" />
-                    <path d="M35,58 Q40,62 42,60" stroke="#d4a373" strokeWidth="1" fill="none" opacity="0.6" />
-                    <path d="M78,60 Q80,62 85,58" stroke="#d4a373" strokeWidth="1" fill="none" opacity="0.6" />
-                    <path d="M60,60 L58,72 L62,72 Z" fill="#e0b084" />
-                    <path d="M52,82 Q60,85 68,82" stroke="#5a3a29" strokeWidth="2" fill="none" strokeLinecap="round" />
-                    <circle cx="50" cy="58" r="8" stroke="#94a3b8" strokeWidth="1.5" fill="none" opacity="0.4"/>
-                    <circle cx="70" cy="58" r="8" stroke="#94a3b8" strokeWidth="1.5" fill="none" opacity="0.4"/>
-                    <line x1="58" y1="58" x2="62" y2="58" stroke="#94a3b8" strokeWidth="1.5" opacity="0.4"/>
-                </svg>
-            ),
-            Spell: ({className}) => (
-                <svg viewBox="0 0 100 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="#4b3a8a"></polygon>
-                    <polygon points="50,5 8,30 8,90 50,115 50,60" fill="#6a4eb3"></polygon>
-                    <polygon points="50,5 92,30 92,90 50,115 50,60" fill="#8464d1"></polygon>
-                    <polygon points="50,20 80,40 80,80 50,100 20,80 20,40" fill="#a68af0"></polygon>
-                    <g stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.3">
-                        <line x1="50" y1="5" x2="50" y2="20"></line><line x1="8" y1="30" x2="20" y2="40"></line>
-                        <line x1="92" y1="30" x2="80" y2="40"></line><line x1="8" y1="90" x2="20" y2="80"></line>
-                        <line x1="92" y1="90" x2="80" y2="80"></line><line x1="50" y1="115" x2="50" y2="100"></line>
-                    </g>
-                    <rect x="30" y="35" width="8" height="8" fill="white" opacity="0.6" rx="1"></rect>
-                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="none" stroke="#9d81e1" strokeWidth="2" strokeLinejoin="round"></polygon>
-                </svg>
-            ),
-            Magic: ({className}) => (
-                <svg viewBox="0 0 100 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="#7a1a1a"></polygon>
-                    <polygon points="50,5 8,30 8,90 50,115 50,60" fill="#a32929"></polygon>
-                    <polygon points="50,5 92,30 92,90 50,115 50,60" fill="#c43333"></polygon>
-                    <polygon points="50,20 80,40 80,80 50,100 20,80 20,40" fill="#ff5757"></polygon>
-                    <g stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.3">
-                        <line x1="50" y1="5" x2="50" y2="20"></line><line x1="8" y1="30" x2="20" y2="40"></line>
-                        <line x1="92" y1="30" x2="80" y2="40"></line><line x1="8" y1="90" x2="20" y2="80"></line>
-                        <line x1="92" y1="90" x2="80" y2="80"></line><line x1="50" y1="115" x2="50" y2="100"></line>
-                    </g>
-                    <rect x="30" y="35" width="8" height="8" fill="white" opacity="0.6" rx="1"></rect>
-                    <polygon points="50,5 92,30 92,90 50,115 8,90 8,30" fill="none" stroke="#ff7a7a" strokeWidth="2" strokeLinejoin="round"></polygon>
-                </svg>
-            ),
-            Silvervine: ({className}) => (
-                <svg viewBox="0 0 120 160" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M60,10 L60,25" stroke="#4a7729" strokeWidth="4" strokeLinecap="round"></path>
-                    <path d="M60,25 Q40,15 35,25" fill="none" stroke="#6aa329" strokeWidth="3" strokeLinecap="round"></path>
-                    <path d="M60,25 Q80,15 85,25" fill="none" stroke="#6aa329" strokeWidth="3" strokeLinecap="round"></path>
-                    <path d="M60,25 C75,25 75,45 75,60 C75,80 95,90 95,115 C95,145 75,155 60,155 C45,155 25,145 25,115 C25,90 45,80 45,60 C45,45 45,25 60,25 Z" fill="#8cc63f"></path>
-                    <path d="M60,25 C60,25 70,45 70,60 C70,80 88,90 88,115 C88,138 75,148 60,148 L60,155 C75,155 95,145 95,115 C95,90 75,80 75,60 C75,45 75,25 60,25" fill="#6aa329" opacity="0.6"></path>
-                    <path d="M48,40 Q40,50 40,65" stroke="white" strokeWidth="3" strokeLinecap="round" opacity="0.4" fill="none"></path>
-                    <ellipse cx="45" cy="100" rx="4" ry="12" fill="white" opacity="0.3" transform="rotate(-10, 45, 100)"></ellipse>
-                    <path d="M35,110 Q45,120 55,115" fill="none" stroke="#4a7729" strokeWidth="1" opacity="0.2"></path>
-                    <path d="M65,125 Q75,130 80,120" fill="none" stroke="#4a7729" strokeWidth="1" opacity="0.2"></path>
-                </svg>
-            ),
-            SilvervineBox: ({className}) => (
-                <svg viewBox="0 0 250 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+             // Basic Fallback Shapes
+            Spell: ({className}) => (<svg viewBox="0 0 32 40" className={className} fill="none"><g fill="#2e1a47"><rect x="10" y="2" width="12" height="1"></rect><rect x="8" y="3" width="2" height="1"></rect> <rect x="22" y="3" width="2" height="1"></rect><rect x="6" y="4" width="2" height="2"></rect> <rect x="24" y="4" width="2" height="2"></rect><rect x="5" y="6" width="1" height="4"></rect> <rect x="26" y="6" width="1" height="4"></rect><rect x="4" y="10" width="1" height="20"></rect> <rect x="27" y="10" width="1" height="20"></rect><rect x="5" y="30" width="1" height="4"></rect> <rect x="26" y="30" width="1" height="4"></rect><rect x="6" y="34" width="2" height="2"></rect> <rect x="24" y="34" width="2" height="2"></rect><rect x="8" y="36" width="2" height="1"></rect> <rect x="22" y="36" width="2" height="1"></rect><rect x="10" y="37" width="12" height="1"></rect></g><g fill="#6b44a3"><rect x="10" y="3" width="12" height="1"></rect><rect x="8" y="4" width="16" height="2"></rect><rect x="6" y="6" width="20" height="4"></rect><rect x="5" y="10" width="22" height="20"></rect><rect x="6" y="30" width="20" height="4"></rect><rect x="8" y="34" width="16" height="2"></rect><rect x="10" y="36" width="12" height="1"></rect></g><g fill="#4c2f75"><rect x="20" y="4" width="4" height="2"></rect><rect x="22" y="6" width="4" height="4"></rect><rect x="24" y="10" width="3" height="20"></rect><rect x="22" y="30" width="4" height="4"></rect><rect x="20" y="34" width="4" height="2"></rect><rect x="8" y="34" width="12" height="2"></rect><rect x="10" y="36" width="12" height="1"></rect><rect x="12" y="22" width="4" height="6"></rect><rect x="16" y="26" width="6" height="4"></rect><rect x="8" y="28" width="6" height="4"></rect></g><g fill="#9e7bd3"><rect x="10" y="3" width="10" height="1"></rect><rect x="8" y="4" width="4" height="2"></rect><rect x="6" y="6" width="4" height="4"></rect><rect x="5" y="10" width="3" height="20"></rect><rect x="6" y="30" width="4" height="4"></rect><rect x="10" y="12" width="6" height="8"></rect><rect x="16" y="8" width="4" height="6"></rect></g><g fill="#ffffff"><rect x="12" y="4" width="6" height="2"></rect><rect x="10" y="6" width="4" height="4"></rect><rect x="8" y="8" width="2" height="6"></rect><rect x="20" y="16" width="2" height="2"></rect></g></svg>),
+            Magic: ({className}) => (<svg viewBox="0 0 32 40" className={className} fill="none"><g id="layer-outline"><rect x="10" y="2" width="12" height="1" fill="#4a0d0d"/><rect x="8" y="3" width="2" height="1" fill="#4a0d0d"/><rect x="22" y="3" width="2" height="1" fill="#4a0d0d"/><rect x="6" y="4" width="2" height="2" fill="#4a0d0d"/><rect x="24" y="4" width="2" height="2" fill="#4a0d0d"/><rect x="5" y="6" width="1" height="4" fill="#4a0d0d"/><rect x="26" y="6" width="1" height="4" fill="#4a0d0d"/><rect x="4" y="10" width="1" height="18" fill="#4a0d0d"/><rect x="27" y="10" width="1" height="18" fill="#4a0d0d"/><rect x="5" y="28" width="1" height="4" fill="#4a0d0d"/><rect x="26" y="28" width="1" height="4" fill="#4a0d0d"/><rect x="6" y="32" width="2" height="2" fill="#4a0d0d"/><rect x="24" y="32" width="2" height="2" fill="#4a0d0d"/><rect x="8" y="34" width="2" height="1" fill="#4a0d0d"/><rect x="22" y="34" width="2" height="1" fill="#4a0d0d"/><rect x="10" y="35" width="12" height="1" fill="#4a0d0d"/></g><g id="layer-base"><rect x="10" y="3" width="12" height="1" fill="#c92a2a"/><rect x="8" y="4" width="16" height="2" fill="#c92a2a"/><rect x="6" y="6" width="20" height="4" fill="#c92a2a"/><rect x="5" y="10" width="22" height="18" fill="#c92a2a"/><rect x="6" y="28" width="20" height="4" fill="#c92a2a"/><rect x="8" y="32" width="16" height="2" fill="#c92a2a"/><rect x="10" y="34" width="12" height="1" fill="#c92a2a"/></g><g id="layer-shadow"><rect x="25" y="10" width="2" height="18" fill="#7f1d1d"/><rect x="22" y="6" width="2" height="4" fill="#7f1d1d"/><rect x="24" y="28" width="2" height="4" fill="#7f1d1d"/><rect x="20" y="32" width="4" height="2" fill="#7f1d1d"/><rect x="10" y="34" width="12" height="1" fill="#7f1d1d"/><rect x="12" y="18" width="8" height="8" fill="#7f1d1d"/><rect x="10" y="22" width="2" height="6" fill="#7f1d1d"/><rect x="20" y="20" width="2" height="4" fill="#7f1d1d"/><rect x="8" y="28" width="6" height="2" fill="#7f1d1d"/><rect x="16" y="28" width="6" height="2" fill="#7f1d1d"/></g><g id="layer-light"><rect x="10" y="4" width="8" height="2" fill="#ff8787"/><rect x="8" y="6" width="4" height="4" fill="#ff8787"/><rect x="6" y="10" width="2" height="10" fill="#ff8787"/><rect x="18" y="8" width="4" height="4" fill="#ff8787"/><rect x="8" y="24" width="2" height="2" fill="#ff8787"/><rect x="22" y="16" width="2" height="2" fill="#ff8787"/></g><g id="layer-highlight"><rect x="10" y="5" width="6" height="3" fill="#ffe3e3"/><rect x="8" y="7" width="2" height="4" fill="#ffe3e3"/><rect x="20" y="10" width="2" height="2" fill="#ffe3e3"/><rect x="6" y="12" width="1" height="4" fill="#ffe3e3"/></g></svg>),
+            Gum: ({className}) => (<svg viewBox="0 0 160 160" className={className} fill="none"><g transform="rotate(15, 80, 100)"><rect x="30" y="80" width="100" height="35" rx="3" fill="#ffb38a" stroke="#d18a66" strokeWidth="1.5"/><rect x="35" y="83" width="90" height="29" rx="2" fill="#ffe0cf"/><circle cx="50" cy="97" r="6" fill="#ff7da1"/></g><g transform="rotate(-30, 80, 70)"><rect x="30" y="45" width="100" height="35" rx="3" fill="#a0d8f5" stroke="#6ba8cc" strokeWidth="1.5"/><rect x="35" y="48" width="90" height="29" rx="2" fill="#def4ff"/><circle cx="55" cy="62" r="5" fill="#ff9aa2"/><circle cx="70" cy="58" r="6" fill="#fff5ba"/><rect x="95" y="55" width="12" height="15" rx="1" fill="#4d3b2c" opacity="0.8"/></g></svg>),
+            HeGum: ({className}) => (
+                <svg viewBox="0 0 200 180" className={className} fill="none">
                     <defs>
-                        <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#b19cd9" stopOpacity="1"></stop>
-                            <stop offset="100%" stopColor="#7a59c7" stopOpacity="1"></stop>
-                        </linearGradient>
-                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#f9e498" stopOpacity="1"></stop>
-                            <stop offset="100%" stopColor="#d4a017" stopOpacity="1"></stop>
+                        <radialGradient id="heGumGrad" cx="40%" cy="40%" r="60%">
+                            <stop offset="0%" stopColor="#ff6b6b"></stop>
+                            <stop offset="70%" stopColor="#c92a2a"></stop>
+                            <stop offset="100%" stopColor="#862e2e"></stop>
+                        </radialGradient>
+                        <linearGradient id="heShine" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="white" stopOpacity="0.6"></stop>
+                            <stop offset="100%" stopColor="white" stopOpacity="0"></stop>
                         </linearGradient>
                     </defs>
-                    <path d="M40,80 L210,80 L220,160 L30,160 Z" fill="url(#boxGrad)" stroke="#5e449e" strokeWidth="2"></path>
-                    <path d="M30,85 C30,30 220,30 220,85 L220,95 L30,95 Z" fill="#c3b1e1" stroke="#5e449e" strokeWidth="2"></path>
-                    <path d="M45,85 C45,45 205,45 205,85" fill="none" stroke="white" strokeWidth="3" strokeOpacity="0.3"></path>
-                    <rect x="35" y="80" width="10" height="85" fill="url(#goldGrad)" rx="2"></rect>
-                    <rect x="205" y="80" width="10" height="85" fill="url(#goldGrad)" rx="2"></rect>
-                    <rect x="35" y="85" width="180" height="8" fill="url(#goldGrad)"></rect>
-                    <circle cx="125" cy="95" r="22" fill="#fdf2d0" stroke="#d4a017" strokeWidth="2"></circle>
-                    <circle cx="125" cy="82" r="5" fill="#ff44cc" stroke="white" strokeWidth="1"></circle>
-                    <path d="M110,105 Q125,120 140,105" fill="none" stroke="#d4a017" strokeWidth="2"></path>
-                </svg>
-            ),
-            Gum: ({className}) => (
-                <svg viewBox="0 0 160 160" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g transform="rotate(15, 80, 100)">
-                        <rect x="30" y="80" width="100" height="35" rx="3" fill="#ffb38a" stroke="#d18a66" strokeWidth="1.5"></rect>
-                        <rect x="35" y="83" width="90" height="29" rx="2" fill="#ffe0cf"></rect>
-                        <circle cx="50" cy="97" r="6" fill="#ff7da1"></circle>
-                    </g>
-                    <g transform="rotate(-30, 80, 70)">
-                        <rect x="30" y="45" width="100" height="35" rx="3" fill="#a0d8f5" stroke="#6ba8cc" strokeWidth="1.5"></rect>
-                        <rect x="35" y="48" width="90" height="29" rx="2" fill="#def4ff"></rect>
-                        <circle cx="55" cy="62" r="5" fill="#ff9aa2"></circle>
-                        <circle cx="70" cy="58" r="6" fill="#fff5ba"></circle>
-                        <rect x="95" y="55" width="12" height="15" rx="1" fill="#4d3b2c" opacity="0.8"></rect>
+                    <ellipse cx="100" cy="150" rx="70" ry="15" fill="#e2e8f0" opacity="0.5"></ellipse>
+                    <g>
+                        <ellipse cx="70" cy="100" rx="20" ry="14" fill="url(#heGumGrad)" transform="rotate(-15 70 100)"></ellipse>
+                        <ellipse cx="130" cy="100" rx="20" ry="14" fill="url(#heGumGrad)" transform="rotate(15 130 100)"></ellipse>
+                        <ellipse cx="100" cy="85" rx="20" ry="14" fill="url(#heGumGrad)"></ellipse>
+                        <ellipse cx="60" cy="120" rx="22" ry="15" fill="url(#heGumGrad)" transform="rotate(-10 60 120)"></ellipse>
+                        <ellipse cx="140" cy="120" rx="22" ry="15" fill="url(#heGumGrad)" transform="rotate(10 140 120)"></ellipse>
+                        <ellipse cx="100" cy="115" rx="22" ry="15" fill="url(#heGumGrad)"></ellipse>
+                        <ellipse cx="80" cy="130" rx="22" ry="15" fill="url(#heGumGrad)" transform="rotate(-5 80 130)"></ellipse>
+                        <ellipse cx="120" cy="130" rx="22" ry="15" fill="url(#heGumGrad)" transform="rotate(5 120 130)"></ellipse>
+                        <ellipse cx="100" cy="140" rx="25" ry="16" fill="url(#heGumGrad)"></ellipse>
+                        <ellipse cx="65" cy="145" rx="22" ry="15" fill="url(#heGumGrad)" transform="rotate(-20 65 145)"></ellipse>
+                        <ellipse cx="135" cy="145" rx="22" ry="15" fill="url(#heGumGrad)" transform="rotate(20 135 145)"></ellipse>
+                        <ellipse cx="145" cy="160" rx="20" ry="12" fill="url(#heGumGrad)" transform="rotate(10 145 160)"></ellipse>
+                        <ellipse cx="95" cy="132" rx="12" ry="6" fill="url(#heShine)"></ellipse>
+                        <ellipse cx="60" cy="138" rx="10" ry="5" fill="url(#heShine)"></ellipse>
+                        <ellipse cx="135" cy="138" rx="10" ry="5" fill="url(#heShine)"></ellipse>
+                        <ellipse cx="145" cy="155" rx="8" ry="4" fill="url(#heShine)"></ellipse>
+                        <ellipse cx="95" cy="78" rx="8" ry="4" fill="url(#heShine)"></ellipse>
                     </g>
                 </svg>
             ),
-            GumBox: ({className}) => (
-                <svg viewBox="0 0 150 150" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M30,50 L120,50 L125,120 L25,120 Z" fill="#b1a5cc" stroke="#7e709e" strokeWidth="2"></path>
-                    <path d="M25,55 L125,55 L125,35 C125,35 75,30 25,35 Z" fill="#c9bddb" stroke="#7e709e" strokeWidth="2"></path>
-                    <path d="M90,120 C100,105 125,110 125,95 L125,120 Z" fill="#d4af37" opacity="0.6"></path>
-                    <path d="M30,50 L45,50 L30,65 Z" fill="#d4af37" opacity="0.8"></path>
-                    <path d="M120,50 L105,50 L120,65 Z" fill="#d4af37" opacity="0.8"></path>
-                </svg>
-            ),
-            Zeny: ({className}) => (
-                <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
-                </svg>
-            )
+
+            GumBox: ({className}) => (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>),
+            HeGumBox: ({className}) => (<svg viewBox="0 0 160 160" className={className} fill="none"><rect x="30" y="30" width="100" height="100" rx="10" fill="#fecaca" stroke="#dc2626" strokeWidth="2"/><path d="M30 60 L130 60" stroke="#dc2626" strokeWidth="2"/><path d="M80 60 L80 130" stroke="#dc2626" strokeWidth="2"/><g transform="translate(90, 90) scale(0.4)"><ellipse cx="70" cy="100" rx="30" ry="20" fill="#ff6b6b"/></g></svg>),
+            Silvervine: ({className}) => (<svg viewBox="0 0 120 160" className={className} fill="none"><path d="M60,10 L60,25" stroke="#4a7729" strokeWidth="4"/><path d="M60,25 C75,25 75,45 75,60 C75,80 95,90 95,115 C95,145 75,155 60,155 C45,155 25,145 25,115 C25,90 45,80 45,60 C45,45 45,25 60,25 Z" fill="#8cc63f"/></svg>),
+            SilvervineBox: ({className}) => (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>),
+            Premium: ({className}) => (<svg viewBox="0 0 256 256" className={className} preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="boxSide" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#ec4899"/> <stop offset="50%" stopColor="#db2777"/> <stop offset="100%" stopColor="#be185d"/> </linearGradient><linearGradient id="lidTop" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#fbcfe8"/> <stop offset="100%" stopColor="#f472b6"/> </linearGradient><linearGradient id="lidSide" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f9a8d4"/> <stop offset="100%" stopColor="#db2777"/> </linearGradient><linearGradient id="silverRibbon" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f1f5f9"/> <stop offset="40%" stopColor="#94a3b8"/> <stop offset="60%" stopColor="#cbd5e1"/> <stop offset="100%" stopColor="#475569"/> </linearGradient><radialGradient id="goldCharm" cx="40%" cy="40%" r="60%"><stop offset="0%" stopColor="#fde047"/> <stop offset="100%" stopColor="#ca8a04"/> </radialGradient><filter id="premBoxShadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceAlpha" stdDeviation="6"/><feOffset dx="0" dy="8" result="offsetblur"/><feComponentTransfer><feFuncA type="linear" slope="0.4"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="premGlow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#premBoxShadow)"><path d="M 128,230 L 128,200 L 210,120 L 210,150 Q 210,190 128,230 Z" fill="url(#boxSide)"/> <path d="M 128,230 L 128,200 L 46,120 L 46,150 Q 46,190 128,230 Z" fill="url(#boxSide)"/> <path d="M 55,160 Q 90,190 128,215 Q 166,190 200,160" fill="none" stroke="#be185d" strokeWidth="1"/> <path d="M 128,200 L 210,120 C 240,90 180,40 128,90 C 76,40 16,90 46,120 Z" fill="#db2777" transform="translate(0, 10)"/> <path d="M 128,190 L 210,110 C 240,80 180,30 128,80 C 76,30 16,80 46,110 Z" fill="url(#lidTop)" stroke="#fbcfe8" strokeWidth="1"/> <path d="M 46,110 L 46,125 L 128,205 L 128,190 Z" fill="url(#lidSide)"/> <path d="M 210,110 L 210,125 L 128,205 L 128,190 Z" fill="url(#lidSide)"/> <path d="M 46,110 L 128,190 L 210,110" fill="none" stroke="#fde047" strokeWidth="2" strokeLinecap="round" opacity="0.6"/> <path d="M 80,60 L 180,160 L 160,175 L 65,75 Z" fill="url(#silverRibbon)" opacity="0.9" clipPath="path('M 128,190 L 210,110 C 240,80 180,30 128,80 C 76,30 16,80 46,110 Z')"/> <path d="M 170,60 L 70,160 L 90,175 L 185,75 Z" fill="url(#silverRibbon)" opacity="0.9" clipPath="path('M 128,190 L 210,110 C 240,80 180,30 128,80 C 76,30 16,80 46,110 Z')"/> <path d="M 120,197 L 120,225 L 136,225 L 136,197" fill="#94a3b8"/> <g transform="translate(128, 90)"> <path d="M -5,5 Q -30,-40 -10,-50 Q 10,-40 0,0" fill="none" stroke="#e2e8f0" strokeWidth="4"/> <path d="M -5,5 Q -30,-40 -10,-50 Q 10,-40 0,0" fill="none" stroke="#64748b" strokeWidth="1.5"/> <path d="M 5,5 Q 30,-40 10,-50 Q -10,-40 0,0" fill="none" stroke="#e2e8f0" strokeWidth="4"/> <path d="M 5,5 Q 30,-40 10,-50 Q -10,-40 0,0" fill="none" stroke="#64748b" strokeWidth="1.5"/> <path d="M -5,5 Q -50,-10 -40,10 Q -20,20 0,5" fill="none" stroke="#e2e8f0" strokeWidth="4"/> <path d="M -5,5 Q -50,-10 -40,10 Q -20,20 0,5" fill="none" stroke="#64748b" strokeWidth="1.5"/> <path d="M 5,5 Q 50,-10 40,10 Q 20,20 0,5" fill="none" stroke="#e2e8f0" strokeWidth="4"/> <path d="M 5,5 Q 50,-10 40,10 Q 20,20 0,5" fill="none" stroke="#64748b" strokeWidth="1.5"/> <path d="M -5,10 Q -20,40 -30,60" fill="none" stroke="#e2e8f0" strokeWidth="3"/> <path d="M -5,10 Q -20,40 -30,60" fill="none" stroke="#64748b" strokeWidth="1"/> <path d="M 5,10 Q 20,40 30,60" fill="none" stroke="#e2e8f0" strokeWidth="3"/> <path d="M 5,10 Q 20,40 30,60" fill="none" stroke="#64748b" strokeWidth="1"/> </g> <g transform="translate(128, 90)"> <circle cx="0" cy="5" r="14" fill="url(#goldCharm)" stroke="#b45309" strokeWidth="1"/> <ellipse cx="-4" cy="0" rx="6" ry="3" fill="white" opacity="0.6" transform="rotate(-45 -4 0)"/> <ellipse cx="-4" cy="3" rx="1.5" ry="2" fill="#713f12"/> <path d="M 3,3 L 6,1" stroke="#713f12" strokeWidth="1.5" strokeLinecap="round"/> <path d="M -5,8 Q 0,13 5,8" fill="none" stroke="#713f12" strokeWidth="1.5" strokeLinecap="round"/> </g> <g filter="url(#premGlow)"> <path d="M 80,60 L 83,68 L 91,71 L 83,74 L 80,82 L 77,74 L 69,71 L 77,68 Z" fill="white" opacity="0.8"/> <path d="M 170,100 L 172,105 L 177,107 L 172,109 L 170,114 L 168,109 L 163,107 L 168,105 Z" fill="white" opacity="0.9"/> <circle cx="100" cy="150" r="1.5" fill="white" opacity="0.6"/> </g> </g></svg>),
+            Kafra: ({className}) => (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10h-10z" opacity="0.5"/></svg>),
+            Wish: ({className}) => (<svg viewBox="0 0 120 120" className={className} fill="none"><path d="M60 10 L75 45 L110 50 L85 75 L90 110 L60 95 L30 110 L35 75 L10 50 L45 45 Z" fill="#fbbf24" stroke="#d97706" strokeWidth="4"/><circle cx="60" cy="60" r="10" fill="#fff" fillOpacity="0.4"/></svg>),
+            Zeny: ({className}) => (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>),
+            Oridecon: ({className}) => (<svg viewBox="0 0 100 100" className={className} fill="none"><path d="M50 15L85 50L50 85L15 50Z" fill="#d8b4fe" stroke="#a855f7" strokeWidth="2"/><path d="M50 15L50 85M15 50L85 50" stroke="#f3e8ff" strokeWidth="1" opacity="0.6"/></svg>),
+            Elunium: ({className}) => (<svg viewBox="0 0 100 100" className={className} fill="none"><path d="M50 10L80 30L80 70L50 90L20 70L20 30L50 10Z" fill="#94a3b8" stroke="#475569" strokeWidth="2"/><path d="M50 10L50 90M20 30L80 30M20 70L80 70" stroke="#cbd5e1" strokeWidth="1" opacity="0.5"/></svg>),
+            Card: ({className}) => (<svg viewBox="0 0 80 120" className={className} fill="none"><rect x="10" y="10" width="60" height="100" rx="4" fill="#1e293b" stroke="#fbbf24" strokeWidth="2"/><circle cx="40" cy="95" r="10" fill="#fbbf24" fillOpacity="0.2"/></svg>),
+            Cost: ({className}) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>),
+            Clock: ({className}) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>),
+            RewardPopup: ({className}) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z" /></svg>)
         };
 
-        const Icon = ({ name, size = 20, className = "" }) => {
+        const Icon = ({ name, size = 20, className }) => {
             const icons = {
-                Home: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
-                History: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
-                Box: <><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,
-                Settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0 2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+                Home: <path d="M21.085,6.758c-.07-.149-.176-.279-.308-.377-.13-.097-.262-.195-.395-.293V3.537c0-.552-.447-1-1-1s-1,.448-1,1v1.1c-2.695-1.912-5.398-3.637-6.383-3.637-1.299,0-5.49,2.927-8.778,5.382-.133,.1-.24,.231-.31,.383-.047,.102-1.154,2.562-1.154,7.578,0,2.165,.202,5.37,.432,6.858,.059,.38,.33,.692,.698,.804,.134,.041,3.346,.995,9.112,.995s8.977-.955,9.11-.995c.367-.112,.639-.424,.697-.804,.231-1.498,.435-4.703,.435-6.858,0-5.059-1.11-7.483-1.157-7.584Zm-11.17,14.196v-4.073c0-1.211,.936-2.196,2.085-2.196s2.085,.985,2.085,2.196v4.073c-.65,.029-1.345,.046-2.085,.046s-1.435-.017-2.085-.046Zm10.002-.711c-.704,.159-2.002,.407-3.832,.576v-3.938c0-2.314-1.832-4.196-4.085-4.196s-4.085,1.882-4.085,4.196v3.938c-1.83-.168-3.129-.417-3.834-.576-.178-1.559-.323-4.132-.323-5.901,0-3.724,.653-5.875,.888-6.527,2.938-2.181,6.457-4.55,7.353-4.804,.893,.258,4.415,2.627,7.358,4.806,.235,.649,.886,2.778,.886,6.525,0,1.763-.146,4.337-.325,5.901Z"/>,
+                Inventory: <g fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"><path d="M 48,70 Q 38,70 38,90 L 38,200 Q 38,230 68,230 L 188,230 Q 218,230 218,200 L 218,90 Q 218,70 208,70 Z"/><path d="M 28,120 Q 28,110 38,110 L 48,110 L 48,190 L 38,190 Q 28,190 28,180 Z"/><path d="M 228,120 Q 228,110 218,110 L 208,110 L 208,190 L 218,190 Q 228,190 228,180 Z"/><path d="M 88,140 Q 88,135 98,135 L 158,135 Q 168,135 168,140 L 168,200 Q 168,210 158,210 L 98,210 Q 88,210 88,200 Z"/><path d="M 88,140 L 168,140 L 158,160 Q 128,170 98,160 Z"/><circle cx="128" cy="155" r="4"/><path d="M 48,70 Q 48,40 78,40 L 178,40 Q 208,40 208,70 L 218,90 L 208,120 Q 128,150 48,120 L 38,90 Z"/><rect x="80" y="40" width="16" height="100" rx="2"/><rect x="160" y="40" width="16" height="100" rx="2"/><rect x="78" y="110" width="20" height="16" rx="2"/><rect x="84" y="114" width="8" height="8" rx="1"/> <rect x="158" y="110" width="20" height="16" rx="2"/><rect x="164" y="114" width="8" height="8" rx="1"/> <path d="M 58,115 Q 128,140 198,115" strokeDasharray="4 4" opacity="0.5"/><path d="M 60,60 L 196,60" strokeDasharray="4 4" opacity="0.5"/><path d="M 100,40 Q 100,20 128,20 Q 156,20 156,40"/></g>,
+                Shop: <><circle cx="7" cy="22" r="2"/><circle cx="17" cy="22" r="2"/><path d="M22.984,6.018A3.675,3.675,0,0,0,20.364,5H5.654L5.391,2.938A3.328,3.328,0,0,0,2.087,0H1.5A1.5,1.5,0,0,0,0,1.5H0A1.5,1.5,0,0,0,1.5,3h.587a.331.331,0,0,1,.326.3l1.5,11.759A3.327,3.327,0,0,0,7.217,18H17.339a5.5,5.5,0,0,0,5.3-4.042l1.246-4.531A3.489,3.489,0,0,0,22.984,6.018ZM19.75,13.163A2.508,2.508,0,0,1,17.339,15H7.217a.329.329,0,0,1-.325-.3L6.037,8H20.514A.5.5,0,0,1,21,8.632Z"/></>,
+                Dungeon: <><path d="M12.5,9.9c0.3-1.4,1-2.7,2.1-3.8C16.7,4,19.6,3.3,22.3,4"/><path d="M9.2,14.2C8.4,13,8,11.5,8,10c0-3,1.6-5.5,4-6.9"/><path d="M9.9,19.5c-1.4-0.3-2.7-1-3.8-2.1C4,15.3,3.3,12.4,4,9.7"/><path d="M14.2,22.8C13,23.6,11.5,24,10,24c-3,0-5.5-1.6-6.9-4"/><path d="M19.5,22.1c-0.3,1.4-1,2.7-2.1,3.8c-2.1,2.1-5.1,2.8-7.7,2.1"/><path d="M22.8,17.8C23.6,19,24,20.5,24,22c0,3-1.6,5.5-4,6.9"/><path d="M22.1,12.5c1.4,0.3,2.7,1,3.8,2.1c2.1,2.1,2.8,5.1,2.1,7.7"/><path d="M17.8,9.2C19,8.4,20.5,8,22,8c3,0,5.5,1.6,6.9,4"/><circle cx="16" cy="16" r="4"/></>,
+                History: <><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></>,
                 Plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
                 Trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></>,
-                TrendingUp: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
-                Check: <polyline points="20 6 9 17 4 12"/>,
-                AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>,
-                Sparkles: <path d="M12 3v1m0 16v1m5-15-1 1m-10 10-1 1M21 12h-1M4 12H3m15.364 6.364-1 1m-10.728-10.728-1 1M12 8l-2 4 2 4 2-4-2-4z"/>,
-                Loader: <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>,
-                Copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></>,
-                Refresh: <><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></>,
-                Key: <><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></>,
-                Pen: <><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></>,
-                X: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>,
-                Save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></>,
-                ToggleOn: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#4ade80"/><circle cx="16" cy="12" r="5" fill="white"/></>,
-                ToggleOff: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#475569"/><circle cx="8" cy="12" r="5" fill="white"/></>,
-                Warp: <><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" opacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10 10 10 0 0 1-10-10A10 10 0 0 1 12 2m0 2a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8z"/><path d="M12 8a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 2a2 2 0 0 0-2 2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2z"/></>,
-                Lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>
+                ToggleOn: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#10b981"/><circle cx="16" cy="12" r="5" fill="white"/></>, // Zinc-Emerald
+                ToggleOff: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#52525b"/><circle cx="8" cy="12" r="5" fill="white"/></>, // Zinc-600
+                X: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+                Settings: <><path d="M12,8a4,4,0,1,0,4,4A4,4,0,0,0,12,8Zm0,6a2,2,0,1,1,2-2A2,2,0,0,1,12,14Z"/><path d="M21.294,13.9l-.444-.256a9.1,9.1,0,0,0,0-3.29l.444-.256a3,3,0,1,0-3-5.2l-.445.257A8.977,8.977,0,0,0,15,3.513V3A3,3,0,0,0,9,3v.513A8.977,8.977,0,0,0,6.152,5.159L5.705,4.9a3,3,0,0,0-3,5.2l.444.256a9.1,9.1,0,0,0,0,3.29l-.444.256a3,3,0,1,0,3,5.2l.445-.257A8.977,8.977,0,0,0,9,20.487V21a3,3,0,0,0,6,0v-.513a8.977,8.977,0,0,0,2.848-1.646l.447.258a3,3,0,0,0,3-5.2Zm-2.548-3.776a7.048,7.048,0,0,1,0,3.75,1,1,0,0,0,.464,1.133l1.084.626a1,1,0,0,1-1,1.733l-1.086-.628a1,1,0,0,0-1.215.165,6.984,6.984,0,0,1-3.243,1.875,1,1,0,0,0-.751.969V21a1,1,0,0,1-2,0V19.748a1,1,0,0,0-.751-.969A6.984,6.984,0,0,1,7.006,16.9a1,1,0,0,0-1.215-.165l-1.084.627a1,1,0,1,1-1-1.732l1.084-.626a1,1,0,0,0,.464-1.133,7.048,7.048,0,0,1,0-3.75A1,1,0,0,0,4.79,8.992L3.706,8.366a1,1,0,0,1,1-1.733l1.086.628A1,1,0,0,0,7.006,7.1a6.984,6.984,0,0,1,3.243-1.875A1,1,0,0,0,11,4.252V3a1,1,0,0,1,2,0V4.252a1,1,0,0,0,.751.969A6.984,6.984,0,0,1,16.994,7.1a1,1,0,0,0,1.215.165l1.084-.627a1,1,0,1,1,1,1.732l-1.084.626A1,1,0,0,0,18.746,10.125Z"/></>,
+                Copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></>,
+                Box: <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
             };
-            return (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name]}
-                </svg>
-            );
+            
+            const iconDef = icons[name] || icons.Box;
+            let viewBox = "0 0 24 24";
+            if (name === "Inventory") viewBox = "0 0 256 256";
+            if (name === "Dungeon") viewBox = "0 0 32 32";
+            if (name === "Home") viewBox = "0 0 24 24";
+            if (name === "Shop") viewBox = "0 0 24 24";
+            if (name === "Settings") viewBox = "0 0 24 24";
+
+            return <svg width={size} height={size} viewBox={viewBox} fill="none" stroke="currentColor" strokeWidth={name === 'Inventory' ? "16" : "2"} strokeLinecap="round" strokeLinejoin="round" className={className}>{iconDef}</svg>;
+        };
+        
+        // Use SmartIcon to resolve URL or fallback
+        const SmartIcon = ({ name, className }) => {
+            const [error, setError] = useState(false);
+            const BASE_URL = "http://sdekzaaa-source.github.io/ro-farm-app/";
+            
+            const imgMap = {
+                'Spell': 'Coagulated Spell.png',
+                'Magic': 'Contaminated Magic.png',
+                'Gum': 'Bubble Gum.png',
+                'HeGum': 'HE Bubble Gum.png',
+                'Silvervine': 'Silvervine Fruit.png',
+                'GumBox': 'Bubble Gum Box.png',
+                'HeGumBox': 'HE Bubble Gum Box.png',
+                'SilvervineBox': 'Silvervine Box.png',
+                'Premium': 'Premium Box.png',
+                'Kafra': 'Kafra Buff.png', 
+                'PremiumStaff': 'Premium Service Staff.png',
+                'elu': 'Elunium.png',
+                'ori': 'Oridecon.png',
+                'Zeny': 'Zeny.png',
+                'DEK': 'DEK.png',
+                'OGH_BOSS': 'OGH BOSS.png',
+                'AOGH_BOSS': 'AOGH BOSS.png'
+            };
+
+            // Custom composite render for Gum Box
+            if (name === 'GumBox') {
+                 return (
+                     <div className={`relative ${className}`}>
+                        <img src={`${BASE_URL}Bubble Gum Box.png`} alt="Box" className="w-full h-full object-contain" />
+                        <img src={`${BASE_URL}Bubble Gum.png`} alt="Gum" className="absolute bottom-0 right-0 w-1/2 h-1/2 object-contain filter drop-shadow-md" />
+                     </div>
+                );
+            }
+            // Custom composite render for HE Gum Box
+            if (name === 'HeGumBox') {
+                return (
+                     <div className={`relative ${className}`}>
+                        <img src={`${BASE_URL}Bubble Gum Box.png`} alt="Box" className="w-full h-full object-contain filter hue-rotate-15" />
+                        <img src={`${BASE_URL}HE Bubble Gum.png`} alt="HE" className="absolute bottom-0 right-0 w-1/2 h-1/2 object-contain filter drop-shadow-md" />
+                     </div>
+                );
+            }
+
+            if (!error && imgMap[name]) {
+                return <img src={`${BASE_URL}${imgMap[name]}`} alt={name} className={`object-contain ${className}`} onError={() => setError(true)} />;
+            }
+
+            const IconComp = Icon;
+            return <IconComp name="Box" className={className} />;
         };
 
-        // --- UI Components ---
-        const Toast = ({ message, onClose }) => {
-            useEffect(() => {
-                const timer = setTimeout(onClose, 2500);
-                return () => clearTimeout(timer);
-            }, [onClose]);
+        // --- Shared Components ---
+        function DeleteButton({ onDelete }) {
+            const [isDeleting, setIsDeleting] = useState(false);
+            const timerRef = useRef(null);
+
+            const startDelete = () => {
+                setIsDeleting(true);
+                timerRef.current = setTimeout(() => {
+                    onDelete();
+                    setIsDeleting(false);
+                }, 3000);
+            };
+
+            const cancelDelete = () => {
+                clearTimeout(timerRef.current);
+                setIsDeleting(false);
+            };
 
             return (
+                <div 
+                    className="relative w-full h-8 bg-zinc-800 rounded-lg overflow-hidden cursor-pointer border border-rose-900/30 select-none touch-none mt-2"
+                    onMouseDown={startDelete}
+                    onMouseUp={cancelDelete}
+                    onMouseLeave={cancelDelete}
+                    onTouchStart={(e) => { e.preventDefault(); startDelete(); }}
+                    onTouchEnd={(e) => { e.preventDefault(); cancelDelete(); }}
+                >
+                    <div 
+                        className={`absolute top-0 left-0 h-full bg-rose-600 delete-progress ${isDeleting ? 'w-full duration-[3000ms]' : 'w-0 duration-100'}`}
+                    ></div>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isDeleting ? 'text-white animate-pulse' : 'text-rose-400'}`}>
+                            {isDeleting ? "Deleting..." : "Hold Delete"}
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+
+        function Toast({ message }) {
+            return (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] animate-slide-down pointer-events-none w-full max-w-sm px-4">
-                    <div className="bg-slate-800/95 backdrop-blur-md border border-white/10 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 justify-center">
-                        <div className="bg-emerald-500/20 p-1 rounded-full text-emerald-400">
-                            <Icon name="Check" size={14} />
-                        </div>
+                    <div className="bg-zinc-800/95 backdrop-blur-md border border-zinc-700 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 justify-center">
+                        <div className="bg-emerald-500/20 p-1 rounded-full text-emerald-400"><Icon name="Check" size={14} /></div>
                         <span className="text-xs font-bold tracking-wide">{message}</span>
                     </div>
                 </div>
             );
-        };
+        }
 
-        const RewardPopup = ({ data, onClose }) => {
-            useEffect(() => {
-                const timer = setTimeout(onClose, 3000);
-                return () => clearTimeout(timer);
-            }, [onClose]);
-
+        function NumberStepper({ value, onChange }) {
             return (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-                    <div className="bg-slate-900 border border-yellow-500/30 p-8 rounded-3xl text-center relative overflow-hidden animate-pop-in shadow-2xl shadow-yellow-500/20 max-w-xs w-full">
-                        <div className="absolute inset-0 bg-yellow-500/5 mix-blend-overlay"></div>
-                        <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                            <Icon name="Sparkles" size={40} className="text-yellow-400"/>
-                        </div>
-                        <h3 className="text-2xl font-black text-white mb-1">RECORD SAVED!</h3>
-                        <p className="text-xs text-yellow-400 font-bold tracking-widest uppercase mb-6">Mission Complete</p>
-                        <div className="flex justify-center gap-4">
-                            <div className="bg-slate-800 p-3 rounded-2xl min-w-[80px]">
-                                <p className="text-[10px] opacity-50 uppercase">Exp</p>
-                                <p className="text-lg font-black text-white">+50</p>
-                            </div>
-                            <div className="bg-slate-800 p-3 rounded-2xl min-w-[80px]">
-                                <p className="text-[10px] opacity-50 uppercase">Coins</p>
-                                <p className="text-lg font-black text-amber-400">+1</p>
-                            </div>
-                            <div className="bg-slate-800 p-3 rounded-2xl min-w-[80px] border border-emerald-500/30">
-                                <p className="text-[10px] opacity-50 uppercase text-emerald-400">DEK</p>
-                                <p className="text-lg font-black text-emerald-400">+{data.dekEarned}</p>
-                            </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-white/5">
-                            <p className="text-xs text-slate-400 font-bold">Profit: {formatMoney(data.profit)} z</p>
-                        </div>
+                <div className="flex items-center justify-between p-1.5 rounded-2xl bg-slate-800">
+                    <button type="button" onClick={() => onChange(Math.max(0, parseInt(value || 0) - 1))} className="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center hover:bg-rose-500/20"><span className="text-lg font-black">-</span></button>
+                    <div className="text-center flex-1">
+                        <input type="text" inputMode="numeric" value={value} onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); onChange(val === '' ? '' : parseInt(val)); }} className="w-full bg-transparent text-center text-lg font-black outline-none" />
+                    </div>
+                    <button type="button" onClick={() => onChange(parseInt(value || 0) + 1)} className="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center hover:bg-emerald-500/20"><span className="text-lg font-black">+</span></button>
+                </div>
+            );
+        }
+
+        function Modal({ children, onClose }) {
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+                    <div className="w-full max-w-sm bg-[#18181b] rounded-[2.5rem] p-6 relative border border-zinc-800" onClick={e => e.stopPropagation()}>
+                        <button onClick={onClose} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"><Icon name="X" size={20}/></button>
+                        {children}
                     </div>
                 </div>
             );
-        };
+        }
 
-        const Modal = ({ children, onClose }) => (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-                <div className="w-full max-w-sm bg-[#1e293b] rounded-3xl p-6" onClick={e => e.stopPropagation()}>
-                    {children}
-                </div>
-            </div>
-        );
+        function ItemDetailModal({ item, onClose, onSell }) {
+             const rColors = { Common: "text-zinc-400", Uncommon: "text-emerald-400", Rare: "text-blue-400", Legendary: "text-amber-400" };
+             const rBg = { Common: "bg-zinc-800/50", Uncommon: "bg-emerald-500/10", Rare: "bg-blue-500/10", Legendary: "bg-amber-500/10" };
+             
+             const info = getItemInfo(item.id || item.itemId);
+             
+             const [sellQty, setSellQty] = useState('1');
+             const [sellPrice, setSellPrice] = useState('');
+             
+             return (
+                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+                     <div className="w-full max-w-xs bg-[#18181b] rounded-[2.5rem] p-6 relative border border-zinc-800" onClick={e => e.stopPropagation()}>
+                         <button onClick={onClose} className="absolute top-5 right-5 text-zinc-500 hover:text-white"><Icon name="X" size={20}/></button>
+                         
+                         <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 ${rBg[info.rarity]} border border-white/5 shadow-xl`}>
+                            <SmartIcon name={info.icon} className="w-12 h-12" />
+                         </div>
+                         
+                         <h3 className={`text-lg font-black text-center ${rColors[info.rarity]}`}>{info.name}</h3>
+                         <p className="text-[10px] font-bold text-center opacity-40 uppercase tracking-widest mb-4">{info.type} • {info.rarity}</p>
+                         <p className="text-xs text-center opacity-60 mb-6 italic">"{info.desc}"</p>
+                         
+                         {item.isSellable && (
+                             <div className="bg-zinc-900 p-4 rounded-2xl mb-4 border border-zinc-800">
+                                 <p className="text-[10px] font-bold opacity-40 uppercase mb-2 text-center">Sell Item</p>
+                                 <div className="grid grid-cols-2 gap-2 mb-2">
+                                     <div>
+                                        <label className="text-[8px] font-bold opacity-30 uppercase ml-1">Qty</label>
+                                        <input 
+                                            type="text" 
+                                            inputMode="numeric" 
+                                            value={sellQty} 
+                                            onChange={e => setSellQty(e.target.value.replace(/\D/g,''))} 
+                                            className="w-full bg-slate-800/80 border border-white/10 p-2 rounded-xl text-center font-bold text-sm outline-none focus:ring-1 focus:ring-emerald-500/50 focus:bg-slate-800 transition-all placeholder-white/20"
+                                            placeholder="0"
+                                        />
+                                     </div>
+                                     <div>
+                                        <label className="text-[8px] font-bold opacity-30 uppercase ml-1">Price/Unit</label>
+                                        <input 
+                                            type="text" 
+                                            inputMode="numeric" 
+                                            value={sellPrice} 
+                                            onChange={e => setSellPrice(e.target.value.replace(/\D/g,''))} 
+                                            className="w-full bg-slate-800/80 border border-white/10 p-2 rounded-xl text-center font-bold text-sm outline-none focus:ring-1 focus:ring-emerald-500/50 focus:bg-slate-800 transition-all placeholder-white/20"
+                                            placeholder="0"
+                                        />
+                                     </div>
+                                 </div>
+                                 <button onClick={() => onSell(item, sellQty, sellPrice)} disabled={!sellQty || !sellPrice} className="w-full py-2 bg-emerald-600 rounded-xl text-xs font-black uppercase hover:bg-emerald-500 transition-colors disabled:opacity-50">Confirm Sell</button>
+                             </div>
+                         )}
+                         
+                         {!item.isSellable && (
+                             <div className="text-center">
+                                 <p className="text-xs font-bold opacity-50">Owned: {item.count || item.qty}</p>
+                             </div>
+                         )}
+                     </div>
+                 </div>
+             );
+        }
 
-        const ConfirmModal = ({ title, message, onConfirm, onCancel, color = "rose", isLoading = false }) => (
-            <Modal onClose={onCancel}>
-                <div className="text-center space-y-4">
-                    <div className={`mx-auto w-16 h-16 rounded-full bg-${color}-500/10 flex items-center justify-center text-${color}-500`}>
-                        <Icon name="AlertTriangle" size={32} />
-                    </div>
-                    <h3 className="text-xl font-black">{title}</h3>
-                    <p className="text-sm opacity-60">{message}</p>
-                    <div className="flex gap-3 pt-4">
-                        <button onClick={onCancel} className="flex-1 py-3 bg-slate-800/50 rounded-xl font-bold hover:bg-slate-800 transition-colors" disabled={isLoading}>ยกเลิก</button>
-                        <button onClick={onConfirm} className={`flex-1 py-3 bg-${color}-600 rounded-xl font-bold text-white flex items-center justify-center gap-2`} disabled={isLoading}>
-                            {isLoading ? <Icon name="Loader" className="animate-spin" size={16}/> : "ยืนยัน"}
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-        );
-
-        const AiAnalysisModal = ({ onClose, analysisResult }) => (
-            <Modal onClose={onClose}>
-                <div className="text-center">
-                    <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-yellow-500 shadow-xl overflow-hidden relative">
-                         <div className="absolute inset-0 bg-yellow-500/10"></div>
-                         <SVGs.Hugin className="w-16 h-16"/>
-                    </div>
-                    <h3 className="text-xl font-black text-amber-400 mb-2">Hugin's Report</h3>
-                    <div className="bg-slate-800/50 p-4 rounded-2xl text-left border border-slate-700 max-h-60 overflow-y-auto">
-                         <p className="text-sm leading-relaxed opacity-90 text-slate-200 whitespace-pre-wrap font-medium">{analysisResult}</p>
-                    </div>
-                    <button onClick={onClose} className="mt-6 w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-xs transition-colors">Close</button>
-                </div>
-            </Modal>
-        );
-
-        const NumberStepper = ({ value, onChange, label, step = 1, disabled = false, small = false }) => (
-            <div className={`flex items-center justify-between p-1.5 rounded-2xl transition-colors ${disabled ? 'bg-slate-800/20 opacity-30 cursor-not-allowed' : 'bg-slate-800'}`}>
-                <button type="button" disabled={disabled} onClick={() => onChange(Math.max(0, parseInt(value || 0) - step))} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${disabled ? 'bg-slate-700/50 text-slate-500' : 'bg-slate-700 hover:bg-rose-500/20'}`}>
-                    <Icon name="Plus" className="rotate-45" size={14}/>
-                </button>
-                <div className="text-center flex-1">
-                    <input type="text" inputMode="numeric" disabled={disabled} value={value} onChange={e => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        onChange(val === '' ? '' : parseInt(val));
-                    }} className="w-full bg-transparent text-center text-lg font-black outline-none" />
-                    {label && <p className="text-[8px] opacity-40 font-bold uppercase tracking-widest leading-none">{label}</p>}
-                </div>
-                <button type="button" disabled={disabled} onClick={() => onChange(parseInt(value || 0) + step)} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${disabled ? 'bg-slate-700/50 text-slate-500' : 'bg-slate-700 hover:bg-emerald-500/20'}`}>
-                    <Icon name="Plus" size={14}/>
-                </button>
-            </div>
-        );
-
-        // --- Core Gemini API Logic ---
-        const callGemini = async (prompt, specificKey = null) => {
-            const savedKey = localStorage.getItem('ogh_gemini_key');
-            const apiKey = specificKey || savedKey || ""; 
-            const model = "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: "You are Hugin, the researcher NPC from Ragnarok Online's Old Glast Heim instance. You speak Thai. You analyze player's loot data. Your tone is knowledgeable, slightly mysterious but helpful. Keep it short." }] }
-            };
-
-            for (let i = 0; i < 5; i++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const data = await response.json();
-                    
-                    if (data.error) {
-                         if (data.error.code === 403 || data.error.message.includes('API key')) {
-                             return "API Key ไม่ถูกต้อง หรือโควต้าเต็ม";
-                         }
-                         throw new Error(data.error.message);
-                    }
-
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Hugin กำลังยุ่ง...";
-                } catch (e) {
-                    if (i === 4) return `Error: ${e.message}`;
-                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-                }
-            }
-            return "Server Busy! Hugin ไม่ว่างคุย";
-        };
-
-        // --- Application Views ---
-        const HomeView = ({ records, stats, goToTab }) => {
+        // --- VIEWS ---
+        function HomeView({ records, stats, goToTab, onOpenSettings, activeBuffs }) {
             const totalProfit = records.reduce((acc, r) => acc + (r.profit || 0), 0);
+            const { ResponsiveContainer, AreaChart, Area } = window.Recharts || {};
             const chartData = [...records].reverse().slice(-7).map((r, i) => ({ name: `Run ${i+1}`, profit: r.profit }));
 
             return (
                 <div className="p-6 animate-fade-in view-content">
                     <header className="flex justify-between items-center mb-6">
-                        <div onClick={() => goToTab('profile')} className="flex items-center gap-3 bg-white/5 p-2 rounded-full pr-4 cursor-pointer hover:bg-white/10">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${stats.isHighClass ? 'bg-amber-500' : 'bg-slate-600'}`}>
-                                {stats.jobClass.substring(0, 1)}
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold opacity-50">LV.{stats.baseLv}</p>
-                                <p className="text-xs font-black">{stats.jobClass}</p>
-                            </div>
+                        <div onClick={() => goToTab('profile')} className="flex items-center gap-3 bg-zinc-800 p-2 rounded-full pr-4 cursor-pointer hover:bg-zinc-700 transition-colors border border-zinc-700">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center font-black bg-zinc-600 text-white shadow-inner">{stats.jobClass ? stats.jobClass.substring(0, 1) : 'N'}</div>
+                            <div><p className="text-[10px] font-bold opacity-50 uppercase tracking-tighter">LV.{stats.baseLv}</p><p className="text-xs font-black text-zinc-300">{stats.jobClass}</p></div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-[10px] opacity-50 font-bold">TOTAL PROFIT</p>
-                            <p className="text-2xl font-black text-emerald-400">{formatMoney(totalProfit)}</p>
-                        </div>
+                        <button onClick={onOpenSettings} className="p-3 bg-zinc-800 rounded-2xl hover:bg-zinc-700 transition-all text-zinc-400 border border-zinc-700"><Icon name="Settings" size={20}/></button>
                     </header>
-
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="glass-panel p-4 rounded-3xl">
-                            <Icon name="TrendingUp" className="text-blue-400 mb-2" />
-                            <p className="text-2xl font-black">{records.length}</p>
-                            <p className="text-[10px] opacity-40 font-bold">รอบที่ลงทั้งหมด</p>
+                    
+                    {activeBuffs && activeBuffs.length > 0 && (
+                        <div className="mb-6 animate-slide-up">
+                            <h3 className="text-[10px] font-bold opacity-40 uppercase tracking-widest mb-2 ml-1">ACTIVE BUFF</h3>
+                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                {activeBuffs.map(b => {
+                                    const now = new Date(); const end = b.endDate; const diff = end - now;
+                                    const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                    const hoursLeft = Math.ceil(diff / (1000 * 60 * 60));
+                                    if (diff < 0) return null;
+                                    let icon = 'Check';
+                                    if(b.itemId === 'premium_box') icon = 'Premium';
+                                    if(b.itemId === 'kafra_box') icon = 'Kafra';
+                                    if(b.itemId === 'silvervine_24h') icon = 'Silvervine';
+                                    return (
+                                        <div key={b.uid} className="flex-shrink-0 bg-zinc-800 p-3 rounded-2xl border border-zinc-700 flex items-center gap-3 min-w-[140px]">
+                                            <div className="text-zinc-400 w-8 h-8 flex items-center justify-center"><SmartIcon name={icon} className="w-6 h-6" /></div>
+                                            <div><p className="text-[10px] font-bold uppercase text-zinc-300 truncate w-20">{b.name}</p><p className="text-xs font-black text-emerald-400">{b.duration === 1 ? `${hoursLeft} Hrs` : `${daysLeft} Days`}</p></div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
-                        <div className="glass-panel p-4 rounded-3xl">
-                            <Icon name="History" className="text-amber-400 mb-2" />
-                            <p className="text-lg font-black truncate">{records[0]?.date || '-'}</p>
-                            <p className="text-[10px] opacity-40 font-bold">ล่าสุดเมื่อ</p>
-                        </div>
-                    </div>
+                    )}
 
-                    <div className="glass-panel p-4 rounded-3xl h-48 overflow-hidden mb-4">
-                        <p className="text-xs font-bold opacity-40 mb-2">PROFIT TREND (Last 7)</p>
-                        <ResponsiveContainer width="100%" height="80%">
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="colorP" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8}/>
-                                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <Area type="monotone" dataKey="profit" stroke="#a855f7" fillOpacity={1} fill="url(#colorP)" strokeWidth={3} />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <div className="text-center mb-8 bg-zinc-800/50 p-6 rounded-[2.5rem] border border-zinc-700/50 relative overflow-hidden">
+                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent"></div>
+                         <div className="flex items-center justify-center gap-2 mb-1">
+                            <SmartIcon name="Zeny" className="w-5 h-5"/>
+                            <p className="text-[10px] opacity-50 font-bold uppercase tracking-widest">Total Profit</p>
+                         </div>
+                         <p className="text-4xl font-black text-white drop-shadow-sm">{formatMoney(totalProfit)}</p>
                     </div>
+                    
+                    {window.Recharts && (
+                        <div className="glass-panel p-4 rounded-3xl h-48 mb-6 border-zinc-700 bg-zinc-800/50">
+                            <p className="text-[10px] font-bold opacity-40 mb-2 uppercase">Profit Trend</p>
+                            <ResponsiveContainer width="100%" height="90%">
+                                <AreaChart data={chartData}><Area type="monotone" dataKey="profit" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={3} /></AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
 
                     <div className="space-y-3">
-                        <h4 className="text-xs font-bold opacity-40 px-2 uppercase tracking-widest">Recent Activity</h4>
+                        <h4 className="text-[10px] font-bold opacity-40 px-2 uppercase tracking-widest">Recent Activity</h4>
                         {records.slice(0, 3).map(r => (
-                            <div key={r.id} className="glass-panel p-4 rounded-2xl flex justify-between items-center animate-slide-up">
+                            <div key={r.id} className="glass-panel p-4 rounded-3xl flex justify-between items-center border-zinc-700 bg-zinc-800">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${r.isSaleRecord ? 'bg-emerald-500' : (r.runMode === 'aogh' ? 'bg-rose-500' : 'bg-purple-500')}`}>
-                                        {r.isSaleRecord ? '$' : r.runMode?.charAt(0).toUpperCase()}
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-black/20 border border-white/5">
+                                        {r.isSaleRecord ? <div className="font-black text-emerald-500">S</div> : 
+                                            <SmartIcon name={r.runMode === 'aogh' ? 'AOGH_BOSS' : 'OGH_BOSS'} className="w-8 h-8 object-cover"/>
+                                        }
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-sm">{r.date}</p>
-                                        <p className="text-[10px] opacity-40">{r.isSaleRecord ? 'Manual Sale' : `${formatFullMoney(r.trashAmount)} Zeny`}</p>
-                                    </div>
+                                    <div><p className="font-bold text-sm text-zinc-200">{r.date}</p><p className="text-[10px] opacity-40 uppercase font-bold tracking-widest text-zinc-500">{r.isSaleRecord ? 'Sale' : r.runMode?.toUpperCase() || 'OGH'}</p></div>
                                 </div>
-                                <p className={`font-black ${r.isSaleRecord ? 'text-emerald-300' : 'text-emerald-400'}`}>{r.isSaleRecord ? '+' : ''}{formatMoney(r.profit)}</p>
+                                <p className={`font-black ${r.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatMoney(r.profit)}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             );
-        };
+        }
 
-        const AddDataView = ({ db, uid, prices, onBack, stats, showToast, setGlobalIsSaving, onSuccess, isSaving }) => {
-            const [form, setForm] = useState({
-                date: new Date().toISOString().split('T')[0],
-                runMode: 'ogh',
-                trashAmount: '',
-                gumUsed: 1,
-                useSilvervine: true,
-                purpleStoneCount: 0,
-                contMagicCount: 0,
-                isSellingSpell: false,
-                isSellingMagic: false,
-                customSpellPrice: '',
-                customMagicPrice: '',
-                minutesUsed: 60,
-                otherCosts: [],
-                notes: ''
-            });
+        function ShopView({ db, uid, showToast }) {
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [price, setPrice] = useState('');
+            const [qty, setQty] = useState('1');
 
-            useEffect(() => {
-                if (form.runMode === 'ogh') {
-                    setForm(prev => ({ ...prev, contMagicCount: 0, isSellingMagic: false }));
-                }
-            }, [form.runMode]);
-
-            const calculateCurrentProfit = () => {
-                const trash = parseInt(form.trashAmount) || 0;
-                const spellPrice = form.isSellingSpell ? (parseInt(form.customSpellPrice) || prices.purpleStonePrice) : 0;
-                const magicPrice = form.isSellingMagic ? (parseInt(form.customMagicPrice) || prices.contMagicPrice) : 0;
-                
-                const spells = (parseInt(form.purpleStoneCount) || 0) * spellPrice;
-                const magics = (parseInt(form.contMagicCount) || 0) * magicPrice;
-                
-                const gumCost = form.gumUsed * (prices.gumBoxPrice / 10);
-                const svCost = form.useSilvervine ? (prices.silvervineBoxPrice / 5) : 0;
-                const otherCostTotal = form.otherCosts.reduce((acc, c) => acc + (parseInt(c.amount) || 0), 0);
-
-                return (trash + spells + magics) - (gumCost + svCost + otherCostTotal);
-            };
-
-            const addCost = () => setForm(p => ({...p, otherCosts: [...p.otherCosts, {id: Date.now(), name: '', amount: ''}]}));
-            const updateCost = (id, field, val) => {
-                if (field === 'amount') {
-                    val = val.replace(/[^0-9]/g, '');
-                }
-                setForm(p => ({...p, otherCosts: p.otherCosts.map(c => c.id === id ? {...c, [field]: val} : c)}));
-            };
-            const removeCost = (id) => setForm(p => ({...p, otherCosts: p.otherCosts.filter(c => c.id !== id)}));
-
-            const handleSubmit = async (e) => {
-                if(e) e.preventDefault();
-                if (!form.trashAmount) return;
-                setGlobalIsSaving(true);
-                
+            const handleItemClick = (item) => { setSelectedItem(item); setPrice(''); setQty('1'); };
+            const handleBuy = async () => {
+                if (!price || !selectedItem) return;
+                const buyPrice = parseInt(price);
+                const quantity = parseInt(qty) || 1;
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
-                const profit = calculateCurrentProfit();
-                const timestamp = Date.now();
-                const dekEarned = Math.floor(profit / 1000);
-
-                try {
-                    await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'records'), {
-                        ...form,
-                        profit,
-                        timestamp
-                    });
-
-                    // Update Gamification
-                    const newBaseExp = stats.baseExp + 50; 
-                    
-                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'), {
-                        ...stats,
-                        baseExp: newBaseExp,
-                        zeny: (stats.zeny || 0) + dekEarned, // Storing DEK amount in 'zeny' field for consistency with existing schema
-                        coins: stats.coins + 1
-                    });
-
-                    onSuccess({ profit, dekEarned }); // Trigger Reward Popup
-                    setForm({ ...form, trashAmount: '', purpleStoneCount: 0, contMagicCount: 0 }); 
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    setGlobalIsSaving(false);
+                const promises = [];
+                for(let i=0; i<quantity; i++) {
+                     promises.push(addDoc(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), {
+                        itemId: selectedItem.id, name: selectedItem.name, type: selectedItem.type, subType: selectedItem.subType || null, duration: selectedItem.duration || null,
+                        qty: selectedItem.qty || 1, buyPrice: buyPrice, timestamp: Date.now() + i, status: 'unused'
+                    }));
                 }
+                await Promise.all(promises);
+                showToast(`Bought ${quantity} ${selectedItem.name}`); setSelectedItem(null); setPrice(''); setQty('1');
             };
 
             return (
-                <div className="p-6 animate-fade-in view-content">
-                    <h2 className="text-2xl font-black italic mb-6">New Run</h2>
-                    
-                    <form id="add-data-form" onSubmit={handleSubmit} className="space-y-6">
-                        <div className="flex bg-slate-800 p-1 rounded-2xl">
-                            <button type="button" onClick={() => setForm({...form, runMode: 'ogh'})} className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${form.runMode === 'ogh' ? 'bg-purple-600 shadow-lg' : 'opacity-40'}`}>OGH (Normal)</button>
-                            <button type="button" onClick={() => setForm({...form, runMode: 'aogh'})} className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${form.runMode === 'aogh' ? 'bg-rose-600 shadow-lg' : 'opacity-40'}`}>AOGH (Advanced)</button>
-                        </div>
-
-                        <div className="bg-slate-900 p-6 rounded-[2.5rem] border border-white/5 text-center">
-                            <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-2">ยอดขาย (Zeny)</p>
-                            <input type="text" inputMode="numeric" placeholder="0" value={form.trashAmount} onChange={e => handleNumberInput(e, 'trashAmount', setForm)} className="w-full bg-transparent text-center text-5xl font-black outline-none placeholder-white/5" />
-                        </div>
-
-                        {/* Stones Layout - 2 Columns */}
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* Spell Block */}
-                            <div className="bg-slate-800/50 p-3 rounded-2xl flex flex-col justify-between space-y-2">
-                                <div className="flex justify-between items-center mb-1">
-                                    <div className="flex items-center gap-2">
-                                        <SVGs.Spell className="w-6 h-6"/>
-                                        <span className="text-[10px] font-bold uppercase opacity-70">Spell</span>
-                                    </div>
-                                    <button type="button" onClick={() => setForm(p => ({...p, isSellingSpell: !p.isSellingSpell}))} className={`px-2 py-1 rounded text-[8px] font-bold uppercase ${form.isSellingSpell ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
-                                        {form.isSellingSpell ? 'Sell' : 'Keep'}
-                                    </button>
-                                </div>
-                                <NumberStepper value={form.purpleStoneCount} onChange={v => setForm({...form, purpleStoneCount: v})} small/>
-                                {/* Persistent Price Input */}
-                                <input 
-                                    type="text" 
-                                    placeholder={prices.purpleStonePrice} 
-                                    value={form.customSpellPrice} 
-                                    onChange={e => handleNumberInput(e, 'customSpellPrice', setForm)} 
-                                    disabled={!form.isSellingSpell}
-                                    className={`bg-slate-900/80 rounded-lg p-2 text-[10px] text-center w-full outline-none transition-all ${!form.isSellingSpell ? 'opacity-30 cursor-not-allowed' : 'opacity-100'}`} 
-                                />
-                            </div>
-
-                            {/* Magic Block */}
-                            <div className={`bg-slate-800/50 p-3 rounded-2xl flex flex-col justify-between space-y-2 transition-all ${form.runMode === 'ogh' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
-                                <div className="flex justify-between items-center mb-1">
-                                    <div className="flex items-center gap-2">
-                                        <SVGs.Magic className="w-6 h-6"/>
-                                        <span className="text-[10px] font-bold uppercase opacity-70">Magic</span>
-                                    </div>
-                                    <button type="button" onClick={() => setForm(p => ({...p, isSellingMagic: !p.isSellingMagic}))} className={`px-2 py-1 rounded text-[8px] font-bold uppercase ${form.isSellingMagic ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
-                                        {form.isSellingMagic ? 'Sell' : 'Keep'}
-                                    </button>
-                                </div>
-                                <NumberStepper value={form.contMagicCount} onChange={v => setForm({...form, contMagicCount: v})} disabled={form.runMode === 'ogh'} small/>
-                                {/* Persistent Price Input */}
-                                <input 
-                                    type="text" 
-                                    placeholder={prices.contMagicPrice} 
-                                    value={form.customMagicPrice} 
-                                    onChange={e => handleNumberInput(e, 'customMagicPrice', setForm)} 
-                                    disabled={!form.isSellingMagic}
-                                    className={`bg-slate-900/80 rounded-lg p-2 text-[10px] text-center w-full outline-none transition-all ${!form.isSellingMagic ? 'opacity-30 cursor-not-allowed' : 'opacity-100'}`} 
-                                />
-                            </div>
-                        </div>
-
-                        {/* Supplies */}
-                        <div className="glass-panel p-5 rounded-3xl space-y-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold opacity-50 flex items-center gap-2">
-                                    <SVGs.Gum className="w-5 h-5"/> Bubble Gum
-                                </span>
-                                <div className="flex gap-2">
-                                    {[0, 1, 2].map(n => (
-                                        <button key={n} type="button" onClick={() => setForm({...form, gumUsed: n})} className={`w-8 h-8 rounded-lg font-bold text-xs transition-all ${form.gumUsed === n ? 'bg-blue-600' : 'bg-slate-800 opacity-40'}`}>{n}</button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold opacity-50 flex items-center gap-2">
-                                    <SVGs.Silvervine className="w-5 h-6"/> Use Silvervine
-                                </span>
-                                <button type="button" onClick={() => setForm({...form, useSilvervine: !form.useSilvervine})} className={`w-12 h-6 rounded-full relative transition-all ${form.useSilvervine ? 'bg-emerald-500' : 'bg-slate-700'}`}>
-                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${form.useSilvervine ? 'right-1' : 'left-1'}`}></div>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Etc Costs */}
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs font-bold opacity-50 uppercase">Etc. Cost</span>
-                                <button type="button" onClick={addCost} className="text-[10px] bg-slate-800 px-2 py-1 rounded text-white flex items-center gap-1"><Icon name="Plus" size={10}/> Add</button>
-                            </div>
-                            {form.otherCosts.map(c => (
-                                <div key={c.id} className="flex gap-2 mb-2">
-                                    <input type="text" placeholder="รายการ" value={c.name} onChange={e => updateCost(c.id, 'name', e.target.value)} className="flex-1 bg-slate-800 rounded-lg px-3 py-2 text-xs outline-none" />
-                                    <input type="text" inputMode="numeric" placeholder="0" value={c.amount} onChange={e => updateCost(c.id, 'amount', e.target.value)} className="w-20 bg-slate-800 rounded-lg px-3 py-2 text-xs outline-none text-right" />
-                                    <button type="button" onClick={() => removeCost(c.id)} className="p-2 text-rose-500"><Icon name="Trash" size={14}/></button>
+                <div className="p-6 animate-fade-in view-content space-y-6">
+                    <h2 className="text-2xl font-black italic tracking-tighter text-zinc-200 flex items-center gap-2"><SmartIcon name="Zeny" className="w-8 h-8"/> Cash Shop</h2>
+                    <div className="bg-zinc-900/50 p-4 rounded-[2rem] border border-zinc-800 min-h-[200px]">
+                        <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-4 text-zinc-400">Shelves</p>
+                        <div className="grid grid-cols-4 gap-3">
+                            {SHOP_ITEMS.map(item => (
+                                <div key={item.id} onClick={() => handleItemClick(item)} className={`aspect-square rounded-2xl flex items-center justify-center transition-all relative cursor-pointer ${selectedItem?.id === item.id ? 'bg-zinc-700 ring-2 ring-emerald-500 scale-105 z-10' : 'bg-zinc-800 border border-zinc-700 active:scale-95 hover:bg-zinc-700/50'}`}>
+                                    <SmartIcon name={item.icon} className="w-8 h-8" />
                                 </div>
                             ))}
                         </div>
-
-                        {/* Notes */}
-                        <div>
-                            <span className="text-xs font-bold opacity-50 uppercase mb-2 block">Memo</span>
-                            <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="w-full bg-slate-800 rounded-xl p-3 text-xs outline-none h-20 resize-none" placeholder="Notes..."></textarea>
+                    </div>
+                    <div className="glass-panel p-6 rounded-[2.5rem] relative overflow-hidden border-zinc-700">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-zinc-600 to-transparent"></div>
+                        <p className="text-[10px] font-bold opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2 text-zinc-400"><Icon name="Shop" size={14}/> Trade Counter</p>
+                        <div className="flex gap-4">
+                            <div className={`w-24 h-24 rounded-3xl flex-shrink-0 flex items-center justify-center border-2 transition-all ${selectedItem ? 'bg-zinc-800 border-emerald-500/50 shadow-xl' : 'bg-zinc-900/50 border-dashed border-zinc-700'}`}>
+                                {selectedItem ? (
+                                     <div className="flex flex-col items-center animate-pop-in"><SmartIcon name={selectedItem.icon} className="w-10 h-10 mb-1" /></div>
+                                ) : (<span className="text-[8px] opacity-20 font-black uppercase text-center text-zinc-500">Select<br/>Item</span>)}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                                <div>
+                                    <div className="flex justify-between items-baseline mb-1"><label className="text-[8px] font-bold opacity-40 uppercase ml-1">Item Name</label>{selectedItem && <span className="text-[10px] font-bold text-emerald-400 truncate">{selectedItem.name}</span>}</div>
+                                    <input type="text" inputMode="numeric" disabled={!selectedItem} value={price} onChange={e => setPrice(e.target.value.replace(/\D/g, ''))} className="slate-input w-full p-2 rounded-xl text-sm font-bold placeholder-zinc-700" placeholder="Price / Unit"/>
+                                </div>
+                                <div>
+                                    <label className="text-[8px] font-bold opacity-40 uppercase ml-1">Quantity</label>
+                                    <div className="flex items-center gap-2">
+                                        <button disabled={!selectedItem} onClick={() => setQty(Math.max(1, parseInt(qty||0)-1).toString())} className="w-8 h-8 bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-30 text-zinc-400">-</button>
+                                        <input type="text" inputMode="numeric" disabled={!selectedItem} value={qty} onChange={e => setQty(e.target.value.replace(/\D/g, ''))} className="w-full bg-transparent text-center text-sm font-black outline-none text-white"/>
+                                        <button disabled={!selectedItem} onClick={() => setQty((parseInt(qty||0)+1).toString())} className="w-8 h-8 bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-30 text-zinc-400">+</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        
-                        {/* Restore Save Button */}
-                        <button 
-                            type="submit"
-                            disabled={isSaving || !form.trashAmount} 
-                            className="w-full py-4 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-2xl font-black text-lg shadow-xl shadow-purple-500/20 active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isSaving ? <Icon name="Loader" className="animate-spin" size={24}/> : "SAVE RECORD"}
-                        </button>
-                    </form>
+                        <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                            <div><p className="text-[9px] opacity-40 font-bold uppercase">Total Cost</p><p className="text-xl font-black text-white">{formatMoney((parseInt(price) || 0) * (parseInt(qty) || 0))} z</p></div>
+                            <button onClick={handleBuy} disabled={!selectedItem || !price} className="px-6 py-3 bg-zinc-100 text-zinc-900 rounded-xl text-xs font-black uppercase shadow-lg hover:bg-white active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all">Buy Now</button>
+                        </div>
+                    </div>
                 </div>
             );
-        };
+        }
 
-        const InventoryView = ({ records, prices, db, uid, showToast }) => {
-            const [sellModal, setSellModal] = useState(null); 
-            const [sellQty, setSellQty] = useState("");
-            const [sellPrice, setSellPrice] = useState("");
-
-            const totalSpells = records.reduce((acc, r) => acc + (parseInt(r.purpleStoneCount) || 0), 0);
-            const totalMagics = records.reduce((acc, r) => acc + (parseInt(r.contMagicCount) || 0), 0);
+        function InventoryView({ db, uid, showToast, records, stock }) {
+            const [items, setItems] = useState([]);
+            const [activeBuffs, setActiveBuffs] = useState([]);
+            const [selectedBox, setSelectedBox] = useState(null);
+            const [svUseConfirm, setSvUseConfirm] = useState(null);
+            const [viewItem, setViewItem] = useState(null); 
             
-            const handleSell = async () => {
-                if(!sellModal || !sellQty || !sellPrice) return;
-                const qty = parseInt(sellQty);
-                const price = parseInt(sellPrice);
-                
-                try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
-                    await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'records'), {
-                        date: new Date().toISOString().split('T')[0],
-                        runMode: 'SALE',
-                        trashAmount: 0,
-                        purpleStoneCount: sellModal.item === 'spell' ? -qty : 0,
-                        contMagicCount: sellModal.item === 'magic' ? -qty : 0,
-                        profit: qty * price,
-                        isSaleRecord: true,
-                        timestamp: Date.now()
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+            const longPressTimer = useRef(null);
+            const isLongPress = useRef(false);
+
+            const totalSpellsDropped = useMemo(() => records.filter(r => !r.isSaleRecord).reduce((acc, r) => acc + (parseInt(r.purpleStoneCount) || 0), 0), [records]);
+            const totalMagicsDropped = useMemo(() => records.filter(r => !r.isSaleRecord).reduce((acc, r) => acc + (parseInt(r.contMagicCount) || 0), 0), [records]);
+            const totalSpellsSold = useMemo(() => records.filter(r => r.isSaleRecord && r.itemId === 'spell').reduce((acc, r) => acc + r.qty, 0), [records]);
+            const totalMagicsSold = useMemo(() => records.filter(r => r.isSaleRecord && r.itemId === 'magic').reduce((acc, r) => acc + r.qty, 0), [records]);
+
+            const currentSpells = Math.max(0, totalSpellsDropped - totalSpellsSold);
+            const currentMagics = Math.max(0, totalMagicsDropped - totalMagicsSold);
+            const drops = useMemo(() => { const c = {}; records.forEach(r => { if (r.drops && !r.isSaleRecord) r.drops.forEach(d => c[d.id] = (c[d.id] || 0) + d.qty); }); return c; }, [records]);
+
+            useEffect(() => {
+                const q = query(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), orderBy('timestamp', 'desc'));
+                const unsub = onSnapshot(q, (snap) => {
+                    const rawItems = snap.docs.map(d => ({ ...d.data(), uid: d.id }));
+                    setItems(rawItems.filter(i => i.status === 'unused'));
+                    const buffs = rawItems.filter(i => i.status === 'active').map(b => {
+                        const endDate = new Date(b.activatedAt); endDate.setDate(endDate.getDate() + b.duration);
+                        if(b.duration === 1) endDate.setTime(new Date(b.activatedAt).getTime() + (24*60*60*1000));
+                        return { ...b, endDate };
                     });
-                    
-                    showToast(`ขาย ${sellModal.item} x${qty} สำเร็จ!`);
-                    setSellModal(null);
-                    setSellQty("");
-                    setSellPrice("");
-                } catch(e) {
-                    console.error(e);
+                    setActiveBuffs(buffs);
+                });
+                return () => unsub();
+            }, [uid]);
+
+            const handleUseBox = async (item) => {
+                if (item.type === 'buff_box') {
+                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', item.uid), { ...item, status: 'active', activatedAt: new Date().toISOString() });
+                    showToast(`${item.name} Activated!`);
+                } else if (item.type === 'consumable_box') {
+                    const currentQty = stock[item.subType]?.qty || 0;
+                    const currentCost = stock[item.subType]?.totalCost || 0;
+                    const newQty = currentQty + item.qty;
+                    const newTotalCost = currentCost + item.buyPrice;
+                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'config', 'stock'), { ...stock, [item.subType]: { qty: newQty, totalCost: newTotalCost, avgCost: newTotalCost / newQty } });
+                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', item.uid), { ...item, status: 'consumed' });
+                    showToast(`Added ${item.qty} to Stock`);
                 }
+                setSelectedBox(null);
             };
-
-            // Grid Slots logic
-            const slots = Array.from({ length: 24 });
             
+            const handleSellAction = async (item, qtyStr, priceStr) => {
+                const qty = parseInt(qtyStr); const price = parseInt(priceStr);
+                if (!qty || !price || qty > item.count) { showToast("Invalid Amount"); return; }
+                const record = { isSaleRecord: true, itemId: item.id, itemName: item.name, qty: qty, pricePerUnit: price, profit: qty * price, date: new Date().toISOString().split('T')[0], timestamp: Date.now() };
+                await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'records'), record);
+                showToast(`Sold ${qty} ${item.name}`); setViewItem(null);
+            };
+            
+            const startPress = (item) => { isLongPress.current = false; longPressTimer.current = setTimeout(() => { isLongPress.current = true; setViewItem(item); }, 500); };
+            const endPress = (item) => { clearTimeout(longPressTimer.current); if (!isLongPress.current) { if (item.isBox) setSelectedBox(item.data); if (item.id === 'premium_staff') setSvUseConfirm(true); } };
+            const cancelPress = () => { clearTimeout(longPressTimer.current); isLongPress.current = false; };
+            const handleUseSilvervineFromStock = async () => {
+                const isActive = activeBuffs.some(b => b.itemId === 'silvervine_24h' && b.endDate > new Date());
+                if (isActive) { alert("Active!"); setSvUseConfirm(null); return; }
+                if ((stock.silvervine?.qty || 0) < 2) { alert("Need 2 Silvervine!"); setSvUseConfirm(null); return; }
+                const newStock = { ...stock, silvervine: { ...stock.silvervine, qty: stock.silvervine.qty - 2 } };
+                await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'config', 'stock'), newStock);
+                const buffData = { itemId: 'silvervine_24h', name: 'Silvervine Buff (24h)', type: 'buff_box', duration: 1, buyPrice: (stock.silvervine?.avgCost || 0) * 2, timestamp: Date.now(), activatedAt: new Date().toISOString(), status: 'active' };
+                await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), buffData);
+                showToast("Activated!"); setSvUseConfirm(null);
+            };
+            
+            const hasPremium = activeBuffs.some(b => b.itemId === 'premium_box' && new Date() < b.endDate);
+            const gridItems = [
+                { id: 'spell', iconComp: <SmartIcon name="Spell" className="w-8 h-8"/>, count: Math.max(0, currentSpells), name: 'Purple Stone', isSellable: true },
+                { id: 'magic', iconComp: <SmartIcon name="Magic" className="w-8 h-8"/>, count: Math.max(0, currentMagics), name: 'Red Stone', isSellable: true },
+                { id: 'gum', iconComp: <SmartIcon name="Gum" className="w-8 h-8"/>, count: stock.gum?.qty || 0, name: 'Gum (Stock)' },
+                { id: 'he_gum', iconComp: <SmartIcon name="HeGum" className="w-8 h-8"/>, count: stock.he_gum?.qty || 0, name: 'HE (Stock)' },
+                { id: 'silvervine', iconComp: <SmartIcon name="Silvervine" className="w-8 h-8"/>, count: stock.silvervine?.qty || 0, name: 'SV (Stock)', isStockAction: true },
+            ];
+            if (hasPremium) gridItems.push({ id: 'premium_staff', iconComp: <SmartIcon name="PremiumStaff" className="w-8 h-8"/>, count: 1, name: 'Staff' });
+            items.forEach(i => gridItems.push({ id: i.uid, iconComp: <SmartIcon name={SHOP_ITEMS.find(s=>s.id===i.itemId)?.icon} className="w-8 h-8" />, count: 1, isBox: true, data: i, name: i.name }));
+            Object.keys(drops).forEach(key => { const def = DROP_TABLE.find(d => d.id === key); if (def) gridItems.push({ id: key, iconComp: <SmartIcon name={def.icon} className="w-8 h-8" />, count: drops[key], name: def.name }); });
+
             return (
-                <div className="p-6 animate-fade-in view-content h-full">
-                    <h2 className="text-2xl font-black italic">Inventory</h2>
-
-                    {/* Inventory Grid */}
-                    <div className="bg-[#1e293b] p-4 rounded-[2rem] shadow-xl border border-slate-700/50">
+                <div className="p-6 animate-fade-in view-content space-y-6">
+                    <h2 className="text-2xl font-black italic tracking-tighter mb-4 text-zinc-300">Bag</h2>
+                    <div className="bg-zinc-900 p-5 rounded-[2.5rem] border border-zinc-800 min-h-[400px]">
                         <div className="grid grid-cols-4 gap-3">
-                            {slots.map((_, index) => {
-                                let content = null;
-                                let onClick = null;
-                                
-                                if (index === 0) {
-                                     content = { icon: <SVGs.Spell className="w-10 h-10 drop-shadow-md"/>, count: totalSpells, id: 'spell', price: prices.purpleStonePrice };
-                                } else if (index === 1) {
-                                     content = { icon: <SVGs.Magic className="w-10 h-10 drop-shadow-md"/>, count: totalMagics, id: 'magic', price: prices.contMagicPrice };
-                                }
-
-                                if (content) {
-                                    onClick = () => { setSellModal({item: content.id, max: content.count}); setSellPrice(content.price); };
-                                }
-
-                                return (
-                                     <div key={index} onClick={onClick} className={`aspect-square rounded-2xl relative flex items-center justify-center transition-all ${content ? 'bg-slate-800 border border-slate-600 cursor-pointer active:scale-95 hover:border-indigo-400' : 'bg-slate-800/20 border-2 border-dashed border-slate-700/50 hover:border-slate-600/50'}`}>
-                                        {content && (
-                                            <>
-                                                <div className="animate-pop-in">{content.icon}</div>
-                                                <span className="absolute bottom-1 right-1.5 text-[10px] font-black text-white bg-black/60 px-1.5 rounded-md backdrop-blur-sm">{content.count}</span>
-                                            </>
-                                        )}
-                                     </div>
-                                );
-                            })}
+                            {gridItems.map((item, index) => (
+                                <div key={index} onMouseDown={() => startPress(item)} onMouseUp={() => endPress(item)} onMouseLeave={cancelPress} onTouchStart={() => startPress(item)} onTouchEnd={() => endPress(item)} onTouchMove={cancelPress} className={`aspect-square rounded-2xl relative flex items-center justify-center transition-all no-context-menu ${(item.isBox || item.id === 'premium_staff') ? 'bg-zinc-800 border border-zinc-700 cursor-pointer active:scale-95' : 'bg-zinc-900 border border-zinc-800'}`}>
+                                    <div className="w-10 h-10 flex items-center justify-center pointer-events-none">{item.iconComp}</div>
+                                    <span className="absolute bottom-1 right-1.5 text-[10px] font-black text-zinc-400 px-1.5 rounded-md pointer-events-none">{item.count}</span>
+                                </div>
+                            ))}
+                            {Array.from({ length: Math.max(0, 20 - gridItems.length) }).map((_, i) => (<div key={`empty-${i}`} className="aspect-square rounded-2xl bg-zinc-900/50 border-2 border-dashed border-zinc-800"></div>))}
                         </div>
-                         <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center px-2">
-                            <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Total Value</span>
-                            <span className="text-lg font-black text-emerald-400">{formatMoney((totalSpells * prices.purpleStonePrice) + (totalMagics * prices.contMagicPrice))} z</span>
-                         </div>
                     </div>
-
-                    {sellModal && (
-                        <Modal onClose={() => setSellModal(null)}>
-                            <h3 className="text-xl font-black mb-4 uppercase">Sell {sellModal.item}</h3>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-[10px] opacity-50 uppercase">Quantity (Max: {sellModal.max})</label>
-                                    <input type="text" inputMode="numeric" value={sellQty} onChange={e => {
-                                        let val = parseInt(e.target.value.replace(/\D/g, '')) || '';
-                                        if(val > sellModal.max) val = sellModal.max;
-                                        setSellQty(val);
-                                    }} className="w-full bg-slate-800 p-3 rounded-xl outline-none font-bold text-lg" autoFocus/>
+                    {viewItem && <ItemDetailModal item={viewItem} onClose={() => setViewItem(null)} onSell={handleSellAction} />}
+                    {selectedBox && (
+                        <Modal onClose={() => setSelectedBox(null)}>
+                            <div className="text-center">
+                                <div className="w-20 h-20 mx-auto bg-zinc-800 rounded-3xl flex items-center justify-center mb-4 border border-zinc-700">
+                                    <SmartIcon name={SHOP_ITEMS.find(s=>s.id===selectedBox.itemId)?.icon} className="w-12 h-12" />
                                 </div>
-                                <div>
-                                    <label className="text-[10px] opacity-50 uppercase">Price / Unit</label>
-                                    <input type="text" inputMode="numeric" value={sellPrice} onChange={e => handleNumberInput(e, '', setSellPrice)} className="w-full bg-slate-800 p-3 rounded-xl outline-none font-bold text-lg"/>
+                                <h3 className="text-lg font-black text-white mb-1">{selectedBox.name}</h3>
+                                <p className="text-xs opacity-50 mb-6">{SHOP_ITEMS.find(s=>s.id===selectedBox.itemId)?.desc}</p>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setSelectedBox(null)} className="flex-1 py-3 bg-zinc-700 rounded-xl font-bold text-xs">Cancel</button>
+                                    <button onClick={() => handleUseBox(selectedBox)} className="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-xs text-white">
+                                        {selectedBox.type.includes('buff') ? 'Activate' : 'Open'}
+                                    </button>
                                 </div>
-                                <div className="flex gap-2 pt-2">
-                                    <button onClick={() => setSellModal(null)} className="flex-1 py-3 bg-slate-800 rounded-xl font-bold text-xs">Cancel</button>
-                                    <button onClick={handleSell} className="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-xs">Confirm Sale</button>
-                                </div>
+                            </div>
+                        </Modal>
+                    )}
+                    {svUseConfirm && (
+                        <Modal onClose={() => setSvUseConfirm(null)}>
+                             <div className="text-center">
+                                <div className="w-20 h-20 mx-auto bg-zinc-800 rounded-3xl flex items-center justify-center mb-4 border border-zinc-700"><SmartIcon name="Silvervine" className="w-12 h-12"/></div>
+                                <h3 className="text-lg font-black text-white mb-2">Activate Buff?</h3>
+                                <div className="flex gap-2"><button onClick={() => setSvUseConfirm(null)} className="flex-1 py-3 bg-zinc-700 rounded-xl font-bold text-xs">Cancel</button><button onClick={handleUseSilvervineFromStock} className="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-xs text-white">Use (2 ea)</button></div>
                             </div>
                         </Modal>
                     )}
                 </div>
             );
-        };
+        }
 
-        const SettingsView = ({ uid, defaultUid, prices, setPrices, db, onResetUid, onRestoreUid, showToast, showAiFab, setShowAiFab }) => {
-            // ... (Previous Settings code maintained for brevity, assumed unchanged logic)
-            // Including full code for context
+        function DungeonView({ db, uid, stock, activeBuffs, onSuccess, records, prices }) {
+            const [form, setForm] = useState({ runMode: 'ogh', normalGumUsed: 0, heGumUsed: 0, useSilvervine: false, purpleStoneCount: 0, contMagicCount: 0, trashAmount: '', minutesUsed: 60, otherCosts: [], notes: '' });
+            const hasPremium = activeBuffs.some(b => b.itemId === 'premium_box' && new Date() < b.endDate);
+            const hasKafra = activeBuffs.some(b => b.itemId === 'kafra_box' && new Date() < b.endDate);
+            const hasSilvervineBuff = activeBuffs.some(b => b.itemId === 'silvervine_24h' && new Date() < b.endDate);
+            const hasGumStock = (stock.gum?.qty || 0) > 0;
+            const hasHeGumStock = (stock.he_gum?.qty || 0) > 0; 
+            
+            const addCost = () => setForm(p => ({...p, otherCosts: [...p.otherCosts, {id: Date.now(), name: '', amount: ''}]}));
+            const updateCost = (id, field, val) => { if (field === 'amount') val = val.replace(/[^0-9]/g, ''); setForm(p => ({...p, otherCosts: p.otherCosts.map(c => c.id === id ? {...c, [field]: val} : c)})); };
+            const removeCost = (id) => setForm(p => ({...p, otherCosts: p.otherCosts.filter(c => c.id !== id)}));
+
+            const handleSave = async () => {
+                let buffAmortizedCost = 0;
+                if (activeBuffs && records) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const runsToday = records.filter(r => r.date === todayStr && !r.isSaleRecord).length;
+                    const currentRunCount = runsToday + 1; 
+                    activeBuffs.forEach(buff => {
+                         const start = new Date(buff.activatedAt); const end = buff.endDate; const now = new Date();
+                         if (now >= start && now <= end) {
+                             const dailyCost = buff.buyPrice / buff.duration;
+                             buffAmortizedCost += dailyCost / currentRunCount;
+                         }
+                    });
+                }
+                let consumablesCost = 0;
+                if (form.normalGumUsed > 0) consumablesCost += (stock.gum?.avgCost || 0) * form.normalGumUsed;
+                if (form.heGumUsed > 0) { consumablesCost += (stock.he_gum?.avgCost || 0) * form.heGumUsed; }
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+                let newStock = { ...stock };
+                if (form.normalGumUsed > 0) newStock.gum.qty = Math.max(0, newStock.gum.qty - form.normalGumUsed);
+                if (form.heGumUsed > 0) { if(!newStock.he_gum) newStock.he_gum = { qty: 0, cost: 0 }; newStock.he_gum.qty = Math.max(0, newStock.he_gum.qty - form.heGumUsed); }
+                await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'config', 'stock'), newStock);
+                const profit = (parseInt(form.trashAmount) || 0) - consumablesCost - buffAmortizedCost;
+                const record = { ...form, buffCost: buffAmortizedCost, consumablesCost, profit, drops: simulateDrops(), timestamp: Date.now(), date: new Date().toISOString().split('T')[0] };
+                await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'records'), record);
+                onSuccess(record);
+            };
+
+            return (
+                <div className="p-6 animate-fade-in view-content space-y-6">
+                     <div className="flex gap-2 justify-center">
+                        <div className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${hasPremium ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'bg-slate-800 border-white/5 opacity-30 grayscale'}`}><SmartIcon name="Premium" className="w-4 h-4" /> <span className="text-[10px] font-bold">VIP</span></div>
+                        <div className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${hasKafra ? 'bg-pink-500/20 border-pink-500 text-pink-400' : 'bg-slate-800 border-white/5 opacity-30 grayscale'}`}><SmartIcon name="Kafra" className="w-4 h-4" /> <span className="text-[10px] font-bold">Kafra</span></div>
+                        <div className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${hasSilvervineBuff ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-slate-800 border-white/5 opacity-30 grayscale'}`}><SmartIcon name="Silvervine" className="w-4 h-4" /> <span className="text-[10px] font-bold">SV 24h</span></div>
+                     </div>
+                     <div className="flex bg-zinc-800 p-1 rounded-2xl shadow-inner mb-4">
+                        <button type="button" onClick={() => setForm({...form, runMode: 'ogh'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${form.runMode === 'ogh' ? 'bg-purple-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}>OGH (Normal)</button>
+                        <button type="button" onClick={() => setForm({...form, runMode: 'aogh'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${form.runMode === 'aogh' ? 'bg-rose-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}>AOGH (Hard)</button>
+                     </div>
+                     <div className="bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-800 text-center shadow-xl">
+                        <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-2 text-zinc-400">Trash Sale (Zeny)</p>
+                        <input type="text" inputMode="numeric" placeholder="0" value={form.trashAmount} onChange={e => setForm({...form, trashAmount: parseInt(e.target.value) || ''})} className="w-full bg-transparent text-center text-4xl font-black outline-none placeholder-zinc-800 text-white" />
+                    </div>
+                    <div className="glass-panel p-6 rounded-[2rem] space-y-4 bg-zinc-800/50">
+                        <div className="mb-4">
+                            <div className="flex justify-between items-center mb-2"><span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-blue-300"><SmartIcon name="Gum" className="w-5 h-5"/> Bubble Gum</span><span className="text-[8px] font-bold opacity-40">Stock: {stock.gum?.qty||0}</span></div>
+                            <div className="flex bg-zinc-900 rounded-xl p-1 gap-1">
+                                {[0, 1, 2].map(n => (<button key={n} disabled={!hasGumStock && n>0} onClick={() => setForm({...form, normalGumUsed: n})} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${form.normalGumUsed === n ? (n===0 ? 'bg-zinc-700 text-zinc-400' : 'bg-blue-600 text-white shadow') : 'text-zinc-600 hover:bg-zinc-800'}`}>{n}</button>))}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center mb-2"><span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-amber-300"><SmartIcon name="HeGum" className="w-5 h-5"/> HE Bubble Gum</span><span className="text-[8px] font-bold opacity-40">Stock: {stock.he_gum?.qty||0}</span></div>
+                             <div className="flex bg-zinc-900 rounded-xl p-1 gap-1">
+                                {[0, 1, 2, 3, 4].map(n => (<button key={n} disabled={!hasHeGumStock && n>0} onClick={() => setForm({...form, heGumUsed: n})} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${form.heGumUsed === n ? (n===0 ? 'bg-zinc-700 text-zinc-400' : 'bg-amber-600 text-white shadow') : 'text-zinc-600 hover:bg-zinc-800'}`}>{n}</button>))}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                        <label className="text-[10px] font-bold opacity-40 uppercase mb-2 block text-center">Time Spent (Minutes): <span className="text-emerald-400 text-sm">{form.minutesUsed}</span></label>
+                        <input type="range" min="1" max="60" value={form.minutesUsed} onChange={e => setForm({...form, minutesUsed: parseInt(e.target.value)})} className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                         <div className="bg-zinc-900 p-4 rounded-3xl flex flex-col items-center border border-zinc-800"><div className="w-8 h-8 mb-2"><SmartIcon name="Spell" className="w-full h-full" /></div><span className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Coagulated Spell</span><input type="text" inputMode="numeric" value={form.purpleStoneCount} onChange={e => setForm({...form, purpleStoneCount: parseInt(e.target.value)||0})} className="slate-input w-full p-2 rounded-xl text-center font-bold text-xl"/></div>
+                         <div className={`bg-zinc-900 p-4 rounded-3xl flex flex-col items-center border border-zinc-800 transition-all ${form.runMode === 'ogh' ? 'opacity-30 grayscale pointer-events-none' : ''}`}><div className="w-8 h-8 mb-2"><SmartIcon name="Magic" className="w-full h-full" /></div><span className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Contaminated Magic</span><input type="text" inputMode="numeric" disabled={form.runMode === 'ogh'} value={form.contMagicCount} onChange={e => setForm({...form, contMagicCount: parseInt(e.target.value)||0})} className="slate-input w-full p-2 rounded-xl text-center font-bold text-xl"/></div>
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold opacity-50 uppercase tracking-widest text-zinc-400">Etc. Costs</span><button type="button" onClick={addCost} className="text-[10px] text-emerald-400 font-black uppercase tracking-tighter">+ Add Cost</button></div>
+                        {form.otherCosts.map(c => (<div key={c.id} className="flex gap-2 mb-2 animate-fade-in"><input type="text" placeholder="Item Name" value={c.name} onChange={e => updateCost(c.id, 'name', e.target.value)} className="slate-input flex-1 p-2 rounded-xl text-xs" /><input type="text" inputMode="numeric" placeholder="0" value={c.amount} onChange={e => updateCost(c.id, 'amount', e.target.value)} className="slate-input w-24 p-2 rounded-xl text-xs text-right" /><button type="button" onClick={() => removeCost(c.id)} className="text-rose-500 p-2"><Icon name="Trash" size={14}/></button></div>))}
+                    </div>
+                    <div className="bg-zinc-900 p-4 rounded-3xl border border-zinc-800"><textarea placeholder="Memo / Notes..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="w-full bg-transparent text-xs text-white outline-none h-16 resize-none placeholder-zinc-700"></textarea></div>
+                    <button onClick={handleSave} className="w-full py-5 bg-gradient-to-tr from-emerald-600 to-teal-600 rounded-[1.5rem] font-black text-lg shadow-xl shadow-emerald-900/20 active:scale-95 transition-transform text-white">SAVE RECORD</button>
+                </div>
+            );
+        }
+
+        function HistoryView({ records, db, uid, showToast, prices }) {
+            const [expandedId, setExpandedId] = useState(null);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+            return (
+                <div className="p-6 animate-fade-in view-content space-y-4">
+                    <h2 className="text-2xl font-black italic mb-6 tracking-tighter text-zinc-300">History Logs</h2>
+                    <div className="space-y-3">
+                        {records.map(r => {
+                            const isExpanded = expandedId === r.id;
+                            const profitValue = r.profit || 0;
+                            let totalCost = 0;
+                            if (r.consumablesCost !== undefined) totalCost += r.consumablesCost;
+                            if (r.buffCost !== undefined) totalCost += r.buffCost;
+                            if (r.consumablesCost === undefined) {
+                                if(r.gumType === 1) totalCost += (prices.gumBoxPrice/10);
+                                if(!r.gumType && r.gumUsed) totalCost += r.gumUsed * (prices.gumBoxPrice/10);
+                            }
+                            if (r.otherCosts) totalCost += r.otherCosts.reduce((a,c)=>a+parseInt(c.amount||0),0);
+                            const realizedStoneIncome = (r.purpleStoneCount || 0) * (prices.purpleStonePrice || 0) + (r.contMagicCount || 0) * (prices.contMagicPrice || 0);
+
+                            if (r.isSaleRecord) {
+                                return (
+                                    <div key={r.id} className="glass-panel p-4 rounded-3xl flex justify-between items-center bg-emerald-900/10 border-emerald-500/20">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black bg-emerald-600 text-white shadow-lg">S</div>
+                                            <div><p className="font-bold text-sm text-emerald-300">Sold: {r.itemName}</p><p className="text-[10px] opacity-60 text-zinc-400">Qty: {r.qty} @ {formatMoney(r.pricePerUnit)}</p></div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-black text-emerald-400 text-lg">+{formatMoney(r.profit)}</p>
+                                            <DeleteButton onDelete={() => deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'records', r.id))} />
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div key={r.id} className={`glass-panel rounded-[1.5rem] overflow-hidden transition-all border-zinc-800 ${expandedId === r.id ? 'bg-zinc-800 ring-1 ring-zinc-600' : 'bg-zinc-900'}`}>
+                                    <div onClick={() => setExpandedId(expandedId === r.id ? null : r.id)} className="p-4 flex justify-between items-center cursor-pointer">
+                                        <div className="flex gap-3">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-white shadow-lg ${r.runMode === 'aogh' ? 'bg-rose-600' : 'bg-purple-600'}`}>{r.runMode === 'aogh' ? 'A' : 'O'}</div>
+                                            <div><p className="font-bold text-sm text-zinc-200">{r.date}</p><p className="text-[10px] opacity-40 uppercase font-bold tracking-widest text-zinc-500">{r.isSaleRecord ? 'Sale' : r.runMode?.toUpperCase() || 'OGH'}</p></div>
+                                        </div>
+                                        <div className="text-right"><p className={`font-black text-sm ${profitValue >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatMoney(profitValue)}</p><Icon name={expandedId === r.id ? "ChevronUp" : "ChevronDown"} size={14} className="opacity-20 inline-block ml-2"/></div>
+                                    </div>
+                                    {expandedId === r.id && (
+                                        <div className="px-4 pb-4 animate-slide-up bg-black/20 pt-4 border-t border-zinc-700/50 text-center">
+                                            <div className="grid grid-cols-2 gap-3 mb-4 text-left">
+                                                <div className="bg-zinc-900/50 p-2 rounded-xl border border-zinc-700/50">
+                                                    <p className="text-[9px] uppercase opacity-50">Stones</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-purple-400 font-bold">{r.purpleStoneCount}</span>
+                                                        {r.runMode === 'aogh' && <span className="text-rose-400 font-bold">/ {r.contMagicCount}</span>}
+                                                        <span className="text-xs text-zinc-500 ml-1">({formatMoney(realizedStoneIncome)})</span>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-zinc-900/50 p-2 rounded-xl border border-zinc-700/50">
+                                                    <p className="text-[9px] uppercase opacity-50">Usage</p>
+                                                    <p className="text-xs font-bold">
+                                                        {(r.normalGumUsed > 0 ? `Gum x${r.normalGumUsed}` : '')}
+                                                        {(r.heGumUsed > 0 ? ` HE x${r.heGumUsed}` : '')}
+                                                        {(r.normalGumUsed === 0 && r.heGumUsed === 0) ? '-' : ''}
+                                                        <span className="text-zinc-500 mx-1">|</span>
+                                                        {r.minutesUsed}m
+                                                    </p>
+                                                </div>
+                                                <div className="col-span-2 bg-zinc-900/50 p-2 rounded-xl border border-zinc-700/50">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-[9px] uppercase opacity-50">Etc. Cost</span>
+                                                        <span className="text-xs text-rose-400 font-bold">-{formatMoney(r.otherCosts?.reduce((a,c)=>a+parseInt(c.amount||0),0)||0)}</span>
+                                                    </div>
+                                                    {r.notes && <p className="text-[10px] italic text-zinc-400 mt-1 border-t border-white/5 pt-1">"{r.notes}"</p>}
+                                                </div>
+                                            </div>
+                                            <DeleteButton onDelete={() => deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'records', r.id))} />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        function SettingsView({ uid, onResetUid, prices, setPrices, db, showToast, onClose }) {
             const [localPrices, setLocalPrices] = useState(prices);
-            const [isSaving, setIsSaving] = useState(false);
-            const [restoreInput, setRestoreInput] = useState("");
-            const [apiKeyInput, setApiKeyInput] = useState(localStorage.getItem('ogh_gemini_key') || "");
-            const [showChangelog, setShowChangelog] = useState(false);
-            const [isDeleting, setIsDeleting] = useState(false);
-            const [isSavingKey, setIsSavingKey] = useState(false);
-            const [isRestoring, setIsRestoring] = useState(false);
-
             const savePrices = async () => {
-                setIsSaving(true);
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
                 await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'config', 'prices'), localPrices);
                 setPrices(localPrices);
-                setIsSaving(false);
+                showToast("Prices Saved");
+                onClose();
             };
-
-            const handleSaveApiKey = async () => {
-                if (!apiKeyInput) return;
-                setIsSavingKey(true);
-                const check = await callGemini("Say Hello", apiKeyInput);
-                if (check.startsWith("API Key ไม่ถูกต้อง") || check.startsWith("Error")) {
-                    alert("API Key ไม่สามารถใช้งานได้จริง: " + check);
-                    setIsSavingKey(false);
-                    return;
-                }
-                localStorage.setItem('ogh_gemini_key', apiKeyInput);
-                setIsSavingKey(false);
-                if(showToast) showToast("API Key ใช้งานได้! บันทึกเรียบร้อย");
-            };
-
-            const handleRestore = async () => {
-                if (!restoreInput.trim()) return;
-                if (restoreInput.length < 5) {
-                    alert("UID สั้นเกินไป กรุณาตรวจสอบอีกครั้ง");
-                    return;
-                }
-                
-                setIsRestoring(true);
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
-                try {
-                    // Check for existence
-                    const statsRef = doc(db, 'artifacts', appId, 'users', restoreInput, 'gamification', 'stats');
-                    const statsSnap = await getDoc(statsRef);
-                    
-                    if (!statsSnap.exists()) {
-                        // Not found - strict validation
-                        alert("❌ ไม่พบ UID นี้ในระบบ\nกรุณาตรวจสอบว่าพิมพ์ถูกต้องหรือไม่");
-                    } else {
-                        // Found
-                        const userData = statsSnap.data();
-                        const confirmMsg = `✅ ค้นพบข้อมูล!\nClass: ${userData.jobClass || 'Novice'}\nCoins: ${userData.coins || 0}\n\nต้องการกู้คืนข้อมูลนี้ใช่หรือไม่?`;
-                        
-                        if(confirm(confirmMsg)) {
-                            onRestoreUid(restoreInput);
-                            setRestoreInput("");
-                        }
-                    }
-                } catch (e) {
-                    alert("Error: " + e.message);
-                } finally {
-                    setIsRestoring(false);
-                }
-            };
-
-            const handleDeleteAll = async () => {
-                if (!confirm("⚠️ คำเตือน: คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?")) return;
-                const confirm2 = prompt("พิมพ์คำว่า 'DELETE' เพื่อยืนยัน");
-                if (confirm2 !== 'DELETE') return;
-                setIsDeleting(true);
-                try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
-                    const userRef = collection(db, 'artifacts', appId, 'users', uid, 'records');
-                    const snapshot = await getDocs(userRef);
-                    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-                    await Promise.all(deletePromises);
-                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'), INITIAL_STATS);
-                    alert("ลบข้อมูลทั้งหมดเรียบร้อยแล้ว");
-                    window.location.reload();
-                } catch(e) { alert("Error: " + e.message); } finally { setIsDeleting(false); }
-            };
-
-            const configItems = [
-                { id: 'purpleStonePrice', label: 'Coagulated Spell', icon: <SVGs.Spell className="w-5 h-5"/> },
-                { id: 'contMagicPrice', label: 'Contaminated Magic', icon: <SVGs.Magic className="w-5 h-5"/> },
-                { id: 'gumBoxPrice', label: 'Bubble Gum (Box)', icon: <SVGs.GumBox className="w-5 h-5"/> },
-                { id: 'silvervineBoxPrice', label: 'Silvervine (Box)', icon: <SVGs.SilvervineBox className="w-5 h-5"/> }
-            ];
-
             return (
                 <div className="p-6 animate-fade-in view-content space-y-8">
-                    <h2 className="text-2xl font-black italic">Settings</h2>
-                    
-                    <div className="glass-panel p-5 rounded-3xl space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold uppercase opacity-50">UID Recovery</span>
-                            {uid !== defaultUid && (
-                                <button onClick={onResetUid} className="text-[10px] text-rose-400 font-bold uppercase border border-rose-500/30 px-2 py-1 rounded-lg">Reset</button>
-                            )}
-                        </div>
-                        <div className="bg-black/30 p-3 rounded-xl flex items-center justify-between gap-2">
-                            <div className="overflow-hidden">
-                                <p className="text-[9px] opacity-40 uppercase">Current UID</p>
-                                <code className="text-xs font-mono opacity-80 truncate block">{uid}</code>
-                            </div>
-                            <button onClick={() => { copyToClipboard(uid); if(showToast) showToast("คัดลอก UID แล้ว"); }} className="p-2 bg-white/5 rounded-lg active:scale-95">
-                                <Icon name="Copy" size={14}/>
-                            </button>
-                            {/* NEW: Small text link for resetting UID */}
-                        </div>
-                        <div className="text-right">
-                             <button onClick={onResetUid} className="text-[10px] text-slate-400 hover:text-white underline">กลับสู่ UID เดิมของเครื่องนี้</button>
-                        </div>
-                        <div className="flex gap-2">
-                            <input 
-                                type="text" 
-                                value={restoreInput} 
-                                onChange={e => setRestoreInput(e.target.value)} 
-                                placeholder="ระบุ UID เพื่อกู้คืน..." 
-                                className="flex-1 bg-slate-800 rounded-xl px-4 text-xs outline-none focus:ring-2 focus:ring-blue-500/50 transition-all" 
-                            />
-                            <button 
-                                onClick={handleRestore} 
-                                disabled={isRestoring || !restoreInput}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                                    isRestoring || !restoreInput 
-                                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed' 
-                                    : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 active:scale-95 hover:bg-blue-500'
-                                }`}
-                            >
-                                {isRestoring ? <Icon name="Loader" className="animate-spin" size={16}/> : <><Icon name="Refresh" size={16}/> Restore</>}
-                            </button>
-                        </div>
+                    <div className="flex justify-between items-center"><h2 className="text-2xl font-black italic tracking-tighter">Settings</h2><button onClick={onClose}><Icon name="X" size={24}/></button></div>
+                    <div className="glass-panel p-6 rounded-[2rem] space-y-4">
+                        <div className="flex justify-between items-center"><span className="text-[10px] font-black uppercase opacity-50 tracking-[0.2em]">UID Management</span><button onClick={onResetUid} className="text-[10px] text-rose-400 hover:text-rose-300 underline font-bold">Reset Default</button></div>
+                        <div className="bg-black/30 p-3 rounded-2xl flex items-center justify-between"><code className="text-xs font-mono opacity-80">{uid}</code><button onClick={() => copyToClipboard(uid)} className="p-2 bg-white/5 rounded-xl"><Icon name="Copy" size={14}/></button></div>
                     </div>
-
-                    <div className="glass-panel p-5 rounded-3xl space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold uppercase opacity-50">Hugin's Service (AI)</span>
-                            <button onClick={() => setShowAiFab(!showAiFab)} className="text-indigo-400">
-                                {showAiFab ? <Icon name="ToggleOn" size={28}/> : <Icon name="ToggleOff" size={28}/>}
-                            </button>
-                        </div>
-                        <div className="flex gap-2">
-                            <input type="password" value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="Paste Key..." className="flex-1 bg-slate-800 rounded-xl px-4 text-xs outline-none h-12" />
-                            <button onClick={handleSaveApiKey} disabled={!apiKeyInput || isSavingKey} className={`px-4 rounded-xl text-xs font-bold flex items-center gap-2 ${!apiKeyInput ? 'bg-slate-700' : 'bg-indigo-600'}`}>
-                                {isSavingKey ? <Icon name="Loader" className="animate-spin" size={16}/> : <Icon name="Check" size={16}/>}
-                            </button>
-                        </div>
-                    </div>
-
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold opacity-40 px-2 uppercase tracking-widest">Prices</h3>
+                        <h3 className="text-[10px] font-black opacity-40 px-2 uppercase tracking-[0.2em]">Market Prices</h3>
                         <div className="grid grid-cols-2 gap-4">
-                            {configItems.map(item => (
-                                <div key={item.id} className="glass-panel p-4 rounded-2xl">
-                                    <div className="flex items-center gap-2 mb-2 opacity-50">
-                                        {item.icon}
-                                        <span className="text-[9px] font-bold uppercase truncate">{item.label}</span>
-                                    </div>
-                                    <input type="text" inputMode="numeric" value={localPrices[item.id]} onChange={e => setLocalPrices({...localPrices, [item.id]: parseInt(e.target.value.replace(/\D/g,'')) || 0})} className="w-full bg-transparent text-xl font-black outline-none" />
-                                </div>
-                            ))}
+                            <div className="glass-panel p-4 rounded-2xl border border-white/5"><p className="text-[9px] font-bold opacity-50 mb-2 truncate">Coagulated Spell</p><input type="text" inputMode="numeric" value={localPrices.purpleStonePrice} onChange={e => setLocalPrices({...localPrices, purpleStonePrice: parseInt(e.target.value)||0})} className="w-full bg-black/20 rounded-lg px-3 py-2 text-xl font-black outline-none text-center" /></div>
+                            <div className="glass-panel p-4 rounded-2xl border border-white/5"><p className="text-[9px] font-bold opacity-50 mb-2 truncate">Contaminated Magic</p><input type="text" inputMode="numeric" value={localPrices.contMagicPrice} onChange={e => setLocalPrices({...localPrices, contMagicPrice: parseInt(e.target.value)||0})} className="w-full bg-black/20 rounded-lg px-3 py-2 text-xl font-black outline-none text-center" /></div>
                         </div>
-                        <button onClick={savePrices} disabled={isSaving} className="w-full py-4 bg-emerald-600 rounded-2xl font-black text-lg active:scale-95 transition-all">
-                            {isSaving ? "SAVING..." : "SAVE PRICES"}
-                        </button>
+                        <button onClick={savePrices} className="w-full py-4 bg-emerald-600 rounded-2xl font-black text-lg shadow-xl">SAVE PRICES</button>
                     </div>
-
-                    <div className="pt-8 border-t border-white/5">
-                        <button onClick={handleDeleteAll} disabled={isDeleting} className="w-full py-4 border border-rose-500/30 text-rose-400 rounded-2xl font-bold text-xs uppercase hover:bg-rose-500/10 flex justify-center gap-2">
-                            {isDeleting ? <Icon name="Loader" className="animate-spin" size={16}/> : <><Icon name="Trash" size={16}/> DELETE ALL DATA</>}
-                        </button>
-                    </div>
-
-                    <div className="text-center pt-4">
-                        <button onClick={() => setShowChangelog(true)} className="opacity-20 hover:opacity-100 text-[10px] font-bold">{APP_VERSION}</button>
-                    </div>
-
-                    {showChangelog && (
-                        <Modal onClose={() => setShowChangelog(false)}>
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-black italic">Changelog</h3>
-                                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                                    {CHANGELOGS.map((log, idx) => (
-                                        <div key={idx} className="bg-slate-800/50 p-4 rounded-2xl">
-                                            <div className="flex justify-between items-end mb-1">
-                                                <span className="text-lg font-black text-white">{log.ver}</span>
-                                                <span className="text-[9px] opacity-40 uppercase">{log.date}</span>
-                                            </div>
-                                            <p className="text-xs opacity-70 leading-relaxed">{log.desc}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={() => setShowChangelog(false)} className="w-full py-3 bg-slate-800 rounded-xl font-bold text-xs">Close</button>
-                            </div>
-                        </Modal>
-                    )}
                 </div>
             );
-        };
+        }
 
-        // --- Main App Component ---
         function App() {
             const [authUser, setAuthUser] = useState(null);
             const [targetUid, setTargetUid] = useState(null);
             const [activeTab, setActiveTab] = useState('home');
             const [records, setRecords] = useState([]);
             const [prices, setPrices] = useState({ purpleStonePrice: 150000, contMagicPrice: 450000, gumBoxPrice: 1500000, silvervineBoxPrice: 2500000 });
+            const [activeBuffs, setActiveBuffs] = useState([]);
             const [stats, setStats] = useState(INITIAL_STATS);
             const [loading, setLoading] = useState(true);
             const [toast, setToast] = useState(null);
-            const [isSaving, setIsSaving] = useState(false);
-            const [rewardData, setRewardData] = useState(null);
-            const [showAiFab, setShowAiFab] = useState(false); // Default OFF
-            const [aiResult, setAiResult] = useState(null);
-            const [isAnalysing, setIsAnalysing] = useState(false);
+            const [db, setDb] = useState(null);
+            const [stock, setStock] = useState({});
+            const [showSettings, setShowSettings] = useState(false);
 
-            const dbRef = useRef(null);
-            const authRef = useRef(null);
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
-
-            const showToast = (message) => setToast(message);
-            const handleRestoreUid = (newUid) => { localStorage.setItem('ogh_target_uid', newUid); setTargetUid(newUid); showToast("Restored UID: " + newUid); };
+            const showToast = (message) => { setToast(message); setTimeout(() => setToast(null), 3000); };
             const handleResetUid = () => { localStorage.removeItem('ogh_target_uid'); if (authUser) setTargetUid(authUser.uid); showToast("Reset to Default"); };
 
             useEffect(() => {
-                const initFirebase = async () => {
-                    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : MANUAL_FIREBASE_CONFIG;
-                    const app = initializeApp(firebaseConfig);
-                    authRef.current = getAuth(app);
-                    dbRef.current = getFirestore(app);
-                    
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(authRef.current, __initial_auth_token); } else { await signInAnonymously(authRef.current); }
-
-                    onAuthStateChanged(authRef.current, (u) => {
-                        setAuthUser(u);
-                        const savedUid = localStorage.getItem('ogh_target_uid');
-                        const effectiveUid = savedUid || u?.uid;
-                        setTargetUid(effectiveUid);
-                        if (effectiveUid) {
-                            onSnapshot(query(collection(dbRef.current, 'artifacts', appId, 'users', effectiveUid, 'records'), orderBy('timestamp', 'desc')), (snap) => {
-                                setRecords(snap.docs.map(d => ({ ...d.data(), id: d.id })));
-                            });
-                            onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', effectiveUid, 'config', 'prices'), d => { if (d.exists()) setPrices(d.data()); });
-                            onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', effectiveUid, 'gamification', 'stats'), d => { if (d.exists()) setStats(d.data()); });
-                        }
-                        setLoading(false);
-                    });
+                const init = async () => {
+                    const app = initializeApp(MANUAL_FIREBASE_CONFIG);
+                    const auth = getAuth(app);
+                    const firestore = getFirestore(app);
+                    setDb(firestore);
+                    await signInAnonymously(auth);
+                    onAuthStateChanged(auth, (u) => { setAuthUser(u); setTargetUid(localStorage.getItem('ogh_target_uid') || u?.uid); setLoading(false); });
                 };
-                initFirebase();
+                init();
             }, []);
 
             useEffect(() => {
-                if (!dbRef.current || !targetUid) return;
-                const unsubRecords = onSnapshot(query(collection(dbRef.current, 'artifacts', appId, 'users', targetUid, 'records'), orderBy('timestamp', 'desc')), (snap) => setRecords(snap.docs.map(d => ({ ...d.data(), id: d.id }))));
-                const unsubPrices = onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', targetUid, 'config', 'prices'), d => { if (d.exists()) setPrices(d.data()); });
-                const unsubStats = onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', targetUid, 'gamification', 'stats'), d => { if (d.exists()) setStats(d.data()); else setStats(INITIAL_STATS); });
-                return () => { unsubRecords(); unsubPrices(); unsubStats(); };
-            }, [targetUid]);
-
-            const triggerAiAnalysis = async () => {
-                // Check if user has recorded at least 5 times (QUEST)
-                if (records.length < 5) {
-                    showToast(`🔒 ยังไม่ปลดล็อค: ต้องบันทึกข้อมูลให้ครบ 5 รอบ (ขาดอีก ${5 - records.length} รอบ)`);
-                    return;
-                }
-
-                if (stats.coins < 1) {
-                    showToast("ไม่สามารถวิเคราะห์ได้: Coins ไม่พอ (ต้องการ 1 Coin)");
-                    return;
-                }
-
-                setIsAnalysing(true);
-                
-                // Deduct Coin
-                try {
-                    await setDoc(doc(dbRef.current, 'artifacts', appId, 'users', targetUid, 'gamification', 'stats'), {
-                        ...stats,
-                        coins: stats.coins - 1
+                if (!db || !targetUid) return;
+                const unsubRecords = onSnapshot(query(collection(db, 'artifacts', appId, 'users', targetUid, 'records'), orderBy('timestamp', 'desc')), (snap) => setRecords(snap.docs.map(d => ({ ...d.data(), id: d.id }))));
+                const unsubPrices = onSnapshot(doc(db, 'artifacts', appId, 'users', targetUid, 'config', 'prices'), d => { if (d.exists()) setPrices(d.data()); });
+                const unsubStats = onSnapshot(doc(db, 'artifacts', appId, 'users', targetUid, 'gamification', 'stats'), d => { if (d.exists()) setStats(d.data()); else setStats(INITIAL_STATS); });
+                const qInv = query(collection(db, 'artifacts', appId, 'users', targetUid, 'inventory'));
+                const unsubBuffs = onSnapshot(qInv, snap => {
+                    const buffs = snap.docs.map(d => d.data()).filter(i => i.status === 'active').map(b => {
+                         const endDate = new Date(b.activatedAt); endDate.setDate(endDate.getDate() + b.duration);
+                         if(b.duration === 1) endDate.setTime(new Date(b.activatedAt).getTime() + (24*60*60*1000));
+                         return { ...b, endDate };
                     });
-                } catch (e) {
-                    console.error("Coin deduction failed", e);
-                    setIsAnalysing(false);
-                    return;
-                }
+                    setActiveBuffs(buffs);
+                });
+                const unsubStock = onSnapshot(doc(db, 'artifacts', appId, 'users', targetUid, 'config', 'stock'), d => { if (d.exists()) setStock(d.data()); });
+                return () => { unsubRecords(); unsubPrices(); unsubStats(); unsubBuffs(); unsubStock(); };
+            }, [db, targetUid]);
 
-                // Calculate Stock Data
-                const totalSpells = records.reduce((acc, r) => acc + (parseInt(r.purpleStoneCount) || 0), 0);
-                const totalMagics = records.reduce((acc, r) => acc + (parseInt(r.contMagicCount) || 0), 0);
-                const totalValue = (totalSpells * prices.purpleStonePrice) + (totalMagics * prices.contMagicPrice);
-                
-                // Get Recent History (Last 5 Runs)
-                const recentRuns = records.slice(0, 5).map(r => ({ date: r.date, profit: r.profit }));
-
-                const prompt = `
-                    ข้อมูลผู้เล่น OGHza Tracker:
-                    - คลังปัจจุบัน: หินม่วง ${totalSpells} ชิ้น, หินแดง ${totalMagics} ชิ้น
-                    - มูลค่ารวมในคลัง: ${totalValue.toLocaleString()} Zeny
-                    - ราคากลาง: หินม่วง ${prices.purpleStonePrice}, หินแดง ${prices.contMagicPrice}
-                    - ประวัติ 5 รอบล่าสุด: ${JSON.stringify(recentRuns)}
-                    
-                    สวมบทบาทเป็น Hugin (NPC นักวิจัยหน้าดัน OGH):
-                    1. ทักทายแบบนักวิจัยลึกลับ
-                    2. วิเคราะห์ดวงจากประวัติล่าสุด (เกลือ/เทพ)
-                    3. แนะนำการขายของ (ช่วงนี้ควรรีบขายหรือดองไว้)
-                    4. ทิ้งท้ายกวนๆ
-                    (ตอบสั้นๆ ไม่เกิน 3 ย่อหน้า ภาษาไทย)
-                `;
-                
-                const result = await callGemini(prompt);
-                setAiResult(result);
-                setIsAnalysing(false);
-            };
-
-            if (loading) return ( <div className="h-screen flex flex-col items-center justify-center space-y-4 bg-[#0f172a]"><Icon name="Loader" className="animate-spin text-purple-500" size={40} /><p className="font-black text-xs uppercase tracking-widest opacity-30">Connecting...</p></div> );
-
-            const renderContent = () => {
-                switch(activeTab) {
-                    case 'home': return <HomeView records={records} stats={stats} goToTab={setActiveTab} />;
-                    case 'add': return <AddDataView db={dbRef.current} uid={targetUid} prices={prices} stats={stats} onBack={() => setActiveTab('home')} showToast={showToast} setGlobalIsSaving={setIsSaving} onSuccess={setRewardData} isSaving={isSaving} />;
-                    case 'inventory': return <InventoryView records={records} prices={prices} db={dbRef.current} uid={targetUid} showToast={showToast} />;
-                    case 'settings': return <SettingsView uid={targetUid} defaultUid={authUser?.uid} prices={prices} setPrices={setPrices} db={dbRef.current} onResetUid={handleResetUid} onRestoreUid={handleRestoreUid} showToast={showToast} showAiFab={showAiFab} setShowAiFab={setShowAiFab} />;
-                    case 'history': return (
-                        <div className="p-6 animate-fade-in view-content space-y-4">
-                            <h2 className="text-2xl font-black italic">History Logs</h2>
-                            {records.map(r => (
-                                <div key={r.id} className={`glass-panel p-4 rounded-2xl flex justify-between items-center ${r.isSaleRecord ? 'border-l-4 border-l-emerald-500' : ''}`}>
-                                    <div className="flex gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${r.isSaleRecord ? 'bg-emerald-500' : (r.runMode === 'aogh' ? 'bg-rose-500' : 'bg-purple-500')}`}>
-                                            {r.isSaleRecord ? '$' : r.runMode?.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold">{r.date}</p>
-                                            <p className="text-[10px] opacity-40">{r.isSaleRecord ? 'Manual Sale' : `${formatFullMoney(r.trashAmount)} Zeny`}</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className={`font-black ${r.isSaleRecord ? 'text-emerald-300' : 'text-emerald-400'}`}>{r.isSaleRecord ? '+' : ''}{formatMoney(r.profit)}</p>
-                                        <button onClick={async () => { if(confirm("Delete this record?")) await deleteDoc(doc(dbRef.current, 'artifacts', appId, 'users', targetUid, 'records', r.id)); }} className="text-[9px] font-bold opacity-20 hover:opacity-100 text-rose-400 uppercase">Del</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    );
-                    case 'profile': return (
-                        <div className="p-6 animate-fade-in view-content space-y-8">
-                            <div className="text-center space-y-4">
-                                <div className={`w-32 h-32 mx-auto rounded-[2.5rem] flex items-center justify-center text-4xl font-black shadow-2xl ${stats.isHighClass ? 'bg-amber-500' : 'bg-slate-700'}`}>{stats.jobClass.substring(0, 2).toUpperCase()}</div>
-                                <div><h2 className="text-3xl font-black italic">{stats.jobClass}</h2><p className="text-xs font-bold opacity-40 uppercase tracking-widest">Base Lv. {stats.baseLv} / Job Lv. {stats.jobLv}</p></div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="glass-panel p-6 rounded-3xl text-center"><p className="text-2xl font-black text-amber-500">{stats.coins}</p><p className="text-[10px] font-bold opacity-40 uppercase">Coins</p></div>
-                                <div className="glass-panel p-6 rounded-3xl text-center"><p className="text-xl font-black text-blue-400 truncate">{formatMoney(stats.zeny)}</p><p className="text-[10px] font-bold opacity-40 uppercase">DEKZA Coin (DEK)</p></div>
-                            </div>
-                        </div>
-                    );
-                    default: return <HomeView records={records} stats={stats} goToTab={setActiveTab} />;
-                }
-            };
-
-            const isAiLocked = records.length < 5;
+            if (loading) return <div className="h-screen flex items-center justify-center bg-[#0f172a] text-purple-500">Loading...</div>;
 
             return (
                 <div className="max-w-md mx-auto relative min-h-screen">
-                    {toast && <Toast message={toast} onClose={() => setToast(null)} />}
-                    {rewardData && <RewardPopup data={rewardData} onClose={() => setRewardData(null)} />}
-                    {aiResult && <AiAnalysisModal analysisResult={aiResult} onClose={() => setAiResult(null)} />}
+                    {toast && <Toast message={toast} />}
                     
-                    {/* Floating AI Button (Global) */}
-                    {showAiFab && (
-                        <button 
-                            onClick={triggerAiAnalysis}
-                            disabled={isAnalysing}
-                            className={`fixed bottom-24 right-6 w-16 h-16 rounded-full shadow-lg flex items-center justify-center animate-hugin active:scale-90 transition-transform z-50 border-2 border-white/20 ${isAiLocked ? 'bg-slate-700 grayscale' : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-orange-500/40'}`}
-                        >
-                            {isAnalysing ? <Icon name="Loader" className="animate-spin text-white" size={28}/> : (isAiLocked ? <Icon name="Lock" className="text-white/50" size={24}/> : <SVGs.Hugin className="w-10 h-10"/>)}
-                        </button>
+                    {showSettings ? (
+                        <SettingsView uid={targetUid} defaultUid={authUser?.uid} prices={prices} setPrices={setPrices} db={db} onResetUid={handleResetUid} showToast={showToast} onClose={() => setShowSettings(false)} />
+                    ) : (
+                        <>
+                            {activeTab === 'home' && <HomeView records={records} stats={stats} goToTab={setActiveTab} onOpenSettings={() => setShowSettings(true)} activeBuffs={activeBuffs} />}
+                            {activeTab === 'add' && <DungeonView db={db} uid={targetUid} stock={stock} activeBuffs={activeBuffs} records={records} prices={prices} onSuccess={() => showToast('Saved!')} />}
+                            {activeTab === 'inventory' && <InventoryView db={db} uid={targetUid} showToast={showToast} records={records} stock={stock} />}
+                            {activeTab === 'shop' && <ShopView db={db} uid={targetUid} showToast={showToast}/>}
+                            {activeTab === 'history' && <HistoryView records={records} db={db} uid={targetUid} showToast={showToast} prices={prices} />}
+                        </>
                     )}
 
-                    {renderContent()}
-
-                    {/* New Standard Tab Bar - Reordered */}
-                    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto glass-panel border-t border-white/5 nav-bar-padding pt-2 px-2 flex justify-between items-end z-40 rounded-t-[2rem]">
-                        <button onClick={() => setActiveTab('home')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'home' ? 'text-purple-400' : 'opacity-40'}`}>
-                            <Icon name="Home" size={24}/>
-                            <span className="text-[9px] font-bold uppercase">Home</span>
-                        </button>
-                        <button onClick={() => setActiveTab('add')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'add' ? 'text-purple-400' : 'opacity-40'}`}>
-                            <Icon name="Warp" size={24}/>
-                            <span className="text-[9px] font-bold uppercase">Dungeon</span>
-                        </button>
-                        <button onClick={() => setActiveTab('history')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'history' ? 'text-purple-400' : 'opacity-40'}`}>
-                            <Icon name="History" size={24}/>
-                            <span className="text-[9px] font-bold uppercase">History</span>
-                        </button>
-                        <button onClick={() => setActiveTab('inventory')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'inventory' ? 'text-purple-400' : 'opacity-40'}`}>
-                            <Icon name="Box" size={24}/>
-                            <span className="text-[9px] font-bold uppercase">Stock</span>
-                        </button>
-                        <button onClick={() => setActiveTab('settings')} className={`flex-1 flex flex-col items-center gap-1 py-3 transition-all ${activeTab === 'settings' ? 'text-purple-400' : 'opacity-40'}`}>
-                            <Icon name="Settings" size={24}/>
-                            <span className="text-[9px] font-bold uppercase">Setting</span>
-                        </button>
-                    </nav>
+                    {!showSettings && (
+                        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto glass-panel border-t border-white/5 nav-bar-padding pt-2 px-2 flex justify-between items-end z-40 rounded-t-[2rem]">
+                            <button onClick={() => setActiveTab('home')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'home' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Home" size={24}/><span className="text-[9px] font-bold uppercase">Home</span></button>
+                            <button onClick={() => setActiveTab('inventory')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'inventory' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Inventory" size={24}/><span className="text-[9px] font-bold uppercase">Bag</span></button>
+                            <button onClick={() => setActiveTab('shop')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'shop' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Shop" size={24}/><span className="text-[9px] font-bold uppercase">Shop</span></button>
+                            <button onClick={() => setActiveTab('add')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'add' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Dungeon" size={24}/><span className="text-[9px] font-bold uppercase">Run</span></button>
+                            <button onClick={() => setActiveTab('history')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'history' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="History" size={24}/><span className="text-[9px] font-bold uppercase">History</span></button>
+                        </nav>
+                    )}
                 </div>
             );
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+
     </script>
 </body>
 </html>
