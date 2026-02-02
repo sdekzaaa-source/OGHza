@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OGHza Tracker V4.6.5</title>
+    <title>OGHza Tracker V4.7.1 (Performance)</title>
     
     <!-- App Icon -->
     <link rel="icon" href="icon.png" type="image/png">
@@ -20,15 +20,14 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kanit:wght@300;400;500;600&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
-
+        
         :root {
             --app-bg: #18181b; /* Zinc-950 */
             --glass-bg: rgba(39, 39, 42, 0.95); /* Zinc-800/95 */
         }
 
         body { 
-            font-family: 'Inter', 'Kanit', 'Noto Color Emoji', sans-serif; 
+            font-family: 'Inter', 'Kanit', sans-serif; 
             background-color: var(--app-bg); 
             color: #f4f4f5; 
             overflow-x: hidden; 
@@ -39,6 +38,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Optimized: Use blur only on sticky/fixed elements */
         .glass-panel { 
             background: var(--glass-bg); 
             backdrop-filter: blur(12px); 
@@ -47,6 +47,7 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
         }
 
+        /* High Performance List Item (No Blur for scrolling lists) */
         .list-panel {
             background: #27272a; 
             border: 1px solid #3f3f46;
@@ -82,7 +83,6 @@
         
         .rox-currency-bar { background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid #3f3f46; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; height: 50px; }
         .currency-pill { background: #27272a; border-radius: 12px; padding: 4px 10px; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: #e4e4e7; border: 1px solid #3f3f46; }
-        .emoji-icon { font-family: 'Noto Color Emoji', sans-serif; line-height: 1; }
         
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -102,6 +102,19 @@
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         .level-up-glow { animation: levelUpPulse 2s infinite; }
+        
+        /* Share Card Gradient */
+        .share-card-bg {
+            background: linear-gradient(135deg, #1f2937 0%, #000000 100%);
+            position: relative;
+        }
+        .share-card-bg::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -114,19 +127,27 @@
 
         const { useState, useEffect, useMemo, useRef } = React;
 
-        const APP_VERSION = "Ver.4.6.5";
+        const APP_VERSION = "Ver.4.7.1";
         const VERSION_HISTORY = [
-            { ver: "Ver.4.6.5", changes: ["Adventure: Removed 0 default (Placeholder)", "Adventure: Removed Save Toast", "Bag: Thai Descriptions", "Bag: Fixed HE Gum Icon"] },
-            { ver: "Ver.4.6.4", changes: ["Removed blur BG in Adventure", "Updated Item Names (Divine-Pride)"] },
-            { ver: "Ver.4.6.3", changes: ["Reward Popup: Profit Display", "Reward Popup: Animated EXP bar", "Adventure: Gum Watermark BG", "Adventure: New HE Gum toggle"] },
-            { ver: "Ver.4.6.2", changes: ["Reward Popup: Level Up & EXP Bar", "Adventure: Compact Zeny input", "Adventure: Hide HE Gum behind toggle"] }
+            { ver: "Ver.4.7.1", changes: ["Reverted to SVG Icons (Fix iOS lag)", "Optimized performance"] },
+            { ver: "Ver.4.7.0", changes: ["Added Share System", "Added DEK Shop"] },
+            { ver: "Ver.4.6.5", changes: ["UI Clean up", "Fixed HE Gum icon", "Removed save toast"] },
+            { ver: "Ver.4.6.3", changes: ["Reward Popup animations", "Profit display"] }
         ];
         
         const MANUAL_FIREBASE_CONFIG = { apiKey: "AIzaSyAbWzr8o_OhkjGbEetBYq_nzYmVZ2fTf40", authDomain: "rocogh-88a38.firebaseapp.com", projectId: "rocogh-88a38", storageBucket: "rocogh-88a38.firebasestorage.app", messagingSenderId: "1025971309206", appId: "1:1025971309206:web:d4f9e0ab6bb016dde590b7" };
-        const INITIAL_STATS = { baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, jobClass: 'Novice', coins: 0, zeny: 0 };
+        const INITIAL_STATS = { baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, jobClass: 'Novice', coins: 0, zeny: 0, unlockedTitles: ['Novice'] };
         const SHOP_ITEMS = [ { id: 'premium_box', name: 'Premium Service Box', duration: 30, type: 'buff_box', icon: 'Premium', desc: 'กล่องพรีเมียม 30 วัน', rarity: 'Rare', category: 'Consumable' }, { id: 'kafra_box', name: 'Kafra Buff (7d)', duration: 7, type: 'buff_box', icon: 'Kafra', desc: 'บัฟคลังคาฟร่า 7 วัน', rarity: 'Uncommon', category: 'Consumable' }, { id: 'silvervine_box', name: 'Silvervine Box (10ea)', qty: 10, type: 'consumable_box', subType: 'silvervine', icon: 'SilvervineBox', desc: 'กล่องผลไม้แมว 10 ชิ้น', rarity: 'Uncommon', category: 'Consumable' }, { id: 'gum_box', name: 'Bubble Gum Box (10ea)', qty: 10, type: 'consumable_box', subType: 'gum', icon: 'GumBox', desc: 'กล่องหมากฝรั่ง 10 ชิ้น', rarity: 'Common', category: 'Consumable' }, { id: 'he_gum_box', name: 'HE Bubble Gum Box (5ea)', qty: 5, type: 'consumable_box', subType: 'he_gum', icon: 'HeGumBox', desc: 'กล่องหมากฝรั่ง HE 5 ชิ้น', rarity: 'Rare', category: 'Consumable' } ];
         
-        // Updated ITEM_DETAILS to Thai
+        // Titles Shop
+        const DEK_TITLES = [
+            { id: 'richman', name: 'Richman', cost: 100, icon: '💰' },
+            { id: 'lucky', name: 'Lucky Guy', cost: 200, icon: '🍀' },
+            { id: 'slayer', name: 'Dragon Slayer', cost: 500, icon: '⚔️' },
+            { id: 'god', name: 'RNG God', cost: 1000, icon: '👑' },
+            { id: 'whale', name: 'The Whale', cost: 5000, icon: '🐳' }
+        ];
+
         const ITEM_DETAILS = {
             'spell': { name: 'Coagulated Spell', desc: 'ผลึกเวทมนตร์สีม่วง ใช้สำหรับ Enchant อุปกรณ์', type: 'Etc', rarity: 'Common', category: 'Etc' },
             'magic': { name: 'Contaminated Magic', desc: 'ผลึกเวทมนตร์สีแดงที่ปนเปื้อนพลังงานชั่วร้าย', type: 'Etc', rarity: 'Uncommon', category: 'Etc' },
@@ -140,6 +161,7 @@
         const DROP_TABLE = [ { id: 'elu', name: 'Elunium', rate: 0.4, min: 1, max: 2, icon: 'Elunium', desc: 'แร่ธาตุสำหรับตีบวก Armor', type: 'Ore', rarity: 'Common', category: 'Etc' }, { id: 'ori', name: 'Oridecon', rate: 0.4, min: 1, max: 2, icon: 'Oridecon', desc: 'แร่ธาตุสำหรับตีบวก Weapon', type: 'Ore', rarity: 'Common', category: 'Etc' }, { id: 'card_wk', name: 'White Knight Card', rarity: 'Rare', rate: 0.05, min: 1, max: 1, icon: 'Card', desc: 'การ์ด White Knight', type: 'Card', category: 'Rare' }, { id: 'card_kk', name: 'Khalitzburg Knight Card', rarity: 'Rare', rate: 0.05, min: 1, max: 1, icon: 'Card', desc: 'การ์ด Khalitzburg Knight', type: 'Card', category: 'Rare' }, { id: 'card_ogh', name: 'Old Glast Heim Card', rarity: 'Legendary', rate: 0.001, min: 1, max: 1, icon: 'Card', desc: 'การ์ด Old Glast Heim', type: 'Card', category: 'Rare' } ];
         
         const formatMoney = (n) => new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(n || 0);
+        const formatFullMoney = (n) => new Intl.NumberFormat('th-TH').format(n || 0);
         const getExpReq = (lv) => Math.floor(100 * Math.pow(lv || 1, 1.5));
         const simulateDrops = () => { const drops = []; DROP_TABLE.forEach(item => { if (Math.random() <= item.rate) { const qty = Math.floor(Math.random() * (item.max - item.min + 1)) + item.min; drops.push({ ...item, qty }); } }); return drops; };
         const copyToClipboard = (text) => { const textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select(); try { document.execCommand('copy'); } catch (err) {} document.body.removeChild(textArea); };
@@ -149,7 +171,6 @@
             const dropItem = DROP_TABLE.find(d => d.id === id); if (dropItem) return dropItem;
             const shopItem = SHOP_ITEMS.find(s => s.id === id); if (shopItem) return { ...shopItem, type: 'Box', rarity: shopItem.rarity || 'Common', category: shopItem.category || 'Consumable' };
             if (id === 'premium_staff') return { ...ITEM_DETAILS['premium_staff'], icon: 'PremiumStaff' };
-            // Fix Key mapping for HE Gum
             if (id === 'he_gum') return { ...ITEM_DETAILS['he_gum'], icon: 'HeGum' }; 
             if (id === 'spell') return { ...ITEM_DETAILS['spell'], icon: 'Spell' };
             if (id === 'magic') return { ...ITEM_DETAILS['magic'], icon: 'Magic' };
@@ -181,22 +202,51 @@
             return <div className={`w-full h-full bg-zinc-700 rounded-md flex items-center justify-center ${className}`}><span className="text-[8px] text-zinc-500">?</span></div>;
         };
 
+        // --- SVG ICONS RESTORED ---
         const Icon = ({ name, size = 20, className }) => {
             const icons = {
-                Home: '🏠', Inventory: '🎒', Shop: '💰', Dungeon: '⚔️', History: '📜', Settings: '🛠️', Profile: '👤',
-                Save: '💾', Trash: '🗑️', Plus: '➕', X: '❌', Check: '✅', Copy: '📋', Info: 'ℹ️',
-                Clock: '⏰', Cost: '💸', TrendingUp: '📈', Box: '📦', ShoppingCart: '🛒', FileText: '📝',
-                Clover: '🍀', Wish: '🌠', Skull: '💀',
-                LayoutGrid: '🎒', Flask: '🧪', Layers: '🍀', Diamond: '💎',
-                Lock: '🔒', DollarSign: '💲', ToggleOn: '🟢', ToggleOff: '⚫'
+                Home: <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor"/>,
+                Inventory: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z" /><path d="M8 10V8a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M9 14h6" /></g>,
+                Shop: <><path d="M3 21h18v-8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8z" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M3 7l2-4h14l2 4" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M3 7h18" stroke="currentColor" strokeWidth="2"/><path d="M10 11v10" stroke="currentColor" strokeWidth="2"/><path d="M14 11v10" stroke="currentColor" strokeWidth="2"/></>,
+                Dungeon: <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>,
+                History: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" stroke="currentColor" strokeWidth="2" fill="none"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" stroke="currentColor" strokeWidth="2" fill="none"/></>,
+                Plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>, Trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></>,
+                ToggleOn: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#10b981"/><circle cx="16" cy="12" r="5" fill="white"/></>, ToggleOff: <><rect x="1" y="5" width="22" height="14" rx="7" fill="#52525b"/><circle cx="8" cy="12" r="5" fill="white"/></>,
+                X: <><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" /><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" /></>,
+                Settings: <g stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"><line x1="4" x2="20" y1="21" y2="21" /><line x1="20" x2="4" y1="3" y2="3" /><line x1="4" x2="20" y1="12" y2="12" /><circle cx="8" cy="12" r="2" /><circle cx="16" cy="3" r="2" /><circle cx="12" cy="21" r="2" /></g>,
+                Check: <polyline points="20 6 9 17 4 12"></polyline>, Copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></>, Box: <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>,
+                Wish: <svg viewBox="0 0 120 120" fill="none"><path d="M60 10 L75 45 L110 50 L85 75 L90 110 L60 95 L30 110 L35 75 L10 50 L45 45 Z" fill="#fbbf24" stroke="#d97706" strokeWidth="4"/><circle cx="60" cy="60" r="10" fill="#fff" fillOpacity="0.4"/></svg>,
+                LayoutGrid: <><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></>,
+                Flask: <><path d="M10 2v7.527a2 2 0 0 1 .211.896v.669L6.81 18.61A3.202 3.202 0 0 0 6 20.556V21h12v-.444a3.202 3.202 0 0 0-.81-1.946l-3.4-7.518v-.669a2 2 0 0 1 .211-.896V2H10z"/><path d="M8.5 2h7"/></>,
+                Layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+                Diamond: <path d="M6 3h12l4 6-10 13L2 9z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>,
+                Lock: <><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>,
+                ShoppingCart: <><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></>,
+                Save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,
+                DollarSign: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,
+                Clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+                FileText: <><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>,
+                Clover: <path d="M16.19 2H7.81C4.17 2 2 4.17 2 7.81v8.37C2 19.83 4.17 22 7.81 22h8.37c3.64 0 5.81-2.17 5.81-5.81V7.81C22 4.17 19.83 2 16.19 2zm-4.14 15.65c0 .3-.24.54-.54.54-.3 0-.54-.24-.54-.54v-3.77l-2.67 2.67c-.21.21-.55.21-.76 0s-.21-.55 0-.76l2.97-2.97c.21-.21.55-.21.76 0 .21.21.21.55 0 .76l-2.22 2.22h2.22c.3 0 .54.24.54.54v1.31zM16 13.5c-.3 0-.54.24-.54.54 0 .3.24.54.54.54h-1.31c0 .3-.24.54-.54.54-.3 0-.54-.24-.54-.54v-2.22l2.22 2.22c.21.21.55.21.76 0 .21-.21.21-.55 0-.76l-2.97-2.97c-.21-.21-.55-.21-.76 0-.21.21-.21.55 0 .76l2.67 2.67h3.77c.3 0 .54-.24.54-.54 0-.3-.24-.54-.54-.54h-3.3z" fill="currentColor"/>,
+                Info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>,
+                TrendingUp: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="17 6 23 6 23 12" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></>,
+                Share: <><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></>,
+                Profile: <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             };
-            return <span className={`inline-flex items-center justify-center leading-none emoji-icon ${className}`} style={{ fontSize: size }}>{icons[name] || '❓'}</span>;
+            
+            const iconDef = icons[name] || icons.Box;
+            let viewBox = "0 0 24 24";
+            if (name === "Wish") viewBox = "0 0 120 120";
+            if (name === "Inventory") viewBox = "0 0 256 256";
+            if (name === "Dungeon") viewBox = "0 0 32 32";
+
+            return <svg width={size} height={size} viewBox={viewBox} fill="none" stroke={['Settings','Trash','Check','X','Dungeon','Inventory','Shop','History','LayoutGrid','Flask','Layers','Diamond','Lock','ShoppingCart','Save','DollarSign','Clock','FileText','Info','TrendingUp','Share','Profile'].includes(name)?"currentColor":"none"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{iconDef}</svg>;
         };
 
         // --- Shared Components ---
         function CurrencyHeader({ stats, activeBuffs }) {
             const [now, setNow] = useState(new Date());
             useEffect(() => { const interval = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(interval); }, []);
+
             return (
                 <div className="rox-currency-bar sticky top-0 z-30">
                     <div className="flex gap-2 mr-auto overflow-x-auto scrollbar-hide max-w-[50%]">
@@ -218,7 +268,50 @@
         function InfoModal({ onClose }) { return (<div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fade-in" onClick={onClose}><div className="w-full max-w-xs bg-[#18181b] rounded-[2.5rem] p-6 relative border border-zinc-800" onClick={e => e.stopPropagation()}><button onClick={onClose} className="absolute top-5 right-5 text-zinc-500 hover:text-white"><Icon name="X" size={20}/></button><h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Icon name="Clover" className="text-emerald-400"/> Rank Criteria</h3><div className="space-y-3 text-sm text-zinc-300"><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-ss w-8 text-center">SS</div><div className="flex-1"><span className="text-white font-bold">Godly</span> <br/><span className="text-xs text-zinc-500">Card Drop!</span></div></div><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-s w-8 text-center">S</div><div className="flex-1"><span className="text-white font-bold">Lucky</span> <br/><span className="text-xs text-zinc-500">&gt; Avg +50%</span></div></div><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-a w-8 text-center">A</div><div className="flex-1"><span className="text-white font-bold">Good</span> <br/><span className="text-xs text-zinc-500">&gt; Avg +30%</span></div></div><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-b w-8 text-center">B</div><div className="flex-1"><span className="text-white font-bold">Normal</span> <br/><span className="text-xs text-zinc-500">Within 10% of Avg</span></div></div><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-c w-8 text-center">C</div><div className="flex-1"><span className="text-white font-bold">Bad</span> <br/><span className="text-xs text-zinc-500">&lt; Avg -10%</span></div></div><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-d w-8 text-center">D</div><div className="flex-1"><span className="text-white font-bold">Poor</span> <br/><span className="text-xs text-zinc-500">&lt; Avg -30%</span></div></div><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-e w-8 text-center">E</div><div className="flex-1"><span className="text-white font-bold">Awful</span> <br/><span className="text-xs text-zinc-500">&lt; Avg -50%</span></div></div><div className="flex items-center gap-3 p-2 bg-zinc-900 rounded-xl border border-zinc-700/50"><div className="text-lg font-black rank-f w-8 text-center">F</div><div className="flex-1"><span className="text-white font-bold">Loss</span> <br/><span className="text-xs text-zinc-500">Negative Profit</span></div></div></div></div></div>); }
         function VersionModal({ onClose }) { return (<div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fade-in" onClick={onClose}><div className="w-full max-w-xs bg-[#18181b] rounded-[2.5rem] p-6 relative border border-zinc-800" onClick={e => e.stopPropagation()}><button onClick={onClose} className="absolute top-5 right-5 text-zinc-500 hover:text-white"><Icon name="X" size={20}/></button><h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Icon name="Info" size={20}/> Update Log</h3><div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">{VERSION_HISTORY.map((v, i) => (<div key={i} className="bg-zinc-900 p-3 rounded-xl border border-zinc-700/50"><h4 className="text-sm font-black text-emerald-400 mb-1">{v.ver}</h4><ul className="list-disc pl-4 text-zinc-400 text-xs space-y-1">{v.changes.map((c, j) => <li key={j}>{c}</li>)}</ul></div>))}</div></div></div>); }
         
-        function RewardPopup({ data, onClose }) {
+        // --- SHARE MODAL ---
+        function ShareModal({ data, onClose }) {
+            return (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-fade-in" onClick={onClose}>
+                    <div className="w-full max-w-sm share-card-bg rounded-3xl p-6 border border-white/10 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white"><Icon name="X" size={24}/></button>
+                        
+                        <div className="text-center mb-6">
+                            <h2 className="text-3xl font-black text-white italic tracking-tighter">OGHza <span className="text-emerald-400">Tracker</span></h2>
+                            <p className="text-[10px] text-zinc-400 tracking-widest uppercase">Adventure Report</p>
+                        </div>
+
+                        <div className="flex justify-center mb-6">
+                            <div className="w-32 h-32 rounded-2xl border-2 border-white/20 relative overflow-hidden shadow-lg bg-black">
+                                <SmartIcon name={data.runMode === 'aogh' ? 'AOGH_BOSS' : 'OGH_BOSS'} className="w-full h-full object-cover" />
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-center py-1 text-[10px] font-bold text-white uppercase">{data.runMode || 'OGH'}</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                                <p className="text-[9px] text-zinc-500 uppercase">Profit</p>
+                                <p className={`text-xl font-black ${data.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatMoney(data.profit)}</p>
+                            </div>
+                            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                                <p className="text-[9px] text-zinc-500 uppercase">Rank</p>
+                                <div className="flex items-center justify-center gap-1">
+                                    <Icon name="Clover" className={data.rankCss} size={16}/>
+                                    <span className={`text-xl font-black ${data.rankCss}`}>{data.rank}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="text-center">
+                            <p className="text-[10px] text-zinc-600 mb-2">Capture this screen to share!</p>
+                            <div className="inline-block px-3 py-1 rounded-full bg-white/10 text-[10px] text-zinc-400 font-mono">{new Date().toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function RewardPopup({ data, onClose, onShare }) {
+            // ... (Existing RewardPopup Logic) ...
             const [displayExpPercent, setDisplayExpPercent] = useState(Math.min(100, Math.floor((data.beforeExp / getExpReq(data.beforeLv)) * 100)));
             const targetExpPercent = Math.min(100, Math.floor((data.afterExp / getExpReq(data.afterLv)) * 100));
             const isLevelUp = data.afterLv > data.beforeLv;
@@ -242,7 +335,10 @@
                         </div>
                          <div className="w-full mb-6"><div className="flex justify-between text-[10px] font-bold text-zinc-500 mb-1"><span>LV.{data.afterLv}</span><span>{Math.floor(displayExpPercent)}%</span></div><div className="w-full h-3 bg-zinc-900 rounded-full overflow-hidden relative border border-zinc-700"><div className="h-full bg-gradient-to-r from-emerald-500 to-green-400 transition-all duration-1000 ease-out" style={{ width: `${displayExpPercent}%` }}></div></div></div>
                         <div className="grid grid-cols-4 gap-3 mb-8 w-full">{data.drops.length > 0 ? data.drops.map((d, i) => (<div key={i} className="flex flex-col items-center animate-slide-up" style={{animationDelay: `${i*100}ms`}}><div className="w-14 h-14 bg-zinc-900 rounded-xl border border-zinc-700 flex items-center justify-center relative shadow-inner"><SmartIcon name={d.icon} className="w-10 h-10" /><span className="absolute -bottom-1 -right-1 bg-black text-zinc-300 text-[9px] font-black px-1.5 rounded border border-zinc-700">x{d.qty}</span></div></div>)) : <div className="col-span-4 text-center text-zinc-600 italic py-4">No rare drops...</div>}</div>
-                        <button onClick={onClose} className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl shadow-lg transition-transform active:scale-95">CONTINUE</button>
+                        <div className="flex gap-2 w-full">
+                            <button onClick={onShare} className="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 text-white font-black rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"><Icon name="Share" size={18}/> SHARE</button>
+                            <button onClick={onClose} className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl shadow-lg transition-transform active:scale-95">CONTINUE</button>
+                        </div>
                     </div>
                 </div>
             ); 
@@ -381,15 +477,18 @@
             Object.keys(drops).forEach(key => { const def = DROP_TABLE.find(d => d.id === key); if (def) allItems.push({ id: key, category: def.category, iconComp: <SmartIcon name={def.icon} className="w-full h-full" />, count: drops[key], name: def.name }); });
             const filteredItems = activeTab === 'All' ? allItems : allItems.filter(i => i.category === activeTab);
             
+            // CORRECT GROUPING LOGIC using Item ID (itemId) not Document ID
             const groupedDisplayItems = useMemo(() => {
                 const map = new Map();
                 filteredItems.forEach(item => {
-                    const key = item.itemId || item.id;
+                    const key = item.itemId || item.id; // Use product ID if available, else unique ID (for fixed items)
                     if(map.has(key)) {
                         const ex = map.get(key);
+                        // For inventory boxes, they are individual docs with qty=1 usually, but let's be safe
                         ex.count += (item.count || 1); 
                     } else {
-                        map.set(key, { ...item, count: item.count !== undefined ? item.count : 0 });
+                        // Clone to avoid mutating original
+                        map.set(key, { ...item, count: item.count || (item.count === 0 ? 0 : 1) });
                     }
                 });
                 return Array.from(map.values());
@@ -399,9 +498,9 @@
 
             return (
                 <div className="p-6 animate-fade-in view-content space-y-6">
-                    <div className="flex items-center justify-between"><h2 className="text-2xl font-black italic tracking-tighter text-zinc-300">Bag <span className="text-sm font-normal text-zinc-500">Inventory 🎒</span></h2><div className="text-[10px] text-zinc-500 font-mono">{groupedDisplayItems.length} Items</div></div>
+                    <div className="flex items-center justify-between"><h2 className="text-2xl font-black tracking-tighter text-zinc-300">Bag <span className="text-sm font-normal text-zinc-500">Inventory 🎒</span></h2><div className="text-[10px] text-zinc-500 font-mono">{groupedDisplayItems.length} Items</div></div>
                     <div className="bg-zinc-900 p-1 rounded-2xl flex gap-1 border border-zinc-800">{['All', 'Consumable', 'Etc', 'Rare'].map(t => { let label = t; let iconName = 'LayoutGrid'; if (t === 'Consumable') { label = 'Use'; iconName = 'Flask'; } if (t === 'Etc') { label = 'Etc'; iconName = 'Layers'; } if (t === 'Rare') { label = 'Rare'; iconName = 'Diamond'; } return <TabButton key={t} label={label} icon={iconName} active={activeTab === t} onClick={() => setActiveTab(t)} />; })}</div>
-                    <div className="bg-zinc-900/50 p-5 rounded-[2.5rem] border border-zinc-800 max-h-[420px] overflow-y-auto scrollbar-hide"><div className="grid grid-cols-4 gap-4 pb-10">{groupedDisplayItems.map((item, index) => (<div key={index} onClick={() => onItemClick(item)} className="aspect-square rounded-2xl sunken-slot relative flex items-center justify-center cursor-pointer overflow-hidden group"><div className="w-10 h-10 pointer-events-none group-active:scale-90 transition-transform">{item.iconComp}</div><span className="absolute bottom-1 right-1.5 text-[8px] font-black text-zinc-400 bg-black/60 px-1.5 rounded-md pointer-events-none backdrop-blur-sm border border-white/5">{item.count}</span></div>))}{Array.from({ length: Math.max(0, 16 - groupedDisplayItems.length) }).map((_, i) => (<div key={`e-${i}`} className="aspect-square rounded-2xl sunken-slot opacity-30"></div>))}</div></div>
+                    <div className="bg-zinc-900/50 p-5 rounded-[2.5rem] border border-zinc-800 max-h-[420px] overflow-y-auto custom-scrollbar"><div className="grid grid-cols-4 gap-4 pb-10">{groupedDisplayItems.map((item, index) => (<div key={index} onClick={() => onItemClick(item)} className="aspect-square rounded-2xl sunken-slot relative flex items-center justify-center cursor-pointer overflow-hidden group"><div className="w-10 h-10 pointer-events-none group-active:scale-90 transition-transform">{item.iconComp}</div><span className="absolute bottom-1 right-1.5 text-[8px] font-black text-zinc-400 bg-black/60 px-1.5 rounded-md pointer-events-none backdrop-blur-sm border border-white/5">{item.count}</span></div>))}{Array.from({ length: Math.max(0, 16 - groupedDisplayItems.length) }).map((_, i) => (<div key={`e-${i}`} className="aspect-square rounded-2xl sunken-slot opacity-30"></div>))}</div></div>
                     {viewItem && <ItemDetailModal item={viewItem} onClose={() => setViewItem(null)} onSell={handleSellAction} />}
                     {selectedBox && <Modal onClose={() => setSelectedBox(null)}><div className="text-center"><div className="w-20 h-20 mx-auto bg-zinc-800 rounded-3xl flex items-center justify-center mb-4 border border-zinc-700"><SmartIcon name={SHOP_ITEMS.find(s=>s.id===selectedBox.itemId)?.icon} className="w-12 h-12" /></div><h3 className="text-lg font-black text-white mb-1">{selectedBox.name}</h3><div className="flex gap-2 mt-4"><button onClick={() => setSelectedBox(null)} className="flex-1 py-3 bg-zinc-700 rounded-xl font-bold text-xs">Cancel</button><button onClick={() => handleUseBox(selectedBox)} className="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-xs text-white">Use</button></div></div></Modal>}
                     {svUseConfirm && <Modal onClose={() => setSvUseConfirm(null)}><div className="text-center"><div className="w-20 h-20 mx-auto bg-zinc-800 rounded-3xl flex items-center justify-center mb-4 border border-zinc-700"><SmartIcon name="Silvervine" className="w-12 h-12"/></div><h3 className="text-lg font-black text-white mb-2">Activate Buff?</h3><div className="flex gap-2"><button onClick={() => setSvUseConfirm(null)} className="flex-1 py-3 bg-zinc-700 rounded-xl font-bold text-xs">Cancel</button><button onClick={handleUseSilvervineFromStock} className="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-xs text-white">Use (2 ea)</button></div></div></Modal>}
@@ -412,6 +511,7 @@
         function DungeonView({ db, uid, stock, activeBuffs, onSuccess, records, prices, stats }) {
             const [form, setForm] = useState({ runMode: 'ogh', normalGumUsed: 0, heGumUsed: 0, useSilvervine: false, purpleStoneCount: 0, contMagicCount: 0, trashAmount: '', minutesUsed: 60, otherCosts: [], notes: '' });
             const [rewardData, setRewardData] = useState(null);
+            const [showHeGum, setShowHeGum] = useState(false);
             
             const hasPremium = activeBuffs.some(b => b.itemId === 'premium_box' && new Date(b.endDate) > new Date());
             const hasKafra = activeBuffs.some(b => b.itemId === 'kafra_box' && new Date(b.endDate) > new Date());
@@ -457,8 +557,11 @@
                 setRewardData({ drops, dek: earnedDek, expGain, profit, beforeExp: prevStats.baseExp, afterExp: newStats.baseExp, beforeLv: prevStats.baseLv, afterLv: newStats.baseLv });
             };
 
-            const closeReward = () => { setRewardData(null); /* No toast here */ setForm({ runMode: 'ogh', normalGumUsed: 0, heGumUsed: 0, useSilvervine: false, purpleStoneCount: 0, contMagicCount: 0, trashAmount: '', minutesUsed: 60, otherCosts: [], notes: '' }); };
+            const closeReward = () => { setRewardData(null); setForm({ runMode: 'ogh', normalGumUsed: 0, heGumUsed: 0, useSilvervine: false, purpleStoneCount: 0, contMagicCount: 0, trashAmount: '', minutesUsed: 60, otherCosts: [], notes: '' }); };
             const isFormValid = form.trashAmount && parseInt(form.trashAmount) > 0;
+            
+            // Share Modal State
+            const [shareData, setShareData] = useState(null);
 
             return (
                 <div className="p-6 animate-fade-in view-content space-y-6">
@@ -533,14 +636,17 @@
 
                     <button disabled={!isFormValid} onClick={handleSave} className="w-full py-5 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-[1.5rem] font-black text-lg shadow-lg shadow-emerald-900/30 active:scale-95 transition-transform text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"><Icon name="Save" size={20}/> COMPLETE RUN</button>
                     
-                    {rewardData && <RewardPopup data={rewardData} onClose={closeReward} />}
+                    {rewardData && <RewardPopup data={rewardData} onClose={closeReward} onShare={() => setShareData({...rewardData, runMode: form.runMode === 'aogh' ? 'AOGH' : 'OGH', rank: getRankInfo(rewardData.profit, 0).rank, rankCss: getRankInfo(rewardData.profit, 0).css})} />}
+                    {shareData && <ShareModal data={shareData} onClose={() => setShareData(null)} />}
                 </div>
             );
         }
 
+        // --- Other Views ---
         function HistoryView({ records, db, uid, showToast, prices, activeBuffs }) {
             const [expandedId, setExpandedId] = useState(null);
             const [showRankInfo, setShowRankInfo] = useState(false);
+            const [shareData, setShareData] = useState(null); // Share State
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
 
             // Group Records by Date
@@ -564,7 +670,7 @@
             return (
                 <div className="p-6 animate-fade-in view-content space-y-4">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-black italic tracking-tighter text-zinc-300 flex items-center gap-2">
+                        <h2 className="text-2xl font-black tracking-tighter text-zinc-300 flex items-center gap-2">
                             History Logs 
                             <button onClick={() => setShowRankInfo(true)} className="opacity-40 hover:opacity-100 transition-opacity text-emerald-400"><Icon name="Info" size={20} /></button>
                         </h2>
@@ -577,7 +683,6 @@
                             const dailyRecords = groupedRecords[date];
                             return (
                                 <div key={date} className="space-y-3 mb-6">
-                                    {/* Minimal Date Header - Just Date & Count */}
                                     <div className="sticky top-14 z-20 bg-zinc-900/95 backdrop-blur-md px-3 py-2 rounded-lg border-b border-zinc-800 flex justify-between items-center">
                                         <span className="text-xs font-bold text-zinc-400">{date}</span>
                                         <span className="text-[10px] text-zinc-600">{dailyRecords.length} Records</span>
@@ -624,7 +729,10 @@
                                                             {/* Memo */}
                                                             {r.notes && (<div className="col-span-2 bg-yellow-900/10 p-3 rounded-xl border border-yellow-700/30 relative mt-2"><div className="absolute -top-2.5 left-3 bg-zinc-900 px-2 py-0.5 text-[9px] text-yellow-500 font-bold border border-yellow-700/50 rounded-full flex items-center gap-1 shadow-sm"><Icon name="FileText" size={8}/> NOTE</div><p className="text-[11px] italic text-zinc-300 mt-1">"{r.notes}"</p></div>)}
                                                         </div>
-                                                        <DeleteButton onDelete={() => deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'records', r.id))} />
+                                                        <div className="flex gap-2 justify-end">
+                                                            <button onClick={() => setShareData({...r, runMode: r.runMode === 'aogh' ? 'AOGH' : 'OGH', rank: rankInfo.rank, rankCss: rankInfo.css})} className="p-2 bg-zinc-800 rounded-lg text-zinc-400 hover:text-white"><Icon name="Share" size={14}/></button>
+                                                            <DeleteButton onDelete={() => deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'records', r.id))} />
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -636,10 +744,12 @@
                     )}
                     
                     {showRankInfo && <InfoModal onClose={() => setShowRankInfo(false)} />}
+                    {shareData && <ShareModal data={shareData} onClose={() => setShareData(null)} />}
                 </div>
             );
         }
 
+        // --- Profile View ---
         function ProfileView({ stats, uid, onResetUid, prices, setPrices, db, showToast, onBack }) {
             const [localPrices, setLocalPrices] = useState(prices);
             const [deleteProgress, setDeleteProgress] = useState(0);
@@ -678,6 +788,16 @@
 
             const expPercent = Math.min(100, Math.floor((stats.baseExp / getExpReq(stats.baseLv)) * 100));
 
+            const handleBuyTitle = async (title) => {
+                if (stats.coins < title.cost) { alert("Not enough DEK!"); return; }
+                if (stats.unlockedTitles?.includes(title.name)) { alert("Already owned!"); return; }
+                const newCoins = stats.coins - title.cost;
+                const newTitles = [...(stats.unlockedTitles || ['Novice']), title.name];
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
+                await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'), { ...stats, coins: newCoins, unlockedTitles: newTitles });
+                showToast(`Unlocked: ${title.name}!`);
+            };
+
             return (
                 <div className="p-6 animate-fade-in view-content space-y-6">
                     <div className="flex justify-between items-center mb-2"><h2 className="text-2xl font-black italic tracking-tighter text-zinc-300 flex items-center gap-2"><Icon name="Profile" size={24}/> Profile</h2><button onClick={onBack} className="p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-colors"><Icon name="X" size={20} /></button></div>
@@ -686,26 +806,32 @@
                          <div className="w-full h-3 bg-zinc-900 rounded-full overflow-hidden relative border border-zinc-700 mb-2"><div className="h-full bg-gradient-to-r from-emerald-500 to-green-400 transition-all duration-500" style={{ width: `${expPercent}%` }}></div></div><div className="flex justify-between text-[9px] text-zinc-500 font-mono"><span>EXP: {formatMoney(stats.baseExp)}</span><span>NEXT: {formatMoney(getExpReq(stats.baseLv))}</span></div>
                     </div>
                     
-                    <div className="glass-panel p-4 rounded-2xl border border-zinc-800 space-y-3"><div className="flex justify-between items-center"><span className="text-[10px] font-black uppercase opacity-50 tracking-[0.2em]">ID Manager</span></div><div className="bg-black/30 p-2 rounded-xl flex items-center justify-between border border-zinc-800/50"><code className="text-[10px] font-mono opacity-60 truncate mr-2">{uid}</code><button onClick={() => copyToClipboard(uid)} className="p-1.5 bg-zinc-800 rounded-lg hover:bg-zinc-700"><Icon name="Copy" size={12}/></button></div><button onClick={onResetUid} className="w-full py-2 border border-zinc-700 text-zinc-500 rounded-xl text-[10px] font-bold hover:text-white hover:border-zinc-500 transition-colors">Reset ID to Default</button></div>
-                    
-                    <div className="pt-4 border-t border-zinc-800">
-                        <div 
-                            className="relative w-full h-12 bg-rose-900/20 border border-rose-900/50 rounded-xl overflow-hidden cursor-pointer select-none touch-none"
-                            onMouseDown={startDelete} onMouseUp={cancelDelete} onMouseLeave={cancelDelete} onTouchStart={(e) => { e.preventDefault(); startDelete(); }} onTouchEnd={(e) => { e.preventDefault(); cancelDelete(); }}
-                        >
-                            <div className="absolute top-0 left-0 h-full bg-rose-600/50 transition-all ease-linear" style={{ width: `${deleteProgress}%` }}></div>
-                            <div className="absolute inset-0 flex items-center justify-center gap-2 pointer-events-none text-rose-500 font-black text-xs">
-                                <Icon name="Trash" size={16}/> {deleteProgress > 0 ? "HOLDING..." : "HOLD 3s TO DELETE ALL DATA"}
-                            </div>
+                    {/* DEK Shop */}
+                    <div className="glass-panel p-4 rounded-2xl border border-zinc-800 space-y-3">
+                        <div className="flex justify-between items-center"><span className="text-[10px] font-black uppercase opacity-50 tracking-[0.2em]">DEK Shop</span><span className="text-amber-400 text-xs font-bold flex items-center gap-1"><SmartIcon name="DEK" className="w-4 h-4"/> {formatMoney(stats.coins)}</span></div>
+                        <div className="grid grid-cols-1 gap-2">
+                            {DEK_TITLES.map(t => {
+                                const isOwned = stats.unlockedTitles?.includes(t.name);
+                                return (
+                                    <div key={t.id} onClick={() => !isOwned && handleBuyTitle(t)} className={`flex items-center justify-between p-2 rounded-xl border ${isOwned ? 'bg-zinc-800 border-zinc-700 opacity-50' : 'bg-zinc-900 border-zinc-800 hover:border-amber-500/50 cursor-pointer'}`}>
+                                        <div className="flex items-center gap-2"><span className="text-xl">{t.icon}</span><span className="text-xs font-bold text-zinc-300">{t.name}</span></div>
+                                        {isOwned ? <span className="text-[9px] font-bold text-emerald-500">OWNED</span> : <span className="text-[9px] font-bold text-amber-400 flex items-center gap-1"><SmartIcon name="DEK" className="w-3 h-3"/> {t.cost}</span>}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
+
+                    <div className="space-y-3"><h3 className="text-[10px] font-black opacity-40 px-2 uppercase tracking-[0.2em]">Market Config</h3><div className="grid grid-cols-2 gap-3"><div className="glass-panel p-3 rounded-2xl border border-zinc-700/50 bg-zinc-900/30"><p className="text-[9px] font-bold opacity-50 mb-1 truncate">Spell Price</p><input type="text" inputMode="numeric" value={localPrices.purpleStonePrice} onChange={e => setLocalPrices({...localPrices, purpleStonePrice: parseInt(e.target.value)||0})} className="w-full bg-black/30 rounded-lg px-2 py-1 text-sm font-black text-center text-white" /></div><div className="glass-panel p-3 rounded-2xl border border-zinc-700/50 bg-zinc-900/30"><p className="text-[9px] font-bold opacity-50 mb-1 truncate">Magic Price</p><input type="text" inputMode="numeric" value={localPrices.contMagicPrice} onChange={e => setLocalPrices({...localPrices, contMagicPrice: parseInt(e.target.value)||0})} className="w-full bg-black/30 rounded-lg px-2 py-1 text-sm font-black text-center text-white" /></div></div><button onClick={handleSavePrices} className="w-full py-3 bg-zinc-800 text-zinc-300 font-bold rounded-xl text-xs hover:bg-zinc-700 border border-zinc-700">Save Prices</button></div>
+                    <div className="glass-panel p-4 rounded-2xl border border-zinc-800 space-y-3"><div className="flex justify-between items-center"><span className="text-[10px] font-black uppercase opacity-50 tracking-[0.2em]">ID Manager</span></div><div className="bg-black/30 p-2 rounded-xl flex items-center justify-between border border-zinc-800/50"><code className="text-[10px] font-mono opacity-60 truncate mr-2">{uid}</code><button onClick={() => copyToClipboard(uid)} className="p-1.5 bg-zinc-800 rounded-lg hover:bg-zinc-700"><Icon name="Copy" size={12}/></button></div><button onClick={onResetUid} className="w-full py-2 border border-zinc-700 text-zinc-500 rounded-xl text-[10px] font-bold hover:text-white hover:border-zinc-500 transition-colors">Reset ID to Default</button></div>
+                    <div className="pt-4 border-t border-zinc-800"><div className="relative w-full h-12 bg-rose-900/20 border border-rose-900/50 rounded-xl overflow-hidden cursor-pointer select-none touch-none" onMouseDown={startDelete} onMouseUp={cancelDelete} onMouseLeave={cancelDelete} onTouchStart={(e) => { e.preventDefault(); startDelete(); }} onTouchEnd={(e) => { e.preventDefault(); cancelDelete(); }}><div className="absolute top-0 left-0 h-full bg-rose-600/50 transition-all ease-linear" style={{ width: `${deleteProgress}%` }}></div><div className="absolute inset-0 flex items-center justify-center gap-2 pointer-events-none text-rose-500 font-black text-xs"><Icon name="Trash" size={16}/> {deleteProgress > 0 ? "HOLDING..." : "HOLD 3s TO DELETE ALL DATA"}</div></div></div>
                      <div className="text-center opacity-20 mt-4 cursor-pointer hover:opacity-50 transition-opacity" onClick={() => setShowVersionModal(true)}><p className="text-[10px] font-mono tracking-widest underline">{APP_VERSION}</p></div>
-                     
                      {showVersionModal && <VersionModal onClose={() => setShowVersionModal(false)} />}
                 </div>
             );
         }
 
+        // --- App Component ---
         function App() {
             const [authUser, setAuthUser] = useState(null);
             const [targetUid, setTargetUid] = useState(null);
@@ -718,7 +844,6 @@
             const [toast, setToast] = useState(null);
             const [db, setDb] = useState(null);
             const [stock, setStock] = useState({});
-            const [showSettings, setShowSettings] = useState(false);
 
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'oghza-tracker';
             const showToast = (message) => { setToast(message); setTimeout(() => setToast(null), 3000); };
