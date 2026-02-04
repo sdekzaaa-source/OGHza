@@ -1,520 +1,239 @@
-<!DOCTYPE html>
-<html lang="th" data-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ทริปเชียงใหม่ 4-6 ก.พ. | Premium Planner</title>
-    
-    <!-- Meta Tags for Add to Home Screen -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="ทริปเชียงใหม่">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+import React, { useState } from 'react';
+import { 
+  Plane, 
+  Car, 
+  Utensils, 
+  Coffee, 
+  Camera, 
+  Home, 
+  MapPin, 
+  Plus, 
+  Trash2, 
+  Moon, 
+  Sun, 
+  Leaf, 
+  Fuel, 
+  Save,
+  Navigation,
+  ChevronRight
+} from 'lucide-react';
+
+const App = () => {
+  const [theme, setTheme] = useState('muji');
+  const [gasTotal, setGasTotal] = useState(0);
+  const [showGasInput, setShowGasInput] = useState(false);
+  const [tempGas, setTempGas] = useState('');
+  const [flightCost, setFlightCost] = useState(0);
+  const [isEditingFlight, setIsEditingFlight] = useState(false);
+
+  const handleAddGas = () => {
+    if (tempGas && !isNaN(tempGas)) {
+      setGasTotal(prev => prev + parseFloat(tempGas));
+      setTempGas('');
+      setShowGasInput(false);
+    }
+  };
+
+  const itinerary = [
+    {
+      date: '4 Feb 2026',
+      title: 'Day 1: มุ่งสู่ม่อนแจ่ม (อัปเดตใหม่)',
+      items: [
+        { time: '11:10', activity: 'ถึงสนามบินเชียงใหม่ (CNX)', icon: <Plane className="text-blue-500" />, location: 'Terminal 1', link: 'https://maps.google.com/?q=Chiang+Mai+International+Airport' },
+        { time: '11:45', activity: 'รับรถเช่าที่จองไว้', icon: <Car className="text-slate-500" />, location: 'Counter Car Rental', link: '' },
+        { time: '12:15', activity: 'ทานมื้อเที่ยง (เน้นเร็ว)', icon: <Utensils className="text-orange-500" />, location: 'ร้านอาหารใกล้สนามบิน', link: 'https://maps.google.com/?q=Restaurants+near+CNX' },
+        { time: '13:30', activity: 'Cafe Hopping (แม่ริม)', icon: <Coffee className="text-yellow-700" />, location: 'Chic 39 / WTF Coffee Camp', link: 'https://maps.google.com/?q=Chic+39+Chiang+Mai' },
+        { time: '15:00', activity: 'เช็คอินที่พัก', icon: <Home className="text-green-600" />, location: 'ม่อนลมหนาว โฮมสเตย์', link: 'https://maps.google.com/?q=ม่อนลมหนาว+โฮมสเตย์' },
+        { time: '16:30', activity: 'ชมวิวพระอาทิตย์ตก', icon: <Camera className="text-purple-500" />, location: 'ยิ่งยงสวนดอกไม้', link: 'https://maps.google.com/?q=ยิ่งยงสวนดอกไม้' },
+        { time: '18:30', activity: 'มื้อค่ำ: หมูกระทะ', icon: <Utensils className="text-red-500" />, location: 'หน้าห้องพัก (ม่อนลมหนาว)', link: '' },
+      ]
+    }
+  ];
+
+  const themes = {
+    light: 'bg-slate-50 text-slate-900',
+    dark: 'bg-slate-900 text-slate-100',
+    muji: 'bg-[#F4EBE1] text-[#4A4238]'
+  };
+
+  const cards = {
+    light: 'bg-white shadow-sm border border-slate-200',
+    dark: 'bg-slate-800 border border-slate-700',
+    muji: 'bg-[#FFF9F3] border border-[#DED0B6]'
+  };
+
+  return (
+    <div className={`min-h-screen transition-colors duration-500 font-sans pb-20 ${themes[theme]}`}>
+      {/* Top Navigation */}
+      <div className="max-w-md mx-auto p-6 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md bg-opacity-80">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight">CNX 2026</h1>
+          <p className="text-xs font-bold opacity-50 uppercase tracking-widest">Version 1.8.2</p>
+        </div>
+        <div className="flex bg-white/20 p-1 rounded-full backdrop-blur-sm border border-white/30 shadow-inner">
+          <button onClick={() => setTheme('light')} className={`p-2 rounded-full transition-all ${theme === 'light' ? 'bg-white text-yellow-500 shadow' : 'text-slate-400'}`}><Sun size={16}/></button>
+          <button onClick={() => setTheme('dark')} className={`p-2 rounded-full transition-all ${theme === 'dark' ? 'bg-slate-700 text-yellow-400 shadow' : 'text-slate-400'}`}><Moon size={16}/></button>
+          <button onClick={() => setTheme('muji')} className={`p-2 rounded-full transition-all ${theme === 'muji' ? 'bg-[#DED0B6] text-[#4A4238] shadow' : 'text-[#A89F91]'}`}><Leaf size={16}/></button>
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto px-6 space-y-6">
         
-        :root {
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --bg-input: #f1f5f9;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --nav-bg: rgba(255, 255, 255, 0.8);
-            --accent-color: #2563eb;
-        }
+        {/* Urgent Update Notification */}
+        <div className="bg-orange-500 text-white p-4 rounded-3xl shadow-lg shadow-orange-500/20 flex items-center gap-4">
+          <div className="bg-white/20 p-2 rounded-2xl">
+            <Plane className="animate-pulse" />
+          </div>
+          <div className="text-sm">
+            <p className="font-bold">Flight Missed Recovery Plan</p>
+            <p className="opacity-90">แผนใหม่เริ่ม 11:10 น. ลุยได้เลยครับ!</p>
+          </div>
+        </div>
 
-        [data-theme='dark'] {
-            --bg-body: #0f172a;
-            --bg-card: #1e293b;
-            --bg-input: #334155;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --nav-bg: rgba(30, 41, 59, 0.8);
-            --accent-color: #3b82f6;
-        }
-
-        [data-theme='muji'] {
-            --bg-body: #f4f1ea;
-            --bg-card: #faf9f6;
-            --bg-input: #efede7;
-            --text-main: #4a4238;
-            --text-muted: #8c7e6d;
-            --border-color: #e2ddd3;
-            --nav-bg: rgba(244, 241, 234, 0.8);
-            --accent-color: #8c7e6d;
-        }
-
-        body { 
-            font-family: 'Kanit', sans-serif; 
-            background-color: var(--bg-body); 
-            color: var(--text-main);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .day-card { display: none; }
-        .day-card.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .nav-btn.active { background-color: var(--accent-color); color: white; }
-
-        .bg-card { background-color: var(--bg-card); border: 1px solid var(--border-color); }
-        .bg-input { background-color: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); }
-        .text-main { color: var(--text-main); }
-        .text-muted { color: var(--text-muted); }
-        .accent-bg { background-color: var(--accent-color); }
-
-        /* Dropdown Animation */
-        .detail-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; opacity: 0; }
-        .detail-content.show { max-height: 1200px; opacity: 1; transition: max-height 0.5s ease-in, opacity 0.3s ease-in; }
-        .rotate-icon { transition: transform 0.3s ease; }
-        .rotate-icon.active { transform: rotate(180deg); }
-
-        /* Modal Summary & Forms */
-        .modal-view { display: none; position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.6); z-index: 60; backdrop-filter: blur(4px); flex-direction: column; justify-content: flex-end; }
-        .modal-view.active { display: flex; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        /* Floating Action Button */
-        .fab { position: fixed; bottom: 100px; right: 24px; z-index: 45; }
-    </style>
-</head>
-<body class="pb-24">
-    <!-- Header -->
-    <header id="app-header" class="accent-bg text-white p-6 rounded-b-3xl shadow-lg sticky top-0 z-50 transition-all duration-500">
-        <div class="max-w-md mx-auto flex justify-between items-center text-center">
-            <div class="w-10"></div>
-            <div class="flex-1">
-                <h1 class="text-xl font-bold tracking-tight">เชียงใหม่ 3 วัน 2 คืน</h1>
-                <p class="text-white/80 text-[10px] uppercase tracking-widest">4 - 6 กุมภาพันธ์ | ม่อนแจ่ม - ตัวเมือง</p>
-            </div>
-            <button onclick="cycleTheme()" class="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full text-white active:scale-90 transition-transform">
-                <i id="theme-icon" class="fas fa-sun"></i>
+        {/* Quick Fuel Log Widget */}
+        <div className={`${cards[theme]} p-5 rounded-[2rem] shadow-sm overflow-hidden relative`}>
+          {!showGasInput ? (
+            <button 
+              onClick={() => setShowGasInput(true)}
+              className="w-full flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform">
+                  <Fuel size={24}/>
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-bold opacity-60 uppercase">Quick Log</p>
+                  <p className="font-bold">บันทึกค่าน้ำมันด่วน</p>
+                </div>
+              </div>
+              <ChevronRight size={20} className="opacity-30" />
             </button>
-        </div>
-    </header>
-
-    <!-- Navigation Tabs -->
-    <div class="flex justify-around p-4 sticky top-20 z-40 bg-transparent backdrop-blur-sm">
-        <div class="bg-card rounded-full shadow-md p-1 flex w-full max-w-md mx-auto border-none">
-            <button onclick="showDay(1)" id="btn-1" class="nav-btn active flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all duration-300">4 ก.พ.</button>
-            <button onclick="showDay(2)" id="btn-2" class="nav-btn flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all duration-300">5 ก.พ.</button>
-            <button onclick="showDay(3)" id="btn-3" class="nav-btn flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all duration-300">6 ก.พ.</button>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <main class="max-w-md mx-auto px-4" id="main-content">
-        <section id="day-1" class="day-card active space-y-4"></section>
-        <section id="day-2" class="day-card space-y-4"></section>
-        <section id="day-3" class="day-card space-y-4"></section>
-    </main>
-
-    <!-- Floating Action Button (FAB) -->
-    <div class="fab">
-        <button id="fab-btn" onclick="openAddPlanModal(currentDay)" class="w-14 h-14 accent-bg text-white rounded-full shadow-2xl flex items-center justify-center text-2xl active:scale-90 transition-transform">
-            <i class="fas fa-plus"></i>
-        </button>
-    </div>
-
-    <!-- Modal: Add Custom Plan -->
-    <div id="add-plan-modal" class="modal-view">
-        <div class="bg-card w-full max-w-md mx-auto rounded-t-[2.5rem] p-6 shadow-2xl border-none">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">✨ แทรกแผนใหม่ (วันที่ <span id="target-day-display">1</span>)</h2>
-                <button onclick="toggleModal('add-plan-modal', false)" class="w-10 h-10 flex items-center justify-center bg-input rounded-full"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <div class="space-y-4">
-                <div class="flex gap-4">
-                    <div class="flex-1">
-                        <label class="block text-[10px] font-bold opacity-50 mb-1 uppercase tracking-widest">เวลา (ย่อย 5 นาที)</label>
-                        <input type="time" id="new-plan-time" step="300" class="w-full p-3 bg-input rounded-xl outline-none border-none">
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-[10px] font-bold opacity-50 mb-1 uppercase tracking-widest">ประเภท</label>
-                        <select id="new-plan-icon" class="w-full p-3 bg-input rounded-xl outline-none border-none">
-                            <option value="map-marker-alt">📍 ทั่วไป</option>
-                            <option value="utensils">🍴 ร้านอาหาร</option>
-                            <option value="coffee">☕ คาเฟ่</option>
-                            <option value="bed">🛏️ ที่พัก</option>
-                            <option value="gas-pump">⛽ เติมน้ำมัน</option>
-                            <option value="camera">📷 ถ่ายรูป</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold opacity-50 mb-1 uppercase tracking-widest">สถานที่ / กิจกรรม</label>
-                    <input type="text" id="new-plan-title" placeholder="เช่น แวะจุดพักรถ" class="w-full p-3 bg-input rounded-xl outline-none border-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold opacity-50 mb-1 uppercase tracking-widest">รายละเอียด</label>
-                    <textarea id="new-plan-details" placeholder="ระบุสิ่งที่ต้องทำ" class="w-full p-3 bg-input rounded-xl outline-none border-none h-24"></textarea>
-                </div>
-                <button onclick="saveCustomPlan()" class="w-full py-4 accent-bg text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-transform">
-                    เพิ่มลงในแผนการเดินทาง
+          ) : (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-bold flex items-center gap-2 text-blue-500">
+                  <Fuel size={16}/> ระบุจำนวนเงิน
+                </p>
+                <button onClick={() => setShowGasInput(false)} className="text-xs opacity-50">ยกเลิก</button>
+              </div>
+              <div className="flex gap-2">
+                <input 
+                  autoFocus
+                  type="number" 
+                  value={tempGas}
+                  onChange={(e) => setTempGas(e.target.value)}
+                  placeholder="เช่น 500"
+                  className="flex-1 p-3 rounded-2xl bg-black/5 border-none focus:ring-2 focus:ring-blue-400 text-lg font-mono"
+                />
+                <button 
+                  onClick={handleAddGas}
+                  className="px-6 bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-all"
+                >
+                  <Save size={20}/>
                 </button>
+              </div>
             </div>
+          )}
         </div>
-    </div>
 
-    <!-- Modal: Confirmation Delete -->
-    <div id="delete-confirm-modal" class="modal-view">
-        <div class="bg-card w-full max-w-md mx-auto rounded-t-[2.5rem] p-8 shadow-2xl text-center border-none">
-            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3 class="text-xl font-bold mb-2">ยืนยันการลบ</h3>
-            <p class="text-muted mb-8 text-sm">ข้อมูลที่ลบแล้วจะไม่สามารถกู้คืนได้ คุณแน่ใจใช่ไหม?</p>
-            <div class="flex gap-4">
-                <button onclick="toggleModal('delete-confirm-modal', false)" class="flex-1 py-4 bg-input text-muted rounded-2xl font-bold">ยกเลิก</button>
-                <button id="confirm-delete-btn" class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold">ลบข้อมูล</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Expense Summary & Fuel Log -->
-    <div id="summary-view" class="modal-view">
-        <div class="bg-card w-full max-w-md mx-auto rounded-t-[2.5rem] p-6 h-[85vh] overflow-y-auto shadow-2xl border-none">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">📊 สรุปรายจ่าย & ค่าน้ำมัน</h2>
-                <button onclick="toggleModal('summary-view', false)" class="w-10 h-10 flex items-center justify-center bg-input rounded-full"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div id="total-card" class="accent-bg rounded-3xl p-6 text-white mb-6 shadow-lg">
-                <p class="text-white/80 text-sm mb-1">ยอดรวมรายจ่ายทั้งหมด</p>
-                <h3 class="text-4xl font-bold" id="total-trip-amount">฿0.00</h3>
-                <div class="mt-4 pt-4 border-t border-white/20 flex justify-between">
-                    <div>
-                        <p class="text-[10px] opacity-70 uppercase tracking-widest">ค่าน้ำมันรวม</p>
-                        <p class="font-bold" id="total-fuel-amount">฿0.00</p>
+        {/* Itinerary Timeline */}
+        <div className="space-y-6">
+          {itinerary.map((day, idx) => (
+            <div key={idx} className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black flex items-center gap-2">
+                  <MapPin size={22} className="text-red-500"/> {day.title}
+                </h2>
+                <span className="text-xs font-bold px-3 py-1 bg-black/5 rounded-full opacity-60">{day.date}</span>
+              </div>
+              
+              <div className="relative ml-4 space-y-6 border-l-2 border-dashed border-black/10 pl-8 pb-4">
+                {day.items.map((item, i) => (
+                  <div key={i} className="relative group">
+                    {/* Dot on line */}
+                    <div className={`absolute -left-[41px] top-2 w-4 h-4 rounded-full border-4 border-[#F4EBE1] ${theme === 'muji' ? 'bg-[#4A4238]' : 'bg-slate-400'}`}></div>
+                    
+                    <div className={`${cards[theme]} p-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]`}>
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter bg-black/5 px-2 py-0.5 rounded text-blue-600">
+                          {item.time}
+                        </span>
+                        {item.link && (
+                          <a href={item.link} target="_blank" rel="noreferrer" className="p-1 rounded bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-colors">
+                            <Navigation size={14}/>
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 opacity-80">{item.icon}</div>
+                        <div>
+                          <h3 className="font-bold leading-tight">{item.activity}</h3>
+                          <p className="text-xs opacity-60 mt-0.5">{item.location}</p>
+                        </div>
+                      </div>
                     </div>
-                </div>
+                  </div>
+                ))}
+              </div>
             </div>
-
-            <div class="bg-input rounded-2xl p-5 mb-6 border-none">
-                <h4 class="text-xs font-bold uppercase tracking-widest mb-4 opacity-70"><i class="fas fa-gas-pump mr-1"></i> บันทึกการเติมน้ำมัน</h4>
-                <div class="flex gap-2 mb-3">
-                    <input type="time" id="fuel-time" step="300" class="w-24 text-sm p-3 rounded-xl border-none bg-card outline-none">
-                    <input type="number" id="fuel-price" placeholder="ยอดเงิน" min="0" class="flex-1 text-sm p-3 rounded-xl border-none bg-card outline-none">
-                    <button onclick="addFuelRecord()" id="fuel-save-btn" class="accent-bg text-white px-4 rounded-xl text-xs font-bold shadow-sm">บันทึก</button>
-                </div>
-                <div id="fuel-list" class="space-y-2"></div>
-            </div>
-
-            <div id="summary-details" class="space-y-6"></div>
-            
-            <button onclick="clearAllData()" class="w-full mt-8 py-4 text-red-500 text-sm font-medium border border-red-100 rounded-2xl hover:bg-red-50 transition-colors">
-                <i class="fas fa-history mr-2"></i> ล้างข้อมูลและรีเซ็ตทริป
-            </button>
+          ))}
         </div>
+
+        {/* Financial Summary */}
+        <div className={`${cards[theme]} p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden`}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16"></div>
+          <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+             Summary Expenses
+          </h3>
+          
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-sm p-3 bg-black/5 rounded-2xl">
+              <span className="flex items-center gap-2 opacity-70"><Fuel size={16}/> ค่าน้ำมันรวม</span>
+              <span className="font-mono font-bold text-blue-600 text-lg">฿{gasTotal.toLocaleString()}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-sm p-3 bg-red-500/5 rounded-2xl text-red-600 border border-red-500/10">
+              <span className="flex items-center gap-2 font-bold"><Plane size={16}/> ตั๋วเครื่องบินใหม่</span>
+              {isEditingFlight ? (
+                <div className="flex gap-2">
+                  <input 
+                    type="number"
+                    className="w-20 p-1 rounded border-b border-red-500 bg-transparent text-right font-mono"
+                    onChange={(e) => setFlightCost(parseFloat(e.target.value) || 0)}
+                    onBlur={() => setIsEditingFlight(false)}
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <span className="font-mono font-bold cursor-pointer" onClick={() => setIsEditingFlight(true)}>
+                  ฿{flightCost.toLocaleString() || '?,???' }
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-black/5 flex justify-between items-end">
+            <div>
+              <p className="text-[10px] font-bold opacity-40 uppercase">Total Spent Today</p>
+              <p className="text-2xl font-black">฿{(gasTotal + flightCost).toLocaleString()}</p>
+            </div>
+            <div className="text-[10px] bg-green-500 text-white px-2 py-1 rounded-full font-bold uppercase animate-pulse">
+              Live Update
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Bottom Floating Nav Mockup */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-xs flex justify-around items-center p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl z-50">
+        <div className="p-2 text-blue-500"><MapPin size={24}/></div>
+        <div className="p-2 opacity-30"><Plus size={24}/></div>
+        <div className="p-2 opacity-30"><Trash2 size={24}/></div>
+      </div>
     </div>
+  );
+};
 
-    <!-- Version Info -->
-    <footer class="mt-8 mb-4 text-center">
-        <p class="text-slate-400 text-[10px]">Version v1.8.0 (Added Map Links)</p>
-    </footer>
+export default App;
 
-    <!-- Bottom Menu -->
-    <nav style="background-color: var(--nav-bg);" class="fixed bottom-0 left-0 right-0 backdrop-blur-md border-t border-slate-200 px-6 py-3 flex justify-between items-center z-50">
-        <div onclick="toggleModal('summary-view', false)" class="flex flex-col items-center cursor-pointer" style="color: var(--accent-color);">
-            <i class="fas fa-calendar-day text-lg"></i>
-            <span class="text-[10px] mt-1 font-bold">แผนเที่ยว</span>
-        </div>
-        <div onclick="toggleModal('summary-view', true)" class="flex flex-col items-center text-slate-400 cursor-pointer">
-            <i class="fas fa-wallet text-lg"></i>
-            <span class="text-[10px] mt-1 font-bold">สรุปรายจ่าย</span>
-        </div>
-        <div class="flex flex-col items-center text-slate-400 opacity-50">
-            <i class="fas fa-user text-lg"></i>
-            <span class="text-[10px] mt-1 font-bold">โปรไฟล์</span>
-        </div>
-    </nav>
-
-    <script>
-        const defaultLocations = [
-            { id: '1-1', day: 1, time: '08:15', title: 'สนามบินเชียงใหม่', map: 'Chiang+Mai+International+Airport', details: 'รับรถเช่าที่จุดนัดพบ (แนะนำให้ตรวจเช็ครอยรอบคันและปริมาณน้ำมันก่อนเซ็นรับ)', tips: 'เตรียมใบขับขี่และบัตรประชาชนให้พร้อม', type: 'plane' },
-            { id: '1-2', day: 1, time: '09:30', title: 'ร้านไม้เฮือน 60', map: 'ไม้เฮือน+60+เชียงใหม่', travel: '🚗 20-30 นาที', details: 'ทานอาหารเช้า/ควบเที่ยง ท่ามกลางบรรยากาศบ้านไม้เก่าที่ตกแต่งด้วยกล้วยไม้และพรรณไม้หายาก', menu: 'แกงเผ็ดเป็ดย่าง, ออร์เดิร์ฟเมือง, กาแฟสดไม้เฮือน', photo: 'โซนสวนกล้วยไม้ด้านในที่มีละอองหมอก', type: 'utensils' },
-            { id: '1-3', day: 1, time: '11:30', title: 'โป่งแยง จังเกิ้ล โคสเตอร์', map: 'Pongyang+Jungle+Coaster', travel: '🚗 45-60 นาที', details: 'สัมผัสความตื่นเต้นกับ Jungle Coaster (รถรางเลื่อนไม้) ที่วิ่งผ่านป่าและน้ำตก', tips: 'หากไม่เล่นเครื่องเล่น สามารถนั่งจิบกาแฟที่ "Jungle De Cafe" ชมวิวน้ำตกได้', type: 'mountain' },
-            { id: '1-4', day: 1, time: '13:30', title: 'ไอนารา คาเฟ่', map: 'ไอนาราคาเฟ่+เชียงใหม่', travel: '🚗 15-20 นาที', details: 'คาเฟ่สไตล์ญี่ปุ่นกลางทุ่งนาแม่ริม มีสะพานไม้ไผ่เดินทอดผ่านทุ่งนา', photo: 'มุมบ้านไม้สไตล์ญี่ปุ่น และที่นั่งริมทุ่งนา', type: 'coffee' },
-            { id: '1-5', day: 1, time: '15:00', title: 'ม่อนลมหนาว โฮมสเตย์', map: 'ม่อนลมหนาว+ม่อนแจ่ม', travel: '🚗 15 นาที', details: 'เช็คอินเข้าที่พัก พักผ่อนรับลมเย็นๆ ณ ที่พักยอดฮิตบนม่อนแจ่ม', highlight: 'นั่งชมสายหมอกและวิวภูเขาจากระเบียงห้องพัก', type: 'bed' },
-            { id: '1-6', day: 1, time: '16:30', title: 'ยอดดอยม่อนแจ่ม', map: 'ยอดดอยม่อนแจ่ม+เชียงใหม่', travel: '🚗 5-10 นาที', details: 'เดินชมทุ่งดอกไม้เมืองหนาว (เช่น ดอกเวอร์บีน่า หรือดอกคอสมอส)', tips: 'มีบริการเช่าชุดชนเผ่าถ่ายรูป ราคา 50-100 บาท', type: 'camera' },
-            { id: '1-7', day: 1, time: '18:30', title: 'ที่พัก (ม่อนลมหนาว)', map: 'ม่อนลมหนาว+ม่อนแจ่ม', details: 'ทานหมูกระทะรับลมหนาวหน้าห้องพัก', type: 'fire' },
-            { id: '2-1', day: 2, time: '10:30', title: 'วัดป่าดาราภิรมย์', map: 'วัดป่าดาราภิรมย์+เชียงใหม่', travel: '🚗 45-50 นาที', details: 'ชมพระอุโบสถและวิหารศิลปะล้านนาชั้นสูงที่งดงามที่สุดแห่งหนึ่งในเชียงใหม่', tips: 'แต่งกายสุภาพ งดขาสั้นเหนือเข่า', type: 'vihara' },
-            { id: '2-2', day: 2, time: '12:00', title: 'มื้อเที่ยง: ข้าวซอย', map: 'ข้าวซอยแม่สาย+เชียงใหม่', travel: '🚗 20-30 นาที', details: 'ร้านแนะนำ: ข้าวซอยแม่สาย (ย่านสันติธรรม) หรือ ข้าวซอยนิมมาน', menu: 'ข้าวซอยเนื้อ/ไก่, ขนมจีนน้ำเงี้ยว, ไส้อั่ว', type: 'utensils' },
-            { id: '2-3', day: 2, time: '14:00', title: 'One Nimman / นิมมานฯ', map: 'One+Nimman', travel: '🚗 5-10 นาที', details: 'เดินช้อปปิ้งแบรนด์ดีไซน์เนอร์ไทย และถ่ายรูปสถาปัตยกรรมอิฐแดงสไตล์ยุโรปผสมล้านนา', photo: 'ลานกลางโครงการ และหอนาฬิกา', type: 'store' },
-            { id: '2-4', day: 2, time: '16:30', title: 'วัดเจดีย์หลวง', map: 'วัดเจดีย์หลวง+วรวิหาร+เชียงใหม่', travel: '🚗 15-20 นาที', details: 'ชมเจดีย์ที่ใหญ่ที่สุดในเชียงใหม่สมัยโบราณ ซึ่งปัจจุบันเหลือเพียงส่วนฐานแต่ยังคงความน่าเกรงขาม', type: 'vihara' },
-            { id: '2-5', day: 2, time: '18:00', title: 'R2 Hotel Chiangmai', map: 'R2+Hotel+Chiangmai', travel: '🚗 10-15 นาที', details: 'เช็คอินเข้าที่พักในเมือง พักผ่อนเก็บของก่อนออกไปเดินเล่น', type: 'bed' },
-            { id: '2-6', day: 2, time: '19:30', title: 'เชียงใหม่ไนท์บาซาร์', map: 'Chiang+Mai+Night+Bazaar', travel: '🚗 10-15 นาที', details: 'เดินตลาดกลางคืนที่ถนนช้างคลาน แวะโซน "Ploen Ruedee" เพื่อหาของกินและฟังดนตรีสด', type: 'moon' },
-            { id: '3-0', day: 3, time: '09:00', title: 'R2 Hotel Chiangmai', map: 'R2+Hotel+Chiangmai', details: 'Check-out จากที่พัก เตรียมเดินทางชิลล์วันสุดท้าย', type: 'bed' },
-            { id: '3-1', day: 3, time: '10:00', title: 'จริงใจมาร์เก็ต', map: 'Jing+Jai+Market+Chiang+Mai', travel: '🚗 15-20 นาที', details: 'เดินตลาดร่มรื่นใต้ต้นไม้ใหญ่ ชมงานคราฟต์ งานทำมือคุณภาพสูง', menu: 'กาแฟดริปจากท้องถิ่น, ขนมปังแฮนด์เมด', type: 'leaf' },
-            { id: '3-2', day: 3, time: '12:00', title: 'ชมคาเฟ่ (Chom Cafe)', map: 'Chom+Cafe+and+Restaurant', travel: '🚗 20-25 นาที', details: 'ทานอาหารในร้านที่จำลองป่าหิมพานต์ มีมอสสีเขียวและไอน้ำตลอดเวลา', photo: 'สะพานไม้ข้ามลำธารจำลองที่มีปลาคราฟตัวใหญ่', type: 'utensils' },
-            { id: '3-3', day: 3, time: '14:00', title: 'มีใจให้มัทฉะ (Magokoro)', map: 'Magokoro+Teahouse+Chiang+Mai', travel: '🚗 15-20 นาที', details: 'ดื่มด่ำกับชามัทฉะเกรดพิธีการ ในบรรยากาศบ้านไม้ญี่ปุ่นที่มีสวนเซน', menu: 'Matcha Latte ระดับความเข้มข้นที่ชอบ, ขนม Wagashi', type: 'mug-hot' },
-            { id: '3-4', day: 3, time: '16:30', title: 'ย่านนิมมานฯ (ส่งท้าย)', map: 'นิมมานเหมินท์+เชียงใหม่', travel: '🚗 15-20 นาที', details: 'นั่ง Rooftop ที่ "Myst" หรือ "Rise Rooftop Bar" ชมดอยสุเทพยามพระอาทิตย์ตกก่อนกลับ', type: 'glass-cheers' },
-            { id: '3-5', day: 3, time: '19:30', title: 'สนามบินเชียงใหม่', map: 'Chiang+Mai+International+Airport', travel: '🚗 15-20 นาที', details: 'Check-in เตรียมตัวเดินทางกลับ (เที่ยวบิน 21:50 น.)', type: 'plane-departure' }
-        ];
-
-        let userPlans = JSON.parse(localStorage.getItem('cm_custom_plans')) || [];
-        let expenses = JSON.parse(localStorage.getItem('cm_trip_expenses')) || [];
-        let fuelLogs = JSON.parse(localStorage.getItem('cm_fuel_logs')) || [];
-        let currentDay = 1;
-        let planToDelete = null;
-        let currentTheme = localStorage.getItem('cm_theme') || 'light';
-
-        document.documentElement.setAttribute('data-theme', currentTheme);
-
-        function cycleTheme() {
-            const themes = ['light', 'dark', 'muji'];
-            let nextIndex = (themes.indexOf(currentTheme) + 1) % themes.length;
-            currentTheme = themes[nextIndex];
-            document.documentElement.setAttribute('data-theme', currentTheme);
-            localStorage.setItem('cm_theme', currentTheme);
-            updateThemeUI();
-        }
-
-        function updateThemeUI() {
-            const icon = document.getElementById('theme-icon');
-            if (currentTheme === 'dark') icon.className = 'fas fa-moon';
-            else if (currentTheme === 'muji') icon.className = 'fas fa-leaf';
-            else icon.className = 'fas fa-sun';
-            showDay(currentDay);
-            updateUI();
-        }
-
-        function addFuelRecord() {
-            const time = document.getElementById('fuel-time').value;
-            const price = document.getElementById('fuel-price').value;
-            if (!time || !price || parseFloat(price) < 0) return;
-            fuelLogs.push({ id: Date.now(), day: currentDay, time, price: parseFloat(price) });
-            localStorage.setItem('cm_fuel_logs', JSON.stringify(fuelLogs));
-            document.getElementById('fuel-price').value = '';
-            updateUI();
-        }
-
-        function deleteFuel(id) {
-            fuelLogs = fuelLogs.filter(f => f.id !== id);
-            localStorage.setItem('cm_fuel_logs', JSON.stringify(fuelLogs));
-            updateUI();
-        }
-
-        function renderAll() {
-            [1, 2, 3].forEach(day => {
-                const container = document.getElementById('day-' + day);
-                const dayLocs = [...defaultLocations, ...userPlans]
-                    .filter(l => l.day === day)
-                    .sort((a, b) => a.time.localeCompare(b.time));
-
-                let html = `<div class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent pt-4">`;
-
-                dayLocs.forEach(loc => {
-                    const isCustom = userPlans.some(up => up.id === loc.id);
-                    const mapUrl = loc.map ? `https://www.google.com/maps/search/?api=1&query=${loc.map}` : null;
-
-                    html += `
-                        <div class="relative flex items-start group">
-                            <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[var(--bg-body)] accent-bg text-white shadow-sm shrink-0 z-10">
-                                <i class="fas fa-${loc.type} text-[10px]"></i>
-                            </div>
-                            <div class="w-[calc(100%-3rem)] bg-card p-4 rounded-2xl shadow-sm ml-4 cursor-pointer" onclick="toggleDetail('${loc.id}')">
-                                <div class="flex justify-between items-start">
-                                    <span class="text-[10px] font-bold tracking-wider opacity-60 uppercase">${loc.time}</span>
-                                    <div class="flex gap-4 items-center">
-                                        ${mapUrl ? `<a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" class="text-red-500 hover:text-red-600 text-xs"><i class="fas fa-map-marker-alt"></i></a>` : ''}
-                                        ${isCustom ? `<button onclick="event.stopPropagation(); requestDeletePlan('${loc.id}')" class="text-red-400 text-xs"><i class="fas fa-trash-alt"></i></button>` : ''}
-                                        <i class="fas fa-chevron-down text-[10px] opacity-20 rotate-icon" id="icon-${loc.id}"></i>
-                                    </div>
-                                </div>
-                                <h3 class="font-bold text-sm">${loc.title}</h3>
-                                ${loc.travel ? `<p class="text-[10px] opacity-60 mt-1 italic">${loc.travel}</p>` : ''}
-                                
-                                <div id="detail-${loc.id}" class="detail-content mt-3 text-xs border-t border-[var(--border-color)] pt-3 space-y-3" onclick="event.stopPropagation()">
-                                    <p class="text-muted"><strong>กิจกรรม:</strong> ${loc.details}</p>
-                                    ${loc.menu ? `<p class="text-muted"><strong>เมนูแนะนำ:</strong> ${loc.menu}</p>` : ''}
-                                    ${loc.photo ? `<p class="text-muted"><strong>จุดถ่ายรูป:</strong> ${loc.photo}</p>` : ''}
-                                    ${loc.tips ? `<p class="text-orange-600 font-medium"><strong>Tips:</strong> ${loc.tips}</p>` : ''}
-                                    ${loc.highlight ? `<p class="font-bold" style="color: var(--accent-color);"><strong>ไฮไลท์:</strong> ${loc.highlight}</p>` : ''}
-                                    
-                                    <div class="mt-4 bg-[var(--bg-input)] p-3 rounded-xl">
-                                        <p class="text-[9px] font-bold opacity-40 uppercase mb-2 tracking-widest">บันทึกรายจ่าย</p>
-                                        <div class="flex gap-2">
-                                            <input type="text" id="exp-item-${loc.id}" placeholder="รายการ" class="flex-1 text-[11px] p-2 rounded-lg bg-card outline-none border-none">
-                                            <input type="number" id="exp-price-${loc.id}" placeholder="ราคา" min="0" class="w-16 text-[11px] p-2 rounded-lg bg-card outline-none border-none">
-                                            <button onclick="addExpense('${loc.id}', '${loc.title}', ${day})" class="accent-bg text-white w-8 h-8 rounded-lg flex items-center justify-center"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="exp-list-${loc.id}" class="mt-2 space-y-1"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-                container.innerHTML = html;
-            });
-            updateUI();
-            updateThemeUI();
-        }
-
-        function toggleDetail(id) {
-            const content = document.getElementById('detail-' + id);
-            const icon = document.getElementById('icon-' + id);
-            if(content) content.classList.toggle('show');
-            if(icon) icon.classList.toggle('active');
-        }
-
-        function showDay(day) {
-            currentDay = day;
-            document.querySelectorAll('.day-card').forEach(card => card.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            const dayElem = document.getElementById('day-' + day);
-            const btnElem = document.getElementById('btn-' + day);
-            if(dayElem) dayElem.classList.add('active');
-            if(btnElem) btnElem.classList.add('active');
-            const root = document.documentElement;
-            if (currentTheme === 'light') {
-                let color = '#2563eb';
-                if (day === 2) color = '#f97316';
-                if (day === 3) color = '#0d9488';
-                root.style.setProperty('--accent-color', color);
-            } else if (currentTheme === 'muji') {
-                root.style.setProperty('--accent-color', '#8c7e6d');
-            } else {
-                root.style.setProperty('--accent-color', '#3b82f6');
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function openAddPlanModal(day) {
-            const display = document.getElementById('target-day-display');
-            if(display) display.innerText = day;
-            toggleModal('add-plan-modal', true);
-        }
-
-        function saveCustomPlan() {
-            const time = document.getElementById('new-plan-time').value;
-            const title = document.getElementById('new-plan-title').value;
-            const details = document.getElementById('new-plan-details').value;
-            const icon = document.getElementById('new-plan-icon').value;
-            if (!time || !title) return;
-            userPlans.push({ id: 'custom-' + Date.now(), day: currentDay, time, title, details: details || '-', type: icon });
-            localStorage.setItem('cm_custom_plans', JSON.stringify(userPlans));
-            toggleModal('add-plan-modal', false);
-            renderAll();
-        }
-
-        function requestDeletePlan(id) {
-            planToDelete = id;
-            toggleModal('delete-confirm-modal', true);
-        }
-
-        function executeDeletePlan() {
-            if (planToDelete) {
-                userPlans = userPlans.filter(p => p.id !== planToDelete);
-                expenses = expenses.filter(e => e.locId !== planToDelete);
-                localStorage.setItem('cm_custom_plans', JSON.stringify(userPlans));
-                localStorage.setItem('cm_trip_expenses', JSON.stringify(expenses));
-                planToDelete = null;
-                toggleModal('delete-confirm-modal', false);
-                renderAll();
-            }
-        }
-
-        function addExpense(locId, locTitle, day) {
-            const item = document.getElementById(`exp-item-${locId}`);
-            const price = document.getElementById(`exp-price-${locId}`);
-            const priceVal = parseFloat(price.value);
-            if (!item.value || isNaN(priceVal) || priceVal < 0) return;
-            expenses.push({ id: Date.now(), locId, locTitle, day, item: item.value, price: priceVal });
-            localStorage.setItem('cm_trip_expenses', JSON.stringify(expenses));
-            item.value = ''; price.value = '';
-            updateUI();
-        }
-
-        function deleteExp(id) {
-            expenses = expenses.filter(e => e.id !== id);
-            localStorage.setItem('cm_trip_expenses', JSON.stringify(expenses));
-            updateUI();
-        }
-
-        function updateUI() {
-            const allLocs = [...defaultLocations, ...userPlans];
-            allLocs.forEach(loc => {
-                const list = document.getElementById(`exp-list-${loc.id}`);
-                if (list) {
-                    list.innerHTML = expenses.filter(e => e.locId === loc.id).map(e => `
-                        <div class="flex justify-between items-center text-[10px] bg-card p-2 rounded-lg shadow-sm">
-                            <span class="opacity-70">${e.item}</span>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold">฿${e.price.toLocaleString()}</span>
-                                <button onclick="deleteExp(${e.id})" class="opacity-20"><i class="fas fa-times-circle"></i></button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            });
-
-            const fuelListElem = document.getElementById('fuel-list');
-            if(fuelListElem) {
-                fuelListElem.innerHTML = fuelLogs.map(f => `
-                    <div class="flex justify-between items-center text-xs bg-card p-3 rounded-xl shadow-sm">
-                        <span class="font-medium">${f.time} น.</span>
-                        <div class="flex items-center gap-3">
-                            <span class="font-bold text-orange-500">฿${f.price.toLocaleString()}</span>
-                            <button onclick="deleteFuel(${f.id})" class="opacity-30"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            const totalExp = expenses.reduce((s, e) => s + e.price, 0);
-            const totalFuel = fuelLogs.reduce((s, f) => s + f.price, 0);
-            const totalTripElem = document.getElementById('total-trip-amount');
-            const totalFuelElem = document.getElementById('total-fuel-amount');
-            if(totalTripElem) totalTripElem.innerText = '฿' + (totalExp + totalFuel).toLocaleString();
-            if(totalFuelElem) totalFuelElem.innerText = '฿' + totalFuel.toLocaleString();
-            
-            let summaryHtml = '';
-            [1, 2, 3].forEach(day => {
-                const dayExps = expenses.filter(e => e.day === day);
-                const dayTotal = dayExps.reduce((s, e) => s + e.price, 0);
-                if (dayExps.length > 0) {
-                    summaryHtml += `
-                        <div class="border-b border-[var(--border-color)] pb-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-bold text-xs opacity-60">วันที่ ${day} (${day + 3} ก.พ.)</h4>
-                                <span class="font-bold text-sm">฿${dayTotal.toLocaleString()}</span>
-                            </div>
-                            <div class="space-y-1">
-                                ${dayExps.map(e => `<div class="flex justify-between text-[11px] opacity-70"><span>${e.item} (${e.locTitle})</span><span>฿${e.price.toLocaleString()}</span></div>`).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-            const summaryDetailsElem = document.getElementById('summary-details');
-            if(summaryDetailsElem) summaryDetailsElem.innerHTML = summaryHtml || '<p class="text-center text-slate-400 py-10 font-light text-xs">ยังไม่มีบันทึกรายจ่าย</p>';
-        }
-
-        function toggleModal(id, show) {
-            const modal = document.getElementById(id);
-            if(modal) {
-                if(show) modal.classList.add('active');
-                else modal.classList.remove('active');
-            }
-        }
-
-        function clearAllData() {
-            if (confirm('คำเตือน! ข้อมูลทั้งหมดจะถูกลบถาวร')) {
-                localStorage.clear();
-                window.location.reload();
-            }
-        }
-
-        document.getElementById('confirm-delete-btn').onclick = executeDeletePlan;
-        window.onload = renderAll;
-    </script>
-</body>
-</html>
