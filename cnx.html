@@ -29,7 +29,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo } = React;
+        const { useState, useMemo, useEffect } = React;
 
         // --- ICONS (SVG) ---
         const Icon = ({ children, className, size = 24, onClick, style }) => (
@@ -57,10 +57,54 @@
             Wallet: (p) => <Icon {...p}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></Icon>,
             Map: (p) => <Icon {...p}><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></Icon>,
             X: (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 18 18"/></Icon>,
-            Compass: (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></Icon>
+            Compass: (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></Icon>,
+            BookOpen: (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>,
+            Image: (p) => <Icon {...p}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></Icon>,
+            CheckSquare: (p) => <Icon {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></Icon>,
+            Square: (p) => <Icon {...p}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></Icon>,
+            Settings: (p) => <Icon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>,
+            Share: (p) => <Icon {...p}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></Icon>,
+            Copy: (p) => <Icon {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></Icon>
         };
 
-        const ItineraryItem = ({ item, dayIndex, itemIndex, onToggle, onAddExpense, onDeleteExpense, onUpdateItem, onDeleteItem }) => {
+        const INITIAL_ITINERARY = [
+            {
+                dateShort: '4 ก.พ.',
+                title: 'Day 1: ขุนเขาแม่ริม',
+                items: [
+                    { time: '11:10', activity: 'ถึงสนามบินเชียงใหม่', iconType: 'Plane', iconColor: 'text-blue-500', location: 'แลนดิ้ง & รับรถเช่า', link: 'https://maps.google.com/?q=Chiang+Mai+International+Airport', isOpen: false, completed: false, expenses: [], journalMood: '', journalNote: '', journalImage: null },
+                    { time: '12:30', activity: 'มื้อเที่ยง: แม่ริม', iconType: 'Utensils', iconColor: 'text-orange-500', location: 'ส้มตำอุดร / หลงป่า', link: 'https://maps.google.com/?q=Somtum+Udon+Maerim', isOpen: false, completed: false, expenses: [] },
+                    { time: '14:00', activity: 'Pongyang Jungle Coaster', iconType: 'Camera', iconColor: 'text-green-600', location: 'เครื่องเล่นรางไม้ & กาแฟ', link: 'https://maps.google.com/?q=Pongyang+Jungle+Coaster', isOpen: false, completed: false, expenses: [] },
+                    { time: '16:00', activity: 'เช็คอิน: ม่อนลมหนาว', iconType: 'Home', iconColor: 'text-indigo-500', location: 'ม่อนแจ่ม (ชมวิวระเบียง)', link: 'https://maps.google.com/?q=Mon+Lom+Nao+Homestay', isOpen: false, completed: false, expenses: [] },
+                    { time: '18:30', activity: 'มื้อเย็น: หมูกระทะ', iconType: 'Utensils', iconColor: 'text-red-500', location: 'หน้าห้องพัก (จองล่วงหน้า)', link: '', isOpen: false, completed: false, expenses: [] }
+                ]
+            },
+            {
+                dateShort: '5 ก.พ.',
+                title: 'Day 2: สถาปัตยกรรม & ในเมือง',
+                items: [
+                    { time: '09:30', activity: 'Skywalk ม่อนแจ่ม', iconType: 'Camera', iconColor: 'text-blue-400', location: 'ถ่ายรูปสวนดอกไม้', link: 'https://maps.google.com/?q=Mon+Jam+Skywalk', isOpen: false, completed: false, expenses: [] },
+                    { time: '11:00', activity: 'วัดป่าดาราภิรมย์', iconType: 'MapPin', iconColor: 'text-yellow-600', location: 'สถาปัตยกรรมล้านนา', link: 'https://maps.google.com/?q=Wat+Pa+Dara+Phirom', isOpen: false, completed: false, expenses: [] },
+                    { time: '12:30', activity: 'มื้อเที่ยง: ข้าวซอย', iconType: 'Utensils', iconColor: 'text-orange-500', location: 'ข้าวซอยแม่สาย / นิมมาน', link: 'https://maps.google.com/?q=Khao+Soi+Mae+Sai', isOpen: false, completed: false, expenses: [] },
+                    { time: '14:00', activity: 'One Nimman', iconType: 'Camera', iconColor: 'text-red-400', location: 'ช้อปปิ้ง & ถ่ายรูปตึกแดง', link: 'https://maps.google.com/?q=One+Nimman', isOpen: false, completed: false, expenses: [] },
+                    { time: '16:00', activity: 'เช็คอิน: โรงแรม R2', iconType: 'Home', iconColor: 'text-slate-600', location: 'ย่านนิมมาน', link: 'https://maps.google.com/?q=R2+Hotel+Chiang+Mai', isOpen: false, completed: false, expenses: [] },
+                    { time: '19:30', activity: 'Night Bazaar', iconType: 'Utensils', iconColor: 'text-pink-500', location: 'Ploen Ruedee Market', link: 'https://maps.google.com/?q=Ploen+Ruedee+Night+Market', isOpen: false, completed: false, expenses: [] }
+                ]
+            },
+            {
+                dateShort: '6 ก.พ.',
+                title: 'Day 3: ตลาดเช้า & มัทฉะ',
+                items: [
+                    { time: '09:00', activity: 'จริงใจมาร์เก็ต (JJ)', iconType: 'Leaf', iconColor: 'text-green-500', location: 'งานคราฟต์ & กาแฟ', link: 'https://maps.google.com/?q=Jing+Jai+Market', isOpen: false, completed: false, expenses: [] },
+                    { time: '11:30', activity: 'Chom Cafe', iconType: 'Camera', iconColor: 'text-green-700', location: 'สวนป่าหิมพานต์', link: 'https://maps.google.com/?q=Chom+Cafe+and+Restaurant', isOpen: false, completed: false, expenses: [] },
+                    { time: '13:30', activity: 'Magokoro Teahouse', iconType: 'Coffee', iconColor: 'text-green-800', location: 'มัทฉะญี่ปุ่นแท้', link: 'https://maps.google.com/?q=Magokoro+Teahouse', isOpen: false, completed: false, expenses: [] },
+                    { time: '15:30', activity: 'ซื้อของฝาก: วนัสนันท์', iconType: 'Coins', iconColor: 'text-yellow-500', location: 'ไส้อั่ว / น้ำพริกหนุ่ม', link: 'https://maps.google.com/?q=Vanasnun', isOpen: false, completed: false, expenses: [] },
+                    { time: '16:30', activity: 'คืนรถ & สนามบิน', iconType: 'Plane', iconColor: 'text-blue-500', location: 'เติมน้ำมันเต็มถัง', link: 'https://maps.google.com/?q=Chiang+Mai+International+Airport', isOpen: false, completed: false, expenses: [] }
+                ]
+            }
+        ];
+
+        const ItineraryItem = ({ item, dayIndex, itemIndex, onToggle, onAddExpense, onDeleteExpense, onUpdateItem, onDeleteItem, onToggleDone }) => {
             const [expenseNote, setExpenseNote] = useState('');
             const [expenseAmount, setExpenseAmount] = useState('');
             const [isEditing, setIsEditing] = useState(item.isNew || false);
@@ -70,6 +114,16 @@
             const [editLocation, setEditLocation] = useState(item.location);
             const [editLink, setEditLink] = useState(item.link || '');
 
+            const handleMoodChange = (mood) => onUpdateItem(dayIndex, itemIndex, { journalMood: mood });
+            const handleNoteChange = (e) => onUpdateItem(dayIndex, itemIndex, { journalNote: e.target.value });
+            const handleImageChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => onUpdateItem(dayIndex, itemIndex, { journalImage: reader.result });
+                    reader.readAsDataURL(file);
+                }
+            };
             const handleAddExpenseLocal = (e) => {
                 e.stopPropagation();
                 if (expenseNote && expenseAmount) {
@@ -78,27 +132,24 @@
                     setExpenseAmount('');
                 }
             };
-
             const handleSaveEdit = (e) => {
                 e.stopPropagation();
                 onUpdateItem(dayIndex, itemIndex, {
-                    time: editTime,
-                    activity: editActivity,
-                    location: editLocation,
-                    link: editLink,
-                    isNew: false
+                    time: editTime, activity: editActivity, location: editLocation, link: editLink, isNew: false
                 });
                 setIsEditing(false);
             };
-
             const handleDeleteItemLocal = (e) => {
                 e.stopPropagation();
-                if(confirm('ยืนยันที่จะลบรายการนี้?')) {
-                    onDeleteItem(dayIndex, itemIndex);
-                }
+                if(confirm('ยืนยันที่จะลบรายการนี้?')) onDeleteItem(dayIndex, itemIndex);
+            };
+            const handleDoneClick = (e) => {
+                e.stopPropagation();
+                onToggleDone(dayIndex, itemIndex);
             };
 
             const totalItemCost = item.expenses ? item.expenses.reduce((sum, ex) => sum + ex.amount, 0) : 0;
+            const moods = ['😍', '😊', '😐', '😕', '😴'];
 
             if (isEditing) {
                 return (
@@ -124,7 +175,7 @@
                                 <input type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)} className="w-full p-2 bg-gray-50 rounded border text-sm" placeholder="ระบุสถานที่..." />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold opacity-50 block mb-1">Link แผนที่ (Google Maps)</label>
+                                <label className="text-[10px] font-bold opacity-50 block mb-1">Link แผนที่</label>
                                 <input type="text" value={editLink} onChange={e => setEditLink(e.target.value)} className="w-full p-2 bg-gray-50 rounded border text-sm" placeholder="https://..." />
                             </div>
                             <div className="pt-2 flex gap-2">
@@ -137,20 +188,27 @@
 
             return (
                 <div className="relative pl-6">
-                    <div className="absolute left-0 top-6 w-4 h-4 -ml-[9px] rounded-full border-4 border-[#F4EBE1] bg-[#4A4238] z-10"></div>
-                    <div className={`bg-[#FFF9F3] border border-[#DED0B6] rounded-2xl transition-all duration-300 overflow-hidden mb-4 ${item.isOpen ? 'shadow-lg ring-1 ring-[#DED0B6]' : 'shadow-sm active:scale-[0.99]'}`}>
+                    <div className={`absolute left-0 top-6 w-4 h-4 -ml-[9px] rounded-full border-4 z-10 transition-colors ${item.completed ? 'border-green-200 bg-green-500' : 'border-[#F4EBE1] bg-[#4A4238]'}`}></div>
+                    
+                    <div className={`bg-[#FFF9F3] border rounded-2xl transition-all duration-300 overflow-hidden mb-4 ${item.isOpen ? 'shadow-lg ring-1 ring-[#DED0B6]' : 'shadow-sm active:scale-[0.99]'} ${item.completed ? 'opacity-60 border-green-200' : 'border-[#DED0B6]'}`}>
                         <div className="p-4 cursor-pointer select-none" onClick={() => onToggle(dayIndex, itemIndex)}>
                             <div className="flex justify-between items-start mb-2">
-                                <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter bg-black/5 px-2 py-0.5 rounded text-blue-600">{item.time}</span>
+                                <div className="flex items-center gap-2">
+                                    <div onClick={handleDoneClick} className={`p-1 rounded hover:bg-black/5 transition-colors ${item.completed ? 'text-green-500' : 'text-gray-300'}`}>
+                                        {item.completed ? <Icons.CheckSquare size={18}/> : <Icons.Square size={18}/>}
+                                    </div>
+                                    <span className={`text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded ${item.completed ? 'bg-green-100 text-green-700 decoration-slice line-through' : 'bg-black/5 text-blue-600'}`}>{item.time}</span>
+                                </div>
                                 <div className="flex gap-2 items-center">
+                                    {item.journalMood && <span className="text-lg">{item.journalMood}</span>}
                                     {totalItemCost > 0 && <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">฿{totalItemCost.toLocaleString()}</span>}
                                     <div className={`transition-transform duration-300 opacity-40 ${item.isOpen ? 'rotate-180' : ''}`}><Icons.ChevronDown size={16} /></div>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
-                                <div className="mt-1 opacity-80 min-w-[24px]">{item.icon}</div>
+                                <div className={`mt-1 min-w-[24px] ${item.completed ? 'opacity-40 grayscale' : 'opacity-80'}`}>{item.icon}</div>
                                 <div>
-                                    <h3 className="font-bold leading-tight text-[#4A4238] text-base">{item.activity}</h3>
+                                    <h3 className={`font-bold leading-tight text-[#4A4238] text-base transition-all ${item.completed ? 'line-through opacity-50' : ''}`}>{item.activity}</h3>
                                     <p className="text-xs opacity-60 mt-1">{item.location}</p>
                                 </div>
                             </div>
@@ -159,12 +217,25 @@
                         {item.isOpen && (
                             <div className="bg-white/50 border-t border-[#DED0B6]/30 p-4 animate-in slide-in-from-top-1 fade-in duration-200">
                                 <div className="flex justify-end gap-2 mb-4">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="flex items-center gap-1 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded shadow-sm text-gray-600 hover:text-blue-500">
-                                        <Icons.Edit size={12}/> แก้ไข
-                                    </button>
-                                    <button onClick={handleDeleteItemLocal} className="flex items-center gap-1 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded shadow-sm text-gray-600 hover:text-red-500">
-                                        <Icons.Trash2 size={12}/> ลบ
-                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="flex items-center gap-1 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded shadow-sm text-gray-600 hover:text-blue-500"><Icons.Edit size={12}/> แก้ไข</button>
+                                    <button onClick={handleDeleteItemLocal} className="flex items-center gap-1 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded shadow-sm text-gray-600 hover:text-red-500"><Icons.Trash2 size={12}/> ลบ</button>
+                                </div>
+
+                                <div className="mb-4 bg-yellow-50/50 p-3 rounded-xl border border-yellow-200/30">
+                                    <p className="text-xs font-bold uppercase opacity-40 flex items-center gap-1 mb-2"><Icons.BookOpen size={12}/> บันทึกความทรงจำ</p>
+                                    <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+                                        {moods.map(m => (
+                                            <button key={m} onClick={() => handleMoodChange(m)} className={`text-2xl p-1 rounded-lg transition-transform hover:scale-125 ${item.journalMood === m ? 'bg-yellow-200 scale-110 shadow-sm' : 'opacity-50 grayscale hover:grayscale-0'}`}>{m}</button>
+                                        ))}
+                                    </div>
+                                    <textarea placeholder="จดบันทึก..." value={item.journalNote || ''} onChange={handleNoteChange} className="w-full p-2 bg-white rounded-lg border border-yellow-200/50 text-sm mb-2 min-h-[60px] outline-none focus:ring-1 focus:ring-yellow-400" />
+                                    <div className="flex items-center gap-3">
+                                        <label className="flex items-center gap-2 bg-white border border-dashed border-gray-300 text-gray-500 px-3 py-2 rounded-lg text-xs cursor-pointer hover:bg-gray-50 hover:border-blue-400 hover:text-blue-500 transition-colors">
+                                            <Icons.Image size={16}/> {item.journalImage ? 'เปลี่ยนรูปภาพ' : 'เพิ่มรูปภาพ'} <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                                        </label>
+                                        {item.journalImage && <span className="text-[10px] text-green-500 flex items-center gap-1">✓ อัปโหลดแล้ว</span>}
+                                    </div>
+                                    {item.journalImage && <div className="mt-2 rounded-lg overflow-hidden border border-gray-200"><img src={item.journalImage} className="w-full h-auto object-cover max-h-40" /></div>}
                                 </div>
 
                                 {item.link && <a href={item.link} target="_blank" className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 mb-4 bg-blue-50 px-3 py-2 rounded-lg w-full justify-center"><Icons.Navigation size={14}/> นำทางด้วย Google Maps</a>}
@@ -176,10 +247,7 @@
                                             {item.expenses.map((ex, idx) => (
                                                 <li key={idx} className="flex justify-between text-sm items-center bg-white p-2 rounded border border-transparent hover:border-red-100">
                                                     <span className="opacity-80 text-xs">{ex.note}</span>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-mono font-bold text-xs">฿{ex.amount.toLocaleString()}</span>
-                                                        <button onClick={(e) => { e.stopPropagation(); onDeleteExpense(dayIndex, itemIndex, idx); }} className="text-red-300 hover:text-red-500"><Icons.Trash2 size={14}/></button>
-                                                    </div>
+                                                    <div className="flex items-center gap-3"><span className="font-mono font-bold text-xs">฿{ex.amount.toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); onDeleteExpense(dayIndex, itemIndex, idx); }} className="text-red-300 hover:text-red-500"><Icons.Trash2 size={14}/></button></div>
                                                 </li>
                                             ))}
                                         </ul>
@@ -197,56 +265,122 @@
             );
         };
 
+        // --- SHARE MODAL ---
+        const ShareModal = ({ isOpen, onClose, journalData }) => {
+            if (!isOpen) return null;
+
+            const generateText = () => {
+                let text = "✈️ Chiang Mai Trip 2026 ⛰️\n\n";
+                journalData.forEach(entry => {
+                    text += `${entry.dayDate} | ${entry.time}\n`;
+                    text += `📍 ${entry.activity} ${entry.journalMood || ''}\n`;
+                    if (entry.journalNote) text += `💬 "${entry.journalNote}"\n`;
+                    text += `\n`;
+                });
+                text += "#CNX2026 #ChiangMai #Travel";
+                return text;
+            };
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(generateText());
+                alert('คัดลอกแคปชั่นแล้ว! นำไปวางใน Facebook ได้เลย');
+            };
+
+            return (
+                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-[#F4EBE1] w-full max-w-sm rounded-[2rem] overflow-hidden max-h-[90vh] flex flex-col">
+                        <div className="p-4 bg-white border-b border-[#DED0B6] flex justify-between items-center">
+                            <h3 className="font-black text-[#4A4238] flex items-center gap-2"><Icons.Share size={20}/> Share Trip</h3>
+                            <button onClick={onClose}><Icons.X size={24} className="opacity-50"/></button>
+                        </div>
+                        
+                        <div className="overflow-y-auto p-4 space-y-6">
+                            {/* Option 1: Copy Text */}
+                            <div className="bg-white p-4 rounded-2xl shadow-sm space-y-3">
+                                <h4 className="font-bold text-sm text-[#4A4238]">1. แคปชั่น (Caption)</h4>
+                                <textarea readOnly className="w-full h-32 p-2 text-xs bg-gray-50 rounded-xl border border-gray-200 outline-none resize-none" value={generateText()}></textarea>
+                                <button onClick={copyToClipboard} className="w-full py-2 bg-[#4A4238] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95"><Icons.Copy size={14}/> คัดลอกข้อความ</button>
+                            </div>
+
+                            {/* Option 2: Screenshot Area */}
+                            <div>
+                                <h4 className="font-bold text-sm text-[#4A4238] mb-2">2. แคปหน้าจอนี้ (Screenshot)</h4>
+                                <div className="bg-white p-6 rounded-[2rem] shadow-lg border-2 border-[#DED0B6] space-y-4">
+                                    <div className="text-center border-b border-dashed border-[#DED0B6] pb-4">
+                                        <h2 className="text-2xl font-black text-[#4A4238] tracking-tight">MY TRIP MEMORIES</h2>
+                                        <p className="text-xs uppercase tracking-widest text-[#4A4238]/60">Chiang Mai • 2026</p>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {journalData.length === 0 ? <p className="text-center text-xs opacity-40">ไม่มีรายการบันทึก</p> : 
+                                            journalData.map((entry, i) => (
+                                                <div key={i} className="flex gap-3">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-2 h-2 bg-[#DED0B6] rounded-full mt-2"></div>
+                                                        <div className="w-0.5 h-full bg-[#DED0B6]/30 my-1"></div>
+                                                    </div>
+                                                    <div className="pb-4 flex-1">
+                                                        <div className="flex justify-between items-baseline">
+                                                            <span className="text-[10px] font-bold opacity-50">{entry.dayDate}</span>
+                                                            <span className="text-lg">{entry.journalMood}</span>
+                                                        </div>
+                                                        <h4 className="font-bold text-sm text-[#4A4238]">{entry.activity}</h4>
+                                                        {entry.journalNote && <p className="text-xs text-gray-500 mt-1 italic">"{entry.journalNote}"</p>}
+                                                        {entry.journalImage && <img src={entry.journalImage} className="mt-2 rounded-lg w-full h-32 object-cover" />}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                    <div className="text-center pt-4 border-t border-dashed border-[#DED0B6]">
+                                        <p className="text-[10px] opacity-40">Created by CNX Planner</p>
+                                    </div>
+                                </div>
+                                <p className="text-center text-[10px] opacity-50 mt-2">👇 กดแคปหน้าจอส่วนการ์ดด้านบนได้เลย</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const App = () => {
             const [view, setView] = useState('trip'); 
             const [activeDateTab, setActiveDateTab] = useState(0); 
+            const [isShareOpen, setIsShareOpen] = useState(false);
             
-            const [itineraryData, setItineraryData] = useState([
-                {
-                    dateShort: '4 ก.พ.',
-                    title: 'Day 1: ขุนเขาแม่ริม',
-                    items: [
-                        { time: '11:10', activity: 'ถึงสนามบินเชียงใหม่', iconType: 'Plane', iconColor: 'text-blue-500', location: 'แลนดิ้ง & รับรถเช่า', link: 'https://maps.google.com/?q=Chiang+Mai+International+Airport', isOpen: false, expenses: [] },
-                        { time: '12:30', activity: 'มื้อเที่ยง: แม่ริม', iconType: 'Utensils', iconColor: 'text-orange-500', location: 'ส้มตำอุดร / หลงป่า', link: 'https://maps.google.com/?q=Somtum+Udon+Maerim', isOpen: false, expenses: [] },
-                        { time: '14:00', activity: 'Pongyang Jungle Coaster', iconType: 'Camera', iconColor: 'text-green-600', location: 'เครื่องเล่นรางไม้ & กาแฟ', link: 'https://maps.google.com/?q=Pongyang+Jungle+Coaster', isOpen: false, expenses: [] },
-                        { time: '16:00', activity: 'เช็คอิน: ม่อนลมหนาว', iconType: 'Home', iconColor: 'text-indigo-500', location: 'ม่อนแจ่ม (ชมวิวระเบียง)', link: 'https://maps.google.com/?q=Mon+Lom+Nao+Homestay', isOpen: false, expenses: [] },
-                        { time: '18:30', activity: 'มื้อเย็น: หมูกระทะ', iconType: 'Utensils', iconColor: 'text-red-500', location: 'หน้าห้องพัก (จองล่วงหน้า)', link: '', isOpen: false, expenses: [] }
-                    ]
-                },
-                {
-                    dateShort: '5 ก.พ.',
-                    title: 'Day 2: สถาปัตยกรรม & ในเมือง',
-                    items: [
-                        { time: '09:30', activity: 'Skywalk ม่อนแจ่ม', iconType: 'Camera', iconColor: 'text-blue-400', location: 'ถ่ายรูปสวนดอกไม้', link: 'https://maps.google.com/?q=Mon+Jam+Skywalk', isOpen: false, expenses: [] },
-                        { time: '11:00', activity: 'วัดป่าดาราภิรมย์', iconType: 'MapPin', iconColor: 'text-yellow-600', location: 'สถาปัตยกรรมล้านนา', link: 'https://maps.google.com/?q=Wat+Pa+Dara+Phirom', isOpen: false, expenses: [] },
-                        { time: '12:30', activity: 'มื้อเที่ยง: ข้าวซอย', iconType: 'Utensils', iconColor: 'text-orange-500', location: 'ข้าวซอยแม่สาย / นิมมาน', link: 'https://maps.google.com/?q=Khao+Soi+Mae+Sai', isOpen: false, expenses: [] },
-                        { time: '14:00', activity: 'One Nimman', iconType: 'Camera', iconColor: 'text-red-400', location: 'ช้อปปิ้ง & ถ่ายรูปตึกแดง', link: 'https://maps.google.com/?q=One+Nimman', isOpen: false, expenses: [] },
-                        { time: '16:00', activity: 'เช็คอิน: โรงแรม R2', iconType: 'Home', iconColor: 'text-slate-600', location: 'ย่านนิมมาน', link: 'https://maps.google.com/?q=R2+Hotel+Chiang+Mai', isOpen: false, expenses: [] },
-                        { time: '19:30', activity: 'Night Bazaar', iconType: 'Utensils', iconColor: 'text-pink-500', location: 'Ploen Ruedee Market', link: 'https://maps.google.com/?q=Ploen+Ruedee+Night+Market', isOpen: false, expenses: [] }
-                    ]
-                },
-                {
-                    dateShort: '6 ก.พ.',
-                    title: 'Day 3: ตลาดเช้า & มัทฉะ',
-                    items: [
-                        { time: '09:00', activity: 'จริงใจมาร์เก็ต (JJ)', iconType: 'Leaf', iconColor: 'text-green-500', location: 'งานคราฟต์ & กาแฟ', link: 'https://maps.google.com/?q=Jing+Jai+Market', isOpen: false, expenses: [] },
-                        { time: '11:30', activity: 'Chom Cafe', iconType: 'Camera', iconColor: 'text-green-700', location: 'สวนป่าหิมพานต์', link: 'https://maps.google.com/?q=Chom+Cafe+and+Restaurant', isOpen: false, expenses: [] },
-                        { time: '13:30', activity: 'Magokoro Teahouse', iconType: 'Coffee', iconColor: 'text-green-800', location: 'มัทฉะญี่ปุ่นแท้', link: 'https://maps.google.com/?q=Magokoro+Teahouse', isOpen: false, expenses: [] },
-                        { time: '15:30', activity: 'ซื้อของฝาก: วนัสนันท์', iconType: 'Coins', iconColor: 'text-yellow-500', location: 'ไส้อั่ว / น้ำพริกหนุ่ม', link: 'https://maps.google.com/?q=Vanasnun', isOpen: false, expenses: [] },
-                        { time: '16:30', activity: 'คืนรถ & สนามบิน', iconType: 'Plane', iconColor: 'text-blue-500', location: 'เติมน้ำมันเต็มถัง', link: 'https://maps.google.com/?q=Chiang+Mai+International+Airport', isOpen: false, expenses: [] }
-                    ]
-                }
-            ]);
+            const [itineraryData, setItineraryData] = useState(() => {
+                const saved = localStorage.getItem('cnx2026_itinerary_v5');
+                return saved ? JSON.parse(saved) : INITIAL_ITINERARY;
+            });
 
-            const [gasTotal, setGasTotal] = useState(0);
+            const [gasTotal, setGasTotal] = useState(() => {
+                const saved = localStorage.getItem('cnx2026_gas');
+                return saved ? parseFloat(saved) : 0;
+            });
+
+            const [flightCost, setFlightCost] = useState(() => {
+                const saved = localStorage.getItem('cnx2026_flight');
+                return saved ? parseFloat(saved) : 0;
+            });
+
             const [showGasInput, setShowGasInput] = useState(false);
             const [tempGas, setTempGas] = useState('');
-            const [flightCost, setFlightCost] = useState(0);
             const [isEditingFlight, setIsEditingFlight] = useState(false);
+
+            useEffect(() => localStorage.setItem('cnx2026_itinerary_v5', JSON.stringify(itineraryData)), [itineraryData]);
+            useEffect(() => localStorage.setItem('cnx2026_gas', gasTotal), [gasTotal]);
+            useEffect(() => localStorage.setItem('cnx2026_flight', flightCost), [flightCost]);
 
             const renderIcon = (type, color) => {
                 const IconComp = Icons[type] || Icons.MapPin;
                 return <IconComp className={color} />;
+            };
+
+            const resetData = () => {
+                if(confirm('ล้างข้อมูลทั้งหมดและเริ่มใหม่?')) {
+                    localStorage.clear();
+                    window.location.reload();
+                }
             };
 
             const handleToggleItem = (dayIdx, itemIdx) => {
@@ -260,28 +394,29 @@
                 });
             };
 
+            const handleToggleDone = (dayIdx, itemIdx) => {
+                setItineraryData(prev => {
+                    const newData = [...prev];
+                    const newDay = { ...newData[dayIdx] };
+                    newDay.items = [...newDay.items];
+                    newDay.items[itemIdx] = { ...newDay.items[itemIdx], completed: !newDay.items[itemIdx].completed };
+                    newData[dayIdx] = newDay;
+                    return newData;
+                });
+            };
+
             const handleAddItem = (dayIdx) => {
                 setItineraryData(prev => {
                     const newData = [...prev];
                     const newDay = { ...newData[dayIdx] };
                     newDay.items = [...newDay.items, {
-                        time: '??:??',
-                        activity: '',
-                        iconType: 'MapPin',
-                        iconColor: 'text-gray-500',
-                        location: '',
-                        link: '',
-                        isOpen: true,
-                        isNew: true,
-                        expenses: []
+                        time: '??:??', activity: '', iconType: 'MapPin', iconColor: 'text-gray-500', location: '', link: '',
+                        isOpen: true, isNew: true, completed: false, expenses: [], journalMood: '', journalNote: '', journalImage: null
                     }];
                     newData[dayIdx] = newDay;
                     return newData;
                 });
-                
-                setTimeout(() => {
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                }, 100);
+                setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
             };
 
             const handleUpdateItem = (dayIdx, itemIdx, updatedData) => {
@@ -353,6 +488,19 @@
 
             const grandTotal = gasTotal + flightCost + totalActivityExpenses;
 
+            // --- DATA FOR JOURNAL ---
+            const journalEntries = useMemo(() => {
+                const entries = [];
+                itineraryData.forEach(day => {
+                    day.items.forEach(item => {
+                        if (item.journalNote || item.journalImage || item.journalMood) {
+                            entries.push({ ...item, dayDate: day.dateShort });
+                        }
+                    });
+                });
+                return entries;
+            }, [itineraryData]);
+
             const renderTripView = () => (
                 <div className="animate-in fade-in duration-300">
                     <div className="sticky top-0 bg-[#F4EBE1]/95 backdrop-blur z-20 pt-2 pb-4 border-b border-[#DED0B6]/30 overflow-x-auto no-scrollbar">
@@ -361,8 +509,7 @@
                                 const isActive = activeDateTab === idx;
                                 return (
                                     <button 
-                                        key={idx}
-                                        onClick={() => setActiveDateTab(idx)}
+                                        key={idx} onClick={() => setActiveDateTab(idx)}
                                         className={`relative px-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 min-w-[80px] ${isActive ? 'bg-[#4A4238] text-[#F4EBE1] shadow-lg scale-105' : 'bg-white/50 text-[#4A4238]/60 hover:bg-white'}`}
                                     >
                                         {day.dateShort}
@@ -380,21 +527,13 @@
                                 <ItineraryItem 
                                     key={idx} 
                                     item={{...item, icon: renderIcon(item.iconType, item.iconColor)}} 
-                                    dayIndex={activeDateTab} 
-                                    itemIndex={idx} 
-                                    onToggle={handleToggleItem} 
-                                    onAddExpense={handleAddExpense} 
-                                    onDeleteExpense={handleDeleteExpense} 
-                                    onUpdateItem={handleUpdateItem}
-                                    onDeleteItem={handleDeleteItem}
+                                    dayIndex={activeDateTab} itemIndex={idx} 
+                                    onToggle={handleToggleItem} onAddExpense={handleAddExpense} onDeleteExpense={handleDeleteExpense} 
+                                    onUpdateItem={handleUpdateItem} onDeleteItem={handleDeleteItem} onToggleDone={handleToggleDone}
                                 />
                             ))}
                         </div>
-                        
-                        <button 
-                            onClick={() => handleAddItem(activeDateTab)}
-                            className="mt-4 w-full py-4 border-2 border-dashed border-[#DED0B6] rounded-2xl text-[#4A4238]/50 font-bold flex items-center justify-center gap-2 hover:bg-white/50 hover:text-[#4A4238] transition-all active:scale-95"
-                        >
+                        <button onClick={() => handleAddItem(activeDateTab)} className="mt-4 w-full py-4 border-2 border-dashed border-[#DED0B6] rounded-2xl text-[#4A4238]/50 font-bold flex items-center justify-center gap-2 hover:bg-white/50 hover:text-[#4A4238] transition-all active:scale-95">
                             <Icons.Plus size={20} /> เพิ่มกิจกรรม
                         </button>
                     </div>
@@ -408,6 +547,7 @@
                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
                         <p className="text-sm font-bold opacity-60 uppercase tracking-widest mb-1">Total Spent</p>
                         <p className="text-4xl font-black">฿{grandTotal.toLocaleString()}</p>
+                        <div className="flex items-center gap-1 text-[10px] mt-2 opacity-50"><Icons.Save size={10}/> Auto-saved</div>
                     </div>
                     <div className="space-y-4">
                         <div className="bg-white p-4 rounded-2xl border border-[#DED0B6] shadow-sm flex justify-between items-center">
@@ -467,8 +607,8 @@
 
             const renderExploreView = () => (
                 <div className="px-4 py-6 animate-in slide-in-from-bottom-4 duration-300 pb-24">
-                    <h2 className="text-2xl font-black text-[#4A4238] mb-6 pl-2 border-l-4 border-[#4A4238]">Explore Nearby</h2>
-                    <div className="grid grid-cols-1 gap-4">
+                    <h2 className="text-2xl font-black text-[#4A4238] mb-6 pl-2 border-l-4 border-[#4A4238]">Nearby & Tools</h2>
+                    <div className="grid grid-cols-1 gap-4 mb-6">
                         <button onClick={() => window.open('https://www.google.com/maps/search/restaurant/')} className="bg-white p-6 rounded-2xl border border-[#DED0B6] shadow-sm flex items-center gap-4 hover:bg-orange-50 transition-colors group">
                             <div className="p-4 bg-orange-100 text-orange-500 rounded-2xl group-hover:scale-110 transition-transform"><Icons.Utensils size={32} /></div>
                             <div className="text-left"><h3 className="text-lg font-black text-[#4A4238]">ร้านอาหาร</h3><p className="text-xs opacity-60">Restaurants Near Me</p></div>
@@ -485,8 +625,59 @@
                             <Icons.ChevronRight className="ml-auto opacity-30" />
                         </button>
                     </div>
+
+                    <button onClick={resetData} className="mt-8 w-full py-3 text-red-400 text-xs font-bold bg-white border border-red-100 rounded-xl hover:bg-red-50">
+                        Reset All Data (ล้างข้อมูลทั้งหมด)
+                    </button>
                 </div>
             );
+
+            const renderJournalView = () => {
+                return (
+                    <div className="px-4 py-6 animate-in slide-in-from-bottom-4 duration-300 pb-24 relative">
+                        <div className="flex justify-between items-start mb-6 border-l-4 border-[#4A4238] pl-2">
+                            <h2 className="text-2xl font-black text-[#4A4238]">Travel Memories</h2>
+                            <button onClick={() => setIsShareOpen(true)} className="bg-[#4A4238] text-white p-2 rounded-full shadow-lg active:scale-95"><Icons.Share size={20}/></button>
+                        </div>
+                        
+                        {journalEntries.length === 0 ? (
+                            <div className="text-center py-20 opacity-40">
+                                <Icons.BookOpen size={64} className="mx-auto mb-4"/>
+                                <p>ยังไม่มีบันทึกความทรงจำ</p>
+                                <p className="text-xs">ลองเพิ่มรูปหรือข้อความในหน้า Trip ดูสิ</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {journalEntries.map((entry, idx) => (
+                                    <div key={idx} className="bg-white rounded-[2rem] shadow-sm border border-[#DED0B6] overflow-hidden">
+                                        {entry.journalImage && (
+                                            <div className="w-full h-48 overflow-hidden bg-gray-100">
+                                                <img src={entry.journalImage} className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <div className="p-5">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg font-bold uppercase tracking-wider">{entry.dayDate} • {entry.time}</span>
+                                                    <h3 className="font-bold text-lg mt-1 text-[#4A4238]">{entry.activity}</h3>
+                                                </div>
+                                                {entry.journalMood && <div className="text-3xl bg-gray-50 p-2 rounded-xl">{entry.journalMood}</div>}
+                                            </div>
+                                            {entry.journalNote && (
+                                                <div className="bg-[#F4EBE1]/50 p-4 rounded-xl text-sm text-gray-600 leading-relaxed italic relative">
+                                                    <span className="absolute top-2 left-2 text-2xl opacity-20">"</span>
+                                                    {entry.journalNote}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} journalData={journalEntries} />
+                    </div>
+                );
+            };
 
             return (
                 <div className="min-h-[100dvh] bg-[#F4EBE1] text-[#4A4238] font-sans relative">
@@ -501,28 +692,33 @@
                         <div className="px-4 pb-2">
                              <div className="bg-orange-500 text-white p-3 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center gap-3 text-xs">
                                 <div className="bg-white/20 p-2 rounded-xl"><Icons.Plane className="animate-pulse" size={16} /></div>
-                                <div><p className="font-bold">Late Arrival 11:10</p><p className="opacity-90">แผนปรับใหม่ (Edit Mode)</p></div>
+                                <div><p className="font-bold">Late Arrival 11:10</p><p className="opacity-90">Auto-Save Enabled</p></div>
                             </div>
                         </div>
                     </div>
                     <div className="max-w-lg mx-auto min-h-screen">
                         {view === 'trip' && renderTripView()}
-                        {view === 'expenses' && renderExpensesView()}
                         {view === 'explore' && renderExploreView()}
+                        {view === 'memories' && renderJournalView()}
+                        {view === 'expenses' && renderExpensesView()}
                     </div>
                     <div className="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-[#DED0B6]/50 safe-bottom z-50">
                         <div className="max-w-lg mx-auto flex justify-around items-center p-2">
-                            <button onClick={() => setView('trip')} className={`flex flex-col items-center p-2 rounded-xl transition-all w-20 ${view === 'trip' ? 'text-[#4A4238] scale-105' : 'text-gray-400'}`}>
+                            <button onClick={() => setView('trip')} className={`flex flex-col items-center p-2 rounded-xl transition-all w-16 ${view === 'trip' ? 'text-[#4A4238] scale-105' : 'text-gray-400'}`}>
                                 <div className={`p-1 rounded-full mb-1 ${view === 'trip' ? 'bg-[#F4EBE1]' : ''}`}><Icons.Map size={24} /></div>
-                                <span className="text-[10px] font-bold uppercase">Trip</span>
+                                <span className="text-[9px] font-bold uppercase">Trip</span>
                             </button>
-                            <button onClick={() => setView('explore')} className={`flex flex-col items-center p-2 rounded-xl transition-all w-20 ${view === 'explore' ? 'text-[#4A4238] scale-105' : 'text-gray-400'}`}>
-                                <div className={`p-1 rounded-full mb-1 ${view === 'explore' ? 'bg-[#F4EBE1]' : ''}`}><Icons.Compass size={24} /></div>
-                                <span className="text-[10px] font-bold uppercase">Explore</span>
+                            <button onClick={() => setView('memories')} className={`flex flex-col items-center p-2 rounded-xl transition-all w-16 ${view === 'memories' ? 'text-[#4A4238] scale-105' : 'text-gray-400'}`}>
+                                <div className={`p-1 rounded-full mb-1 ${view === 'memories' ? 'bg-[#F4EBE1]' : ''}`}><Icons.BookOpen size={24} /></div>
+                                <span className="text-[9px] font-bold uppercase">Memory</span>
                             </button>
-                            <button onClick={() => setView('expenses')} className={`flex flex-col items-center p-2 rounded-xl transition-all w-20 ${view === 'expenses' ? 'text-[#4A4238] scale-105' : 'text-gray-400'}`}>
+                            <button onClick={() => setView('expenses')} className={`flex flex-col items-center p-2 rounded-xl transition-all w-16 ${view === 'expenses' ? 'text-[#4A4238] scale-105' : 'text-gray-400'}`}>
                                 <div className={`p-1 rounded-full mb-1 ${view === 'expenses' ? 'bg-[#F4EBE1]' : ''}`}><Icons.Wallet size={24} /></div>
-                                <span className="text-[10px] font-bold uppercase">Wallet</span>
+                                <span className="text-[9px] font-bold uppercase">Wallet</span>
+                            </button>
+                            <button onClick={() => setView('explore')} className={`flex flex-col items-center p-2 rounded-xl transition-all w-16 ${view === 'explore' ? 'text-[#4A4238] scale-105' : 'text-gray-400'}`}>
+                                <div className={`p-1 rounded-full mb-1 ${view === 'explore' ? 'bg-[#F4EBE1]' : ''}`}><Icons.Settings size={24} /></div>
+                                <span className="text-[9px] font-bold uppercase">More</span>
                             </button>
                         </div>
                     </div>
