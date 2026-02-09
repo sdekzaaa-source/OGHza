@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OGHza Tracker V5.0.4</title>
+    <title>OGHza Tracker V5.0.8</title>
     
     <!-- App Icon -->
     <link rel="icon" href="icon.png" type="image/png">
@@ -37,23 +37,27 @@
             --badge-bg: rgba(0,0,0,0.6);
             --badge-text: #a1a1aa;
             --modal-bg: #18181b;
+            --nav-active: #c084fc; /* Purple-400 */
+            --nav-inactive: #71717a; /* Zinc-500 */
         }
 
         /* Real Muji Style (Warm/Natural/Soft) */
         [data-theme='light'] {
             --app-bg: #f2efe6; /* Cream/Beige (Not White) */
-            --glass-bg: rgba(251, 250, 245, 0.95); /* Ivory Glass */
+            --glass-bg: rgba(251, 250, 245, 0.98); /* Ivory Glass (More opaque) */
             --panel-bg: #fbfaf5; /* Ivory Panel */
-            --text-main: #5c5248; /* Warm Dark Brown/Grey (Soft) */
-            --text-muted: #a0968a; /* Warm Grey */
-            --border-color: #e6e0d4; /* Soft Beige Border */
+            --text-main: #594a42; /* Deep Warm Brown (น้ำตาลไหม้) */
+            --text-muted: #9c9488; /* Warm Grey */
+            --border-color: #e0dace; /* Darker Beige Border */
             --input-bg: #f5f2e9; /* Light Beige Input */
-            --shadow-color: rgba(92, 82, 72, 0.06); /* Warm Shadow */
+            --shadow-color: rgba(92, 82, 72, 0.08); /* Warm Shadow */
             --accent-green: #8da376; /* Matcha Green */
             --card-gradient: linear-gradient(180deg, #fbfaf5 0%, #f2efe6 100%);
-            --badge-bg: #5c5248; /* Dark Brown */
+            --badge-bg: #594a42; /* Dark Brown */
             --badge-text: #fbfaf5; /* Ivory */
             --modal-bg: #fbfaf5;
+            --nav-active: #594a42; /* Deep Brown for Active Menu */
+            --nav-inactive: #b0a69a; /* Light Brown Grey for Inactive */
         }
 
         /* --- THEME OVERRIDES --- */
@@ -63,7 +67,7 @@
         [data-theme='light'] .bg-zinc-900\/95,
         [data-theme='light'] .bg-black\/90,
         [data-theme='light'] .bg-black {
-            background-color: var(--panel-bg) !important;
+            background-color: #ffffff !important;
             border-color: var(--border-color) !important;
             color: var(--text-main) !important;
         }
@@ -78,8 +82,8 @@
         [data-theme='light'] .bg-zinc-800,
         [data-theme='light'] .bg-zinc-800\/50, 
         [data-theme='light'] .bg-zinc-800\/95 {
-            background-color: #fffefb !important; /* Lighter than app bg for contrast */
-            border-color: #e6e0d4 !important;
+            background-color: #fffefb !important; 
+            border-color: var(--border-color) !important;
             color: var(--text-main) !important;
         }
 
@@ -142,8 +146,12 @@
         [data-theme='light'] .modal-bg-flip {
             background-color: #fbfaf5 !important;
             color: #594a42 !important;
-            border-color: #e6e2d8 !important;
+            border-color: var(--border-color) !important;
         }
+        
+        /* Nav Bar Specifics */
+        .nav-item-active { color: var(--nav-active) !important; opacity: 1 !important; }
+        .nav-item-inactive { color: var(--nav-inactive) !important; opacity: 0.6 !important; }
 
         [data-theme='light'] .bg-emerald-500 { background-color: #8da376 !important; }
         [data-theme='light'] .text-emerald-400 { color: #6d8058 !important; }
@@ -280,14 +288,14 @@
     <script type="text/babel" data-type="module" data-presets="react">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, onSnapshot, addDoc, deleteDoc, getDocs, increment, writeBatch } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, onSnapshot, addDoc, deleteDoc, getDocs, increment, writeBatch, limit } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         const { useState, useEffect, useMemo, useRef } = React;
 
-        const APP_VERSION = "Ver.5.0.4";
+        const APP_VERSION = "Ver.5.0.8";
         const VERSION_HISTORY = [
-            { ver: "Ver.5.0.4", changes: ["Restored Luck/Fortune Widget", "Added Red Pulse Alert for missing char"] },
-            { ver: "Ver.5.0.3", changes: ["Fixed HE Gum Icon", "Improved Muji Theme"] },
+            { ver: "Ver.5.0.8", changes: ["Added 10s Hold for Delete All Data", "Fixed Red Alert Border"] },
+            { ver: "Ver.5.0.7", changes: ["Added 'Delete All Data' button (Danger Zone)", "Improved Muji Theme"] },
         ];
         
         const MANUAL_FIREBASE_CONFIG = { apiKey: "AIzaSyAbWzr8o_OhkjGbEetBYq_nzYmVZ2fTf40", authDomain: "rocogh-88a38.firebaseapp.com", projectId: "rocogh-88a38", storageBucket: "rocogh-88a38.firebasestorage.app", messagingSenderId: "1025971309206", appId: "1:1025971309206:web:d4f9e0ab6bb016dde590b7" };
@@ -392,7 +400,7 @@
                         </>
                     );
                     break;
-                case 'Settings': content = <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>; break;
+                case 'Settings': content = <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>; break;
                 case 'Trash': content = <><polyline points="3 6 5 6 21 6" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" strokeWidth="2"/><line x1="10" y1="11" x2="10" y2="17" stroke="currentColor" strokeWidth="2"/><line x1="14" y1="11" x2="14" y2="17" stroke="currentColor" strokeWidth="2"/></>; break;
                 case 'Plus': content = <><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2"/></>; break;
                 case 'X': content = <><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/></>; break;
@@ -460,15 +468,15 @@
                 </div>
             );
         }
-        function DeleteButton({ onDelete, duration = 750, className = "w-full mt-2" }) { 
+        function DeleteButton({ onDelete, duration = 750, className = "w-full mt-2", label = "Hold Delete" }) { 
             const [isDeleting, setIsDeleting] = useState(false); 
             const timerRef = useRef(null); 
-            const startDelete = () => { setIsDeleting(true); timerRef.current = setTimeout(() => { onDelete(); setIsDeleting(false); }, 750); }; 
+            const startDelete = () => { setIsDeleting(true); timerRef.current = setTimeout(() => { onDelete(); setIsDeleting(false); }, duration); }; 
             const cancelDelete = () => { clearTimeout(timerRef.current); setIsDeleting(false); }; 
             return (
                 <div className={`relative h-8 bg-zinc-800 rounded-lg overflow-hidden cursor-pointer border border-rose-900/30 select-none touch-none ${className}`} onMouseDown={startDelete} onMouseUp={cancelDelete} onMouseLeave={cancelDelete} onTouchStart={(e) => { e.preventDefault(); startDelete(); }} onTouchEnd={(e) => { e.preventDefault(); cancelDelete(); }}>
-                    <div className={`absolute top-0 left-0 h-full bg-rose-600 delete-progress ${isDeleting ? 'w-full duration-[750ms]' : 'w-0 duration-100'}`}></div>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className={`text-[10px] font-bold uppercase tracking-widest ${isDeleting ? 'text-white animate-pulse' : 'text-rose-400'}`}>{isDeleting ? "DELETING..." : "Hold Delete"}</span></div>
+                    <div className={`absolute top-0 left-0 h-full bg-rose-600 delete-progress ${isDeleting ? 'w-full' : 'w-0'}`} style={{ transitionDuration: isDeleting ? `${duration}ms` : '100ms' }}></div>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className={`text-[10px] font-bold uppercase tracking-widest ${isDeleting ? 'text-white animate-pulse' : 'text-rose-400'}`}>{isDeleting ? "DELETING..." : label}</span></div>
                 </div>
             ); 
         }
@@ -545,11 +553,11 @@
                         </div>
                     </div>
                 </div>
-            );
+            ); 
         }
 
         function ItemDetailModal({ item, onClose, onSell }) { const rColors = { Common: "text-zinc-400", Uncommon: "text-emerald-400", Rare: "text-blue-400", Legendary: "text-amber-400" }; const rBg = { Common: "bg-zinc-800/50", Uncommon: "bg-emerald-500/10", Rare: "bg-blue-500/10", Legendary: "bg-amber-500/10" }; const info = getItemInfo(item.id || item.itemId); const [sellQty, setSellQty] = useState('1'); const [sellPrice, setSellPrice] = useState(''); return (<div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fade-in" onClick={onClose}><div className="w-full max-w-xs bg-zinc-900 rounded-[2.5rem] p-6 relative border border-zinc-800 modal-bg-flip" onClick={e => e.stopPropagation()}><button onClick={onClose} className="absolute top-5 right-5 text-zinc-500 hover:text-white"><Icon name="X" size={20}/></button><div className={`w-24 h-24 mx-auto rounded-3xl flex items-center justify-center mb-4 ${rBg[info.rarity]} border border-white/5 shadow-xl`}><SmartIcon name={info.icon} className="w-16 h-16" /></div><h3 className={`text-lg font-black text-center ${rColors[info.rarity]}`}>{info.name}</h3><p className="text-[10px] font-bold text-center opacity-40 uppercase tracking-widest mb-4">{info.type} • {info.rarity}</p><p className="text-xs text-center opacity-60 mb-6 italic">"{info.desc}"</p>{item.isSellable ? (<div className="bg-zinc-900 p-4 rounded-2xl mb-4 border border-zinc-800"><p className="text-[10px] font-bold opacity-40 uppercase mb-2 text-center">Sell Item</p><div className="grid grid-cols-2 gap-2 mb-2"><div><label className="text-[8px] font-bold opacity-30 uppercase ml-1">Qty</label><input type="text" inputMode="numeric" value={sellQty} onChange={e => setSellQty(e.target.value.replace(/\D/g,''))} className="slate-input w-full p-2 rounded-xl text-center font-bold text-sm outline-none placeholder-white/20"/></div><div><label className="text-[8px] font-bold opacity-30 uppercase ml-1">Price/Unit</label><input type="text" inputMode="numeric" value={sellPrice} onChange={e => setSellPrice(e.target.value.replace(/\D/g,''))} className="slate-input w-full p-2 rounded-xl text-center font-bold text-sm outline-none placeholder-white/20"/></div></div><button onClick={() => onSell(item, sellQty, sellPrice)} disabled={!sellQty || !sellPrice} className="w-full py-2 bg-emerald-600 rounded-xl text-xs font-black uppercase hover:bg-emerald-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"><Icon name="DollarSign" size={14}/> Confirm Sell</button></div>) : (<div className="text-center"><p className="text-xs font-bold opacity-50">Owned: {item.count || item.qty}</p></div>)}</div></div>); }
-        const TabButton = ({ label, icon: IconName, active, onClick }) => ( <button onClick={onClick} className={`flex-1 py-2 text-[10px] font-black uppercase transition-all rounded-xl flex flex-col items-center justify-center gap-1 ${active ? 'bg-zinc-700 text-white shadow-lg ring-1 ring-zinc-600' : 'text-zinc-500 hover:text-zinc-300'}`}><Icon name={IconName} size={16} />{label}</button> );
+        const TabButton = ({ label, icon: IconName, active, onClick }) => ( <button onClick={onClick} className={`flex-1 py-2 text-[10px] font-black uppercase transition-all rounded-xl flex flex-col items-center justify-center gap-1 ${active ? 'nav-item-active' : 'nav-item-inactive'}`}><Icon name={IconName} size={16} />{label}</button> );
 
         // --- NEW: ProfileView Component with Export/Import & Theme ---
         function ProfileView({ stats, uid, onResetUid, onSetUid, prices, setPrices, db, showToast, onBack, characters, setCharacters, setTheme, currentTheme }) {
@@ -576,6 +584,39 @@
                 const newStats = { ...stats, savingsGoal: parseInt(localGoal) };
                 await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'), newStats);
                 showToast("Settings Saved!");
+            };
+
+            const handleDeleteAllData = async () => {
+                if(!confirm("⚠️ ARE YOU SURE? This will PERMANENTLY DELETE all your data!")) return;
+                
+                try {
+                    const batch = writeBatch(db);
+                    
+                    // 1. Delete Records
+                    const recordsSnapshot = await getDocs(collection(db, 'artifacts', appId, 'users', uid, 'records'));
+                    recordsSnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+
+                    // 2. Delete Inventory
+                    const inventorySnapshot = await getDocs(collection(db, 'artifacts', appId, 'users', uid, 'inventory'));
+                    inventorySnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+
+                    // 3. Delete Configs
+                    batch.delete(doc(db, 'artifacts', appId, 'users', uid, 'config', 'prices'));
+                    batch.delete(doc(db, 'artifacts', appId, 'users', uid, 'config', 'characters'));
+                    batch.delete(doc(db, 'artifacts', appId, 'users', uid, 'config', 'stock'));
+                    batch.delete(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'));
+
+                    await batch.commit();
+                    showToast("All Data Deleted!");
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch (error) {
+                    console.error("Error deleting data:", error);
+                    showToast("Failed to delete data");
+                }
             };
 
             const copyUid = () => {
@@ -774,6 +815,12 @@
                                 <input type="file" accept=".json" onChange={handleImportData} className="hidden" />
                             </label>
                         </div>
+
+                        {/* Delete All Section */}
+                        <div className="pt-2 border-t border-zinc-700/50 mt-2">
+                             <p className="text-[9px] text-rose-400/70 font-bold uppercase tracking-widest mb-1 text-center">Danger Zone</p>
+                             <DeleteButton onDelete={handleDeleteAllData} duration={10000} label="Hold 10s to Wipe Data" className="w-full h-10 bg-rose-900/10 border-rose-500/30" />
+                        </div>
                         <p className="text-[9px] text-zinc-600 italic text-center">Export to .json file to save or transfer data.</p>
                     </div>
 
@@ -932,6 +979,15 @@
                                 <div className="text-[10px] text-zinc-500 italic py-2">Add characters in Profile</div>
                             )}
                         </div>
+
+                        {hasNoCharacters && (
+                            <div className="absolute top-14 left-2 z-30 animate-bounce pointer-events-none origin-left">
+                                <div className="bg-emerald-500 text-black text-[10px] font-black px-3 py-2 rounded-xl relative shadow-lg">
+                                    👈 Create Character Here!
+                                    <div className="absolute -top-1 left-4 w-2.5 h-2.5 bg-emerald-500 transform rotate-45"></div>
+                                </div>
+                            </div>
+                        )}
                     </header>
 
                     <div className="grid grid-cols-2 gap-3 mb-6">
@@ -948,7 +1004,7 @@
                             <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div className="h-full bg-amber-500 transition-all" style={{width: `${goalPercent}%`}}></div></div>
                             <div className="flex justify-between items-end mt-1">
                                 <p className="text-[8px] text-zinc-600">{formatMoney(stats.zeny)}</p>
-                                <p className="text-[8px] font-bold text-emerald-400">{timeToGoal.days > 0 ? `${timeToGoal.days}d` : 'Done!'}</p>
+                                <p className="text-[8px] font-bold text-emerald-400">{timeToGoal.text}</p>
                             </div>
                         </div>
                     </div>
@@ -1142,6 +1198,24 @@
             const [rewardData, setRewardData] = useState(null);
             const [showHeGum, setShowHeGum] = useState(false);
             
+            // --- Auto-fill from last run ---
+            useEffect(() => {
+                if (records.length > 0 && !rewardData) {
+                    // Find the last run (that is NOT a sale record)
+                    const lastRun = records.find(r => !r.isSaleRecord);
+                    if (lastRun) {
+                        setForm(prev => ({
+                            ...prev,
+                            runMode: lastRun.runMode || 'ogh',
+                            normalGumUsed: lastRun.normalGumUsed || 0,
+                            heGumUsed: lastRun.heGumUsed || 0,
+                            minutesUsed: lastRun.minutesUsed || 60
+                        }));
+                        if(lastRun.heGumUsed > 0) setShowHeGum(true);
+                    }
+                }
+            }, [records, rewardData]);
+            
             const hasPremium = activeBuffs.some(b => b.itemId === 'premium_box' && new Date(b.endDate) > new Date());
             const hasKafra = activeBuffs.some(b => b.itemId === 'kafra_box' && b.characterId === selectedCharId && new Date(b.endDate) > new Date()); // Check Char ID
             const hasSilvervineBuff = activeBuffs.some(b => b.itemId === 'silvervine_24h' && new Date(b.endDate) > new Date());
@@ -1224,7 +1298,11 @@
                 await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'gamification', 'stats'), newStats);
             };
 
-            const closeReward = () => { setRewardData(null); /* No Toast */ setForm({ runMode: 'ogh', normalGumUsed: 0, heGumUsed: 0, useSilvervine: false, purpleStoneCount: 0, contMagicCount: 0, trashAmount: '', minutesUsed: 60, otherCosts: [], notes: '' }); };
+            const closeReward = () => { 
+                setRewardData(null); /* No Toast */ 
+                // Don't reset form completely, keep smart memory values or minimal defaults
+                setForm(prev => ({ ...prev, purpleStoneCount: 0, contMagicCount: 0, trashAmount: '', otherCosts: [], notes: '' })); 
+            };
             const isFormValid = form.trashAmount && parseInt(form.trashAmount) > 0;
             const [shareData, setShareData] = useState(null);
 
@@ -1652,11 +1730,11 @@
                     
                     {activeTab !== 'profile' && (
                         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto glass-panel border-t border-white/5 nav-bar-padding pt-2 px-2 flex justify-between items-end z-40 rounded-t-[2rem]">
-                            <button onClick={() => setActiveTab('home')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'home' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Home" size={24}/><span className="text-[9px] font-bold uppercase">Home</span></button>
-                            <button onClick={() => setActiveTab('inventory')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'inventory' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Inventory" size={24}/><span className="text-[9px] font-bold uppercase">Inventory</span></button>
-                            <button onClick={() => setActiveTab('shop')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'shop' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Shop" size={24}/><span className="text-[9px] font-bold uppercase">Shop</span></button>
-                            <button onClick={() => setActiveTab('add')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'add' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="Dungeon" size={24}/><span className="text-[9px] font-bold uppercase">Adventure</span></button>
-                            <button onClick={() => setActiveTab('history')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'history' ? 'text-purple-400' : 'opacity-40'}`}><Icon name="History" size={24}/><span className="text-[9px] font-bold uppercase">History</span></button>
+                            <button onClick={() => setActiveTab('home')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'home' ? 'nav-item-active' : 'nav-item-inactive'}`}><Icon name="Home" size={24}/><span className="text-[9px] font-bold uppercase">Home</span></button>
+                            <button onClick={() => setActiveTab('inventory')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'inventory' ? 'nav-item-active' : 'nav-item-inactive'}`}><Icon name="Inventory" size={24}/><span className="text-[9px] font-bold uppercase">Inventory</span></button>
+                            <button onClick={() => setActiveTab('shop')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'shop' ? 'nav-item-active' : 'nav-item-inactive'}`}><Icon name="Shop" size={24}/><span className="text-[9px] font-bold uppercase">Shop</span></button>
+                            <button onClick={() => setActiveTab('add')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'add' ? 'nav-item-active' : 'nav-item-inactive'}`}><Icon name="Dungeon" size={24}/><span className="text-[9px] font-bold uppercase">Adventure</span></button>
+                            <button onClick={() => setActiveTab('history')} className={`flex-1 flex flex-col items-center gap-1 py-3 ${activeTab === 'history' ? 'nav-item-active' : 'nav-item-inactive'}`}><Icon name="History" size={24}/><span className="text-[9px] font-bold uppercase">History</span></button>
                         </nav>
                     )}
                 </div>
