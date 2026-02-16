@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Work Management - Product Tracker</title>
     
+    <!-- App Icons (Mobile & Desktop) -->
+    <link rel="icon" type="image/png" href="sebo.png">
+    <link rel="apple-touch-icon" href="sebo.png">
+    
     <!-- Scripts: React, Babel, Tailwind, Lucide Icons -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -82,13 +86,13 @@
             const [loading, setLoading] = useState(true);
             const [recordsLoading, setRecordsLoading] = useState(false);
             
-            // Tab States: Added 'analysis'
-            const [activeTab, setActiveTab] = useState('record'); // 'record' | 'view' | 'analysis' | 'manage'
+            // Tab States
+            const [activeTab, setActiveTab] = useState('record'); 
             const [viewSubTab, setViewSubTab] = useState('pending'); 
             const [manageSubTab, setManageSubTab] = useState('search');
             
             // Analysis State
-            const [analysisRange, setAnalysisRange] = useState('7d'); // 1d, 7d, 30d, 90d, 365d
+            const [analysisRange, setAnalysisRange] = useState('7d');
 
             const [searchTerm, setSearchTerm] = useState('');
             const [showSuggestions, setShowSuggestions] = useState(false);
@@ -125,25 +129,18 @@
                 return url;
             };
 
-            // Helper to parse Thai date string dd/mm/yyyy HH:mm:ss to Date Object
             const parseThaiDate = (dateStr) => {
-                if (!dateStr) return new Date(0); // Return old date if invalid
+                if (!dateStr) return new Date(0); 
                 try {
-                    // Expect format: "16/02/2026, 21:04:00" or similar
                     const parts = dateStr.match(/(\d+)\/(\d+)\/(\d+)/);
                     if (parts) {
                         const day = parseInt(parts[1], 10);
                         const month = parseInt(parts[2], 10) - 1;
                         let year = parseInt(parts[3], 10);
-                        
-                        // Handle Buddhist Year (if year > 2400, assumes BE)
                         if (year > 2400) year -= 543;
-                        
-                        // Create date (ignore time for daily comparison or include if needed)
-                        // Currently string often comes with time, but date parts are enough for day filtering
                         return new Date(year, month, day);
                     }
-                    return new Date(dateStr); // Fallback standard parse
+                    return new Date(dateStr); 
                 } catch (e) {
                     return new Date(0);
                 }
@@ -151,8 +148,7 @@
 
             const getAnalysisData = useMemo(() => {
                 const now = new Date();
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Midnight today
-                
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 let rangeStart = new Date(today);
                 
                 switch (analysisRange) {
@@ -164,13 +160,11 @@
                     default: rangeStart.setDate(today.getDate() - 7);
                 }
 
-                // 1. Filter items within range
                 const filtered = savedItems.filter(item => {
                     const itemDate = parseThaiDate(item.timestamp);
                     return itemDate >= rangeStart;
                 });
 
-                // 2. Aggregate quantities by Product Name
                 const aggregator = {};
                 let totalQty = 0;
 
@@ -189,10 +183,7 @@
                     totalQty += qty;
                 });
 
-                // 3. Convert to array and sort
                 const sorted = Object.values(aggregator).sort((a, b) => b.qty - a.qty);
-                
-                // 4. Get Top 5
                 const top5 = sorted.slice(0, 5);
 
                 return {
@@ -517,13 +508,13 @@
                                 <LucideIcon name="edit-3" size={16} /> บันทึก
                             </button>
                             <button onClick={() => setActiveTab('view')} className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'view' ? 'bg-white shadow text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <LucideIcon name="list" size={16} /> งานประจำวัน
+                                <LucideIcon name="list" size={16} /> งาน
                             </button>
                             <button onClick={() => setActiveTab('analysis')} className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'analysis' ? 'bg-white shadow text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
                                 <LucideIcon name="bar-chart-2" size={16} /> สถิติ
                             </button>
                             <button onClick={() => setActiveTab('manage')} className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'manage' ? 'bg-white shadow text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <LucideIcon name="settings" size={16} /> จัดการสินค้า
+                                <LucideIcon name="settings" size={16} /> สินค้า
                             </button>
                         </div>
 
@@ -737,8 +728,18 @@
                                                     <div className="aspect-square bg-slate-50 rounded-2xl overflow-hidden mb-3 cursor-zoom-in" onClick={() => setPreviewImage(p.imgUrl)}><img src={p.imgUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" /></div>
                                                     <p className="text-[11px] font-black text-slate-700 truncate text-center mb-2">{p.name}</p>
                                                     <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none group-hover:pointer-events-auto">
-                                                        <button onClick={() => setEditMasterItem({ originalName: p.name, name: p.name, imgUrl: p.imgUrl })} className="bg-white text-indigo-600 p-2 rounded-full hover:bg-indigo-50"><LucideIcon name="pencil" size={16} /></button>
-                                                        <button onClick={() => handleDeleteMaster(p.name)} className="bg-white text-red-500 p-2 rounded-full hover:bg-red-50"><LucideIcon name="trash-2" size={16} /></button>
+                                                        <button 
+                                                            onClick={() => setEditMasterItem({ originalName: p.name, name: p.name, imgUrl: p.imgUrl })}
+                                                            className="bg-white text-indigo-600 p-2 rounded-full hover:bg-indigo-50 shadow-lg"
+                                                        >
+                                                            <LucideIcon name="pencil" size={16} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => setPreviewImage(p.imgUrl)}
+                                                            className="bg-white text-emerald-600 p-2 rounded-full hover:bg-emerald-50 shadow-lg"
+                                                        >
+                                                            <LucideIcon name="zoom-in" size={16} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))}
