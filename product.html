@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ระบบจัดการสินค้า</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+    
+    /* Tab Animations */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Login Numpad Animations */
+    .numpad-btn:active { transform: scale(0.95); background-color: #e5e7eb; }
+    .pin-dot { transition: all 0.2s ease; }
+    .pin-dot.filled { background-color: #2563eb; transform: scale(1.1); }
+    .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+  
+    /* Bottom Nav Active State */
+    .nav-item.active { color: #2563eb; }
+    .nav-item.active i { transform: translateY(-2px); }
+
+    /* Selection Mode Styles - FIXED */
+    .product-card { transition: all 0.2s; }
+    .product-card.selected { border-color: #ef4444; background-color: #fef2f2; transform: scale(0.98); }
+    .checkbox-circle { transition: all 0.2s; }
+    .product-card.selected .checkbox-circle { background-color: #ef4444; border-color: #ef4444; }
+    .product-card.selected .checkbox-circle i { display: block !important; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <!-- CONFIGURATION -->
+  <script>
+    // ---------------------------------------------------------
+    // URL Web App ล่าสุดของคุณ (ต้อง Deploy Code.gs ใหม่ก่อน!)
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCid80tMMmb9d2H-eETe_8jGMdzGeRufGiml53KepIfCPsTmRrllYdaYidODWwXs39Rg/exec'; 
+    // ---------------------------------------------------------
+  </script>
+
+  <!-- ================= LOGIN SCREEN (NUMPAD) ================= -->
+  <div id="loginScreen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6">
+    <div class="mb-8 text-center">
+      <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+        <i class="fas fa-lock text-blue-600 text-3xl"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-800">เข้าสู่ระบบ</h2>
+      <p class="text-gray-500 text-sm mt-1">กรุณาใส่รหัสผ่าน 4 หลัก</p>
+    </div>
+
+    <!-- PIN Display -->
+    <div id="pinDisplay" class="flex space-x-4 mb-10">
+      <div class="w-4 h-4 rounded-full border-2 border-gray-300 pin-dot"></div>
+      <div class="w-4 h-4 rounded-full border-2 border-gray-300 pin-dot"></div>
+      <div class="w-4 h-4 rounded-full border-2 border-gray-300 pin-dot"></div>
+      <div class="w-4 h-4 rounded-full border-2 border-gray-300 pin-dot"></div>
+    </div>
+
+    <!-- Numpad -->
+    <div class="grid grid-cols-3 gap-6 w-full max-w-xs">
+      <button onclick="enterPin(1)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">1</button>
+      <button onclick="enterPin(2)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">2</button>
+      <button onclick="enterPin(3)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">3</button>
+      <button onclick="enterPin(4)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">4</button>
+      <button onclick="enterPin(5)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">5</button>
+      <button onclick="enterPin(6)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">6</button>
+      <button onclick="enterPin(7)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">7</button>
+      <button onclick="enterPin(8)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">8</button>
+      <button onclick="enterPin(9)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">9</button>
+      <div></div>
+      <button onclick="enterPin(0)" class="numpad-btn w-16 h-16 rounded-full text-2xl font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm mx-auto flex items-center justify-center">0</button>
+      <button onclick="deletePin()" class="numpad-btn w-16 h-16 rounded-full text-gray-500 hover:text-red-500 bg-transparent hover:bg-red-50 mx-auto flex items-center justify-center transition-colors">
+        <i class="fas fa-backspace text-xl"></i>
+      </button>
+    </div>
+    
+    <p id="loginStatus" class="mt-8 text-sm text-gray-400 h-5 text-center min-h-[20px]"></p>
+  </div>
+
+  <!-- ================= MAIN APP ================= -->
+  <div id="mainApp" class="hidden flex-col min-h-screen pb-24 md:pb-8 p-4 md:p-8 max-w-5xl mx-auto w-full">
+    
+    <!-- Header (Desktop Only) -->
+    <div class="hidden md:flex bg-white rounded-2xl shadow-lg p-6 mb-6 items-center justify-between relative overflow-hidden">
+      <div class="relative z-10">
+        <h1 class="text-3xl font-bold text-gray-800 tracking-tight">
+          <i class="fas fa-boxes text-blue-600 mr-3"></i>Stock Manager
+        </h1>
+        <p id="connectionStatus" class="text-gray-500 text-sm mt-1 ml-11 flex items-center">
+           <span class="w-2 h-2 rounded-full bg-yellow-400 mr-2 animate-pulse"></span> กำลังเชื่อมต่อ...
+        </p>
+      </div>
+      <button onclick="logout()" class="relative z-10 text-gray-400 hover:text-red-500 transition">
+          <i class="fas fa-sign-out-alt mr-1"></i> ออกจากระบบ
+      </button>
+      <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-50 rounded-full opacity-50 z-0"></div>
+    </div>
+
+    <!-- Mobile Header -->
+    <div class="md:hidden flex justify-between items-center mb-6 pt-2">
+      <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-boxes text-blue-600 mr-2"></i>Stock Manager</h1>
+      <button onclick="logout()" class="text-gray-400 hover:text-red-500 p-2"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+
+    <!-- Desktop Navigation Tabs (Simplified) -->
+    <div class="hidden md:flex space-x-2 mb-6">
+      <button onclick="switchTab('add')" id="d-btn-add" class="d-tab-btn active-tab px-5 py-2.5 rounded-xl font-medium shadow-sm transition-all bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-2">
+        <i class="fas fa-plus-circle mr-2"></i> เพิ่มสินค้า
+      </button>
+      <button onclick="switchTab('all')" id="d-btn-all" class="d-tab-btn px-5 py-2.5 rounded-xl font-medium shadow-sm transition-all bg-white text-gray-600 hover:text-blue-600">
+        <i class="fas fa-th-large mr-2"></i> สินค้าทั้งหมด
+      </button>
+    </div>
+
+    <!-- Mobile Connection Status -->
+    <div class="md:hidden mb-4 px-1">
+       <p id="mobileConnectionStatus" class="text-xs text-gray-500 flex items-center">
+         <span class="w-2 h-2 rounded-full bg-yellow-400 mr-2 animate-pulse"></span> กำลังเชื่อมต่อ...
+       </p>
+    </div>
+
+    <!-- 1. ADD PRODUCT -->
+    <div id="tab-add" class="tab-content active bg-white p-5 md:p-8 rounded-2xl shadow-lg border border-gray-100 relative min-h-[500px]">
+      
+      <!-- Toggle Mode: Single / Bulk -->
+      <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-pen text-blue-500 mr-2"></i>ลงทะเบียนสินค้า</h2>
+        <div class="flex bg-gray-100 p-1 rounded-lg">
+           <button onclick="setAddMode('single')" id="mode-single" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-blue-600 shadow transition">ทีละชิ้น</button>
+           <button onclick="setAddMode('bulk')" id="mode-bulk" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition">หลายชิ้น</button>
+        </div>
+      </div>
+
+      <!-- SINGLE UPLOAD FORM -->
+      <form id="addProductForm" onsubmit="handleFormSubmit(event)">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="mb-2">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">ประเภท (Type)</label>
+            <input list="typeList" name="type" class="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เลือกหรือพิมพ์ใหม่..." required autocomplete="off">
+            <datalist id="typeList"></datalist>
+          </div>
+          <div class="mb-2">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">ชื่อสินค้า</label>
+            <input type="text" name="name" class="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" required>
+          </div>
+        </div>
+        <div class="mt-6 mb-6">
+          <label class="block text-gray-700 text-sm font-semibold mb-2">รูปภาพสินค้า</label>
+          <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:bg-gray-50 cursor-pointer relative" onclick="document.getElementById('fileInput').click()">
+            <div class="text-center">
+              <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3 block"></i>
+              <span class="text-blue-600 font-medium text-sm">คลิกเพื่ออัพโหลดรูปภาพ</span>
+              <input id="fileInput" type="file" class="hidden" accept="image/*" onchange="previewImage(this)">
+            </div>
+            <img id="imagePreview" class="hidden absolute inset-0 w-full h-full object-contain bg-gray-100 rounded-xl p-2" />
+          </div>
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-700 text-sm font-semibold mb-2">Memo</label>
+          <textarea name="memo" rows="3" class="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow transition">
+          บันทึกข้อมูล
+        </button>
+      </form>
+
+      <!-- BULK UPLOAD INTERFACE (Hidden by default) -->
+      <div id="bulkUploadInterface" class="hidden">
+         <!-- Dropzone -->
+         <div class="border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl p-8 text-center cursor-pointer hover:bg-blue-100 transition mb-6" onclick="document.getElementById('bulkFileInput').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+            <i class="fas fa-images text-4xl text-blue-400 mb-2"></i>
+            <p class="text-blue-700 font-medium">ลากรูปภาพหลายรูปมาวางที่นี่</p>
+            <p class="text-sm text-blue-500">หรือคลิกเพื่อเลือกไฟล์ (สูงสุดครั้งละ 20 รูป)</p>
+            <input type="file" id="bulkFileInput" class="hidden" multiple accept="image/*" onchange="handleBulkFiles(this.files)">
+         </div>
+
+         <!-- Actions & Settings -->
+         <div id="bulkControls" class="hidden">
+             <!-- Actions (Sticky Top) -->
+             <div class="flex flex-wrap justify-between items-center bg-blue-50 p-4 rounded-lg sticky top-0 z-20 border border-blue-100 shadow-sm mb-4">
+                <span id="bulkCount" class="text-blue-800 font-bold">0 รายการ</span>
+                <div class="flex space-x-2">
+                   <button onclick="clearBulkQueue()" class="text-red-500 hover:text-red-700 text-sm font-bold px-3 py-1 bg-white rounded border border-red-100">ล้าง</button>
+                   <button onclick="uploadBulkQueue()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg font-bold shadow flex items-center text-sm">
+                      <i class="fas fa-cloud-upload-alt mr-2"></i> บันทึกทั้งหมด
+                   </button>
+                </div>
+                <!-- Progress Bar -->
+                <div id="bulkProgressContainer" class="hidden w-full mt-3">
+                   <div class="flex justify-between text-xs text-gray-600 mb-1">
+                      <span id="bulkProgressText">กำลังอัปโหลด...</span>
+                      <span id="bulkProgressPercent">0%</span>
+                   </div>
+                   <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div id="bulkProgressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                   </div>
+                </div>
+             </div>
+
+             <!-- Global Settings -->
+             <div class="mb-6 bg-gray-50 p-4 rounded-lg border">
+                <h4 class="text-sm font-bold text-gray-700 mb-3"><i class="fas fa-cog mr-1"></i> ตั้งค่าทั้งหมดพร้อมกัน</h4>
+                <div class="flex flex-col md:flex-row gap-3">
+                   <div class="flex-1 relative">
+                      <input list="typeList" id="bulkGlobalType" class="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none" placeholder="ประเภท (Type) ทั้งหมด...">
+                      <button onclick="applyGlobal('type')" class="absolute right-1 top-1 bottom-1 bg-blue-100 text-blue-600 px-3 rounded text-xs font-bold hover:bg-blue-200">ใช้</button>
+                   </div>
+                   <div class="flex-1 relative">
+                      <input type="text" id="bulkGlobalMemo" class="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Memo ทั้งหมด...">
+                      <button onclick="applyGlobal('memo')" class="absolute right-1 top-1 bottom-1 bg-blue-100 text-blue-600 px-3 rounded text-xs font-bold hover:bg-blue-200">ใช้</button>
+                   </div>
+                </div>
+             </div>
+         </div>
+
+         <!-- Preview List -->
+         <div id="bulkPreviewList" class="space-y-4 mb-6"></div>
+         
+         <!-- Bottom Save Button -->
+         <div id="bulkBottomActions" class="hidden mt-6 pt-4 border-t">
+             <button onclick="uploadBulkQueue()" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-bold shadow flex items-center justify-center text-lg">
+                <i class="fas fa-check-circle mr-2"></i> ยืนยันบันทึกทั้งหมด
+             </button>
+         </div>
+      </div>
+    </div>
+
+    <!-- 3. ALL PRODUCTS (Merged with Search & Pagination) -->
+    <div id="tab-all" class="tab-content bg-white p-5 md:p-8 rounded-2xl shadow-lg border border-gray-100 min-h-[60vh]">
+      
+      <!-- Search & Tools -->
+      <div class="mb-6">
+         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <!-- Search Bar -->
+            <div class="relative w-full md:w-2/3">
+               <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="ค้นหาชื่อสินค้า..." class="w-full pl-12 pr-4 py-3 rounded-full border shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+               <i class="fas fa-search absolute left-5 top-3.5 text-gray-400"></i>
+            </div>
+            <!-- Selection Button -->
+            <div class="flex justify-end">
+               <button onclick="toggleSelectionMode()" id="btn-select-mode" class="px-4 py-2 rounded-lg text-sm font-bold border border-gray-300 text-gray-600 hover:bg-gray-100 transition whitespace-nowrap">
+                  <i class="fas fa-check-square mr-1"></i> เลือกรายการ
+               </button>
+            </div>
+         </div>
+         
+         <!-- Sorting -->
+         <div class="flex justify-end items-center text-sm text-gray-500">
+            <span class="mr-2">เรียงโดย:</span>
+            <select id="sortSelect" onchange="renderAllProducts()" class="border rounded px-2 py-1 outline-none bg-white">
+               <option value="time_desc">ล่าสุดก่อน</option>
+               <option value="time_asc">เก่าสุดก่อน</option>
+               <option value="name_asc">ชื่อ ก-ฮ</option>
+               <option value="type_asc">ประเภท</option>
+            </select>
+         </div>
+      </div>
+
+      <!-- Product Grid -->
+      <div id="allProductsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"></div>
+
+      <!-- Pagination -->
+      <div id="paginationContainer" class="flex justify-center items-center space-x-2">
+         <!-- Populated by JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FLOATING DELETE BAR -->
+  <div id="selectionDeleteBar" class="hidden fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:w-80 bg-white p-4 rounded-xl shadow-2xl border border-red-100 z-50 flex justify-between items-center animate-bounce-slight">
+     <div class="flex items-center text-gray-700">
+        <span class="bg-red-100 text-red-600 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3" id="selectedCount">0</span>
+        <span class="text-sm font-medium">รายการที่เลือก</span>
+     </div>
+     <button onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">
+        <i class="fas fa-trash-alt mr-2"></i>ลบ
+     </button>
+  </div>
+
+  <!-- ================= BOTTOM NAVIGATION (MOBILE) ================= -->
+  <div id="bottomNav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around items-center px-2 py-2 z-40 hidden">
+    <button onclick="switchTab('add')" id="m-btn-add" class="nav-item active flex flex-col items-center justify-center p-2 w-full text-gray-500 transition-colors">
+      <i class="fas fa-plus-circle text-xl mb-1"></i>
+      <span class="text-[10px] font-medium">เพิ่มสินค้า</span>
+    </button>
+    <button onclick="switchTab('all')" id="m-btn-all" class="nav-item flex flex-col items-center justify-center p-2 w-full text-gray-500 transition-colors">
+      <i class="fas fa-th-large text-xl mb-1"></i>
+      <span class="text-[10px] font-medium">สินค้าทั้งหมด</span>
+    </button>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading" class="hidden fixed inset-0 bg-gray-900 bg-opacity-40 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
+      <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600 mb-3"></div>
+      <span class="font-medium text-gray-700">กำลังประมวลผล...</span>
+    </div>
+  </div>
+
+  <!-- FLOATING UPLOAD PROGRESS -->
+  <div id="globalUploadProgress" class="hidden fixed bottom-20 right-4 bg-white p-4 rounded-xl shadow-2xl border border-blue-100 z-50 w-72 transition-all transform translate-y-0">
+    <div class="flex justify-between items-center mb-2">
+      <h4 class="text-sm font-bold text-gray-700"><i class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>กำลังอัปโหลด...</h4>
+      <span id="globalProgressPercent" class="text-xs font-bold text-blue-600">0%</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div id="globalProgressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+    </div>
+    <p id="globalProgressText" class="text-xs text-gray-500 mt-2 truncate">เตรียมพร้อม...</p>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-50 max-w-sm w-full">
+    <div id="toastContent" class="bg-gray-800 text-white px-6 py-4 rounded-lg shadow-xl flex items-center border-l-4 border-blue-500">
+      <i id="toastIcon" class="fas fa-info-circle mr-3 text-xl"></i>
+      <div><h4 id="toastTitle" class="font-bold text-sm"></h4><p id="toastMessage" class="text-sm opacity-90"></p></div>
+    </div>
+  </div>
+  
+  <!-- Delete Modal -->
+  <div id="deleteModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-trash-alt text-red-500 text-2xl"></i></div>
+        <h3 id="deleteModalTitle" class="text-lg font-bold text-gray-800">ยืนยันการลบ?</h3>
+        <p id="deleteModalDesc" class="text-sm text-gray-500 mt-2">การกระทำนี้ไม่สามารถเรียกคืนได้</p>
+      </div>
+      <div class="flex space-x-3">
+        <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition">ยกเลิก</button>
+        <button onclick="executeDelete()" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">ยืนยันลบ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 my-8">
+      <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h3 class="text-xl font-bold text-gray-800"><i class="fas fa-edit text-blue-500 mr-2"></i>แก้ไขสินค้า</h3>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <form id="editProductForm" onsubmit="handleEditSubmit(event)">
+        <input type="hidden" id="editRow">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-semibold mb-2">ประเภท (Type)</label>
+          <input list="typeList" id="editType" name="type" class="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 px-4 focus:ring-2 focus:ring-blue-500 outline-none" required autocomplete="off">
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-semibold mb-2">ชื่อสินค้า</label>
+          <input type="text" id="editName" name="name" class="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 px-4 focus:ring-2 focus:ring-blue-500 outline-none" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-semibold mb-2">เปลี่ยนรูปภาพ (ถ้ามี)</label>
+          <div class="flex items-center space-x-4">
+             <div class="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border">
+                <img id="editImagePreview" class="w-full h-full object-cover">
+             </div>
+             <div class="flex-1">
+                <label for="editFileInput" class="cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm block text-center transition">
+                   <i class="fas fa-upload mr-2"></i>เลือกรูปใหม่
+                </label>
+                <input id="editFileInput" type="file" class="hidden" accept="image/*" onchange="previewEditImage(this)">
+                <p class="text-xs text-gray-400 mt-2">เว้นว่างไว้หากใช้รูปเดิม</p>
+             </div>
+          </div>
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-700 text-sm font-semibold mb-2">Memo</label>
+          <textarea id="editMemo" name="memo" rows="3" class="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 px-4 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+        </div>
+        <div class="flex space-x-3">
+           <button type="button" onclick="closeEditModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition">ยกเลิก</button>
+           <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md">บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Image Expansion Modal (Lightbox) -->
+  <div id="imageModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300" onclick="closeImageModal()">
+    <div class="relative max-w-4xl w-full max-h-screen flex flex-col items-center animate-zoom">
+        <button onclick="closeImageModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 focus:outline-none p-2">
+          <i class="fas fa-times text-3xl"></i>
+        </button>
+        <img id="expandedImage" src="" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl transform transition-transform" onclick="event.stopPropagation()">
+    </div>
+  </div>
+
+  <style>
+    @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .animate-zoom { animation: zoomIn 0.2s ease-out; }
+    .animate-bounce-slight { animation: bounceSlight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+    @keyframes bounceSlight { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+  </style>
+
+  <script>
+    // --- State ---
+    let currentPin = "";
+    let productsData = []; 
+    let isDemoMode = false;
+    let rowToDelete = null;
+    let bulkQueue = [];
+    
+    // Pagination & Search
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let searchQuery = "";
+    let filteredProducts = [];
+    
+    // Selection Mode
+    let isSelectionMode = false;
+    let selectedRows = new Set();
+
+    // --- Mock Data ---
+    const mockData = [
+      { row: 1, type: "ตัวอย่าง", name: "สินค้าตัวอย่าง (Demo)", img: "", memo: "เข้าสู่โหมด Demo เนื่องจากเชื่อมต่อไม่ได้", time: new Date().toISOString() }
+    ];
+    let mockTypes = ["ทั่วไป", "ตัวอย่าง"];
+
+    // --- Login Logic ---
+    function enterPin(num) {
+      if (currentPin.length < 4) {
+        currentPin += num;
+        updatePinDots();
+        if (currentPin.length === 4) verifyPinBackend();
+      }
+    }
+
+    function deletePin() {
+      currentPin = currentPin.slice(0, -1);
+      updatePinDots();
+      document.getElementById('loginStatus').innerText = "";
+    }
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll('.pin-dot');
+      dots.forEach((dot, index) => {
+        if (index < currentPin.length) {
+          dot.classList.add('filled', 'border-blue-600');
+          dot.classList.remove('border-gray-300');
+        } else {
+          dot.classList.remove('filled', 'border-blue-600');
+          dot.classList.add('border-gray-300');
+        }
+      });
+    }
+
+    async function verifyPinBackend() {
+      const statusEl = document.getElementById('loginStatus');
+      statusEl.innerText = "กำลังตรวจสอบ...";
+      if (currentPin === '1234') { loginSuccess(true); return; }
+      try {
+        const response = await fetch(SCRIPT_URL + '?action=verifyPin&pin=' + currentPin);
+        const result = await response.json();
+        if (result.success) loginSuccess(false);
+        else loginFail("รหัสผ่านไม่ถูกต้อง");
+      } catch (e) {
+        loginFail("เชื่อมต่อ Server ไม่ได้");
+      }
+    }
+    
+    function loginSuccess(demo = false) {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      document.getElementById('mainApp').classList.add('flex');
+      document.getElementById('bottomNav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.add('flex');
+      isDemoMode = demo;
+      loadTypes();
+      loadAllProducts();
+    }
+    
+    function loginFail(msg = "รหัสผ่านไม่ถูกต้อง") {
+      document.getElementById('loginStatus').innerText = msg;
+      document.getElementById('pinDisplay').classList.add('shake');
+      setTimeout(() => {
+        document.getElementById('pinDisplay').classList.remove('shake');
+        currentPin = "";
+        updatePinDots();
+      }, 500);
+    }
+    
+    function logout() { location.reload(); }
+
+    // --- Main Logic ---
+    function switchTab(tabName) {
+      // Clean up when leaving tabs
+      if(isSelectionMode) toggleSelectionMode();
+      
+      // Update Tab UI
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.d-tab-btn').forEach(btn => {
+        btn.classList.remove('active-tab', 'bg-blue-600', 'text-white', 'ring-2');
+        btn.classList.add('bg-white', 'text-gray-600');
+      });
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('active', 'text-blue-600');
+        btn.classList.add('text-gray-500');
+      });
+
+      document.getElementById('tab-' + tabName).classList.add('active');
+      
+      // Activate Buttons
+      const dBtn = document.getElementById('d-btn-' + tabName);
+      if(dBtn) {
+        dBtn.classList.remove('bg-white', 'text-gray-600');
+        dBtn.classList.add('active-tab', 'bg-blue-600', 'text-white', 'ring-2');
+      }
+      const mBtn = document.getElementById('m-btn-' + tabName);
+      if(mBtn) {
+        mBtn.classList.remove('text-gray-500');
+        mBtn.classList.add('active', 'text-blue-600');
+      }
+      
+      if (tabName === 'all' && !isDemoMode) {
+        loadAllProducts(false);
+      }
+    }
+    
+    function toggleLoading(show) {
+      document.getElementById('loading').classList.toggle('hidden', !show);
+    }
+
+    function showToast(title, message, type = 'info') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastTitle').innerText = title;
+      document.getElementById('toastMessage').innerText = message;
+      
+      const content = document.getElementById('toastContent');
+      if(type === 'success') {
+          content.classList.remove('border-blue-500', 'border-red-500');
+          content.classList.add('border-green-500');
+          document.getElementById('toastIcon').className = "fas fa-check-circle mr-3 text-xl text-green-400";
+      } else if (type === 'error') {
+          content.classList.remove('border-blue-500', 'border-green-500');
+          content.classList.add('border-red-500');
+          document.getElementById('toastIcon').className = "fas fa-times-circle mr-3 text-xl text-red-400";
+      }
+
+      toast.classList.remove('translate-x-full');
+      setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+    }
+
+    function updateConnectionStatus(connected) {
+      const html = connected 
+        ? '<span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span> ออนไลน์'
+        : '<span class="w-2 h-2 rounded-full bg-orange-500 mr-2"></span> โหมดสาธิต';
+      document.getElementById('connectionStatus').innerHTML = html;
+      document.getElementById('mobileConnectionStatus').innerHTML = html;
+      isDemoMode = !connected;
+    }
+
+    // --- Bulk Upload Logic ---
+    function setAddMode(mode) {
+       const form = document.getElementById('addProductForm');
+       const bulk = document.getElementById('bulkUploadInterface');
+       const btnSingle = document.getElementById('mode-single');
+       const btnBulk = document.getElementById('mode-bulk');
+
+       if(mode === 'single') {
+          form.classList.remove('hidden');
+          bulk.classList.add('hidden');
+          btnSingle.classList.add('bg-white', 'text-blue-600', 'shadow');
+          btnSingle.classList.remove('text-gray-500');
+          btnBulk.classList.remove('bg-white', 'text-blue-600', 'shadow');
+          btnBulk.classList.add('text-gray-500');
+       } else {
+          form.classList.add('hidden');
+          bulk.classList.remove('hidden');
+          btnBulk.classList.add('bg-white', 'text-blue-600', 'shadow');
+          btnBulk.classList.remove('text-gray-500');
+          btnSingle.classList.remove('bg-white', 'text-blue-600', 'shadow');
+          btnSingle.classList.add('text-gray-500');
+       }
+    }
+
+    function handleDrop(e) { e.preventDefault(); if (e.dataTransfer.files) handleBulkFiles(e.dataTransfer.files); }
+
+    function handleBulkFiles(files) {
+       if (!files || files.length === 0) return;
+       Array.from(files).forEach(file => {
+          if (!file.type.startsWith('image/')) return;
+          const reader = new FileReader();
+          reader.onload = e => {
+             const item = {
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                file: file,
+                data: e.target.result, 
+                name: file.name.split('.')[0] 
+             };
+             bulkQueue.push(item);
+             renderBulkItem(item);
+             updateBulkCount(); 
+          };
+          reader.readAsDataURL(file);
+       });
+    }
+
+    function renderBulkItem(item) {
+       const list = document.getElementById('bulkPreviewList');
+       const div = document.createElement('div');
+       div.id = 'bulk-item-' + item.id;
+       div.className = "flex items-start bg-white p-3 rounded-lg border shadow-sm space-x-4";
+       div.innerHTML = `
+          <div class="w-20 h-20 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+             <img src="${item.data}" class="w-full h-full object-cover">
+          </div>
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+             <input type="text" placeholder="ชื่อสินค้า" class="bulk-name border rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-500 h-9" value="${item.name}">
+             <input list="typeList" placeholder="ประเภท" class="bulk-type border rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-500 h-9">
+             <input type="text" placeholder="Memo" class="bulk-memo border rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-500 h-9">
+          </div>
+          <button onclick="removeBulkItem('${item.id}')" class="text-gray-400 hover:text-red-500 p-1"><i class="fas fa-times"></i></button>
+       `;
+       list.appendChild(div);
+    }
+
+    function removeBulkItem(id) {
+       bulkQueue = bulkQueue.filter(i => i.id !== id);
+       const el = document.getElementById('bulk-item-' + id);
+       if(el) el.remove();
+       updateBulkCount();
+    }
+
+    function clearBulkQueue() {
+       bulkQueue = [];
+       document.getElementById('bulkPreviewList').innerHTML = '';
+       updateBulkCount();
+    }
+
+    function updateBulkCount() {
+       document.getElementById('bulkCount').innerText = bulkQueue.length + " รายการ";
+       const controls = document.getElementById('bulkControls');
+       const bottomActions = document.getElementById('bulkBottomActions');
+       if(bulkQueue.length > 0) {
+          controls.classList.remove('hidden');
+          bottomActions.classList.remove('hidden');
+       } else {
+          controls.classList.add('hidden');
+          bottomActions.classList.add('hidden');
+       }
+    }
+
+    function applyGlobal(field) {
+       const val = document.getElementById(field === 'type' ? 'bulkGlobalType' : 'bulkGlobalMemo').value;
+       const inputs = document.querySelectorAll(field === 'type' ? '.bulk-type' : '.bulk-memo');
+       inputs.forEach(input => input.value = val);
+    }
+
+    async function uploadBulkQueue() {
+       const globalProgress = document.getElementById('globalUploadProgress');
+       const globalBar = document.getElementById('globalProgressBar');
+       const globalPercent = document.getElementById('globalProgressPercent');
+       const globalText = document.getElementById('globalProgressText');
+       
+       bulkQueue.forEach(item => {
+          const el = document.getElementById('bulk-item-' + item.id);
+          if (el) {
+             item.finalName = el.querySelector('.bulk-name').value;
+             item.finalType = el.querySelector('.bulk-type').value;
+             item.finalMemo = el.querySelector('.bulk-memo').value;
+          }
+       });
+
+       const invalid = bulkQueue.find(i => !i.finalName || !i.finalType);
+       if (invalid) { alert("กรุณาระบุชื่อและประเภทให้ครบทุกรายการ"); return; }
+
+       globalProgress.classList.remove('hidden'); 
+       let completed = 0;
+       
+       for (let i = 0; i < bulkQueue.length; i++) {
+          const item = bulkQueue[i];
+          const percent = Math.round(((i) / bulkQueue.length) * 100);
+          globalBar.style.width = percent + "%";
+          globalPercent.innerText = percent + "%";
+          globalText.innerText = `กำลังอัปโหลด ${i+1}/${bulkQueue.length}: ${item.finalName}`;
+
+          const payload = {
+             action: 'saveProduct',
+             type: item.finalType,
+             name: item.finalName,
+             memo: item.finalMemo,
+             imageParams: {
+                data: item.data.split(',')[1],
+                type: item.file.type,
+                name: item.file.name
+             }
+          };
+
+          try {
+             if (!isDemoMode) {
+                await fetch(SCRIPT_URL, {
+                   method: 'POST',
+                   mode: 'no-cors',
+                   headers: { 'Content-Type': 'text/plain' },
+                   body: JSON.stringify(payload)
+                });
+                await new Promise(r => setTimeout(r, 1000));
+             } else {
+                await new Promise(r => setTimeout(r, 500)); // Demo delay
+             }
+          } catch(e) { console.error("Upload failed for", item.finalName); }
+          
+          completed++;
+          const el = document.getElementById('bulk-item-' + item.id);
+          if(el) el.classList.add('bg-green-50', 'border-green-200');
+       }
+
+       globalBar.style.width = "100%";
+       globalPercent.innerText = "100%";
+       globalText.innerText = "เสร็จสิ้น!";
+       
+       setTimeout(() => {
+          showToast('สำเร็จ', `อัปโหลด ${completed} รายการเรียบร้อย`, 'success');
+          clearBulkQueue();
+          globalProgress.classList.add('hidden'); 
+          loadTypes();
+          loadAllProducts(false); 
+          setAddMode('single'); 
+       }, 1000);
+    }
+
+    // --- API Calls ---
+    async function loadTypes() {
+      if(isDemoMode) { renderTypes(mockTypes); return; }
+      try {
+        const response = await fetch(SCRIPT_URL + '?action=getTypes');
+        const types = await response.json();
+        renderTypes(types);
+      } catch (e) { renderTypes(mockTypes); }
+    }
+
+    function renderTypes(types) {
+        const dataList = document.getElementById('typeList');
+        dataList.innerHTML = '';
+        types.forEach(type => {
+          const option = document.createElement('option');
+          option.value = type;
+          dataList.appendChild(option);
+        });
+    }
+
+    async function loadAllProducts(showLoading = true) {
+      if(showLoading) toggleLoading(true);
+      if(isDemoMode) {
+         productsData = mockData;
+         filteredProducts = [...productsData]; // Init filtered
+         renderAllProducts();
+         if(showLoading) toggleLoading(false);
+         return;
+      }
+      try {
+        const response = await fetch(SCRIPT_URL + '?action=getProducts');
+        const data = await response.json();
+        if(data.status === 'error') throw new Error();
+        productsData = data;
+        
+        // Reset Search & Sort on new load if needed, or keep current
+        handleSearch(); // Applies current search
+        updateConnectionStatus(true);
+      } catch (e) {
+        productsData = mockData;
+        handleSearch();
+        updateConnectionStatus(false);
+      } finally {
+        if(showLoading) toggleLoading(false);
+      }
+    }
+    
+    // --- Render, Search & Pagination Logic ---
+    function handleSearch() {
+       searchQuery = document.getElementById('searchInput').value.toLowerCase();
+       const sortValue = document.getElementById('sortSelect').value;
+       
+       // 1. Filter
+       filteredProducts = productsData.filter(p => (p.name || "").toLowerCase().includes(searchQuery));
+       
+       // 2. Sort
+       filteredProducts.sort((a, b) => {
+          const tA = new Date(a.time).getTime() || 0;
+          const tB = new Date(b.time).getTime() || 0;
+          if (sortValue === 'time_desc') return tB - tA;
+          if (sortValue === 'time_asc') return tA - tB;
+          if (sortValue === 'name_asc') return (a.name || "").localeCompare(b.name || "");
+          if (sortValue === 'type_asc') return (a.type || "").localeCompare(b.type || "");
+          return 0;
+       });
+
+       // 3. Reset Page
+       currentPage = 1;
+       
+       // 4. Render
+       renderAllProducts();
+    }
+
+    function renderAllProducts() {
+       // Just re-run filter/sort to be safe or assuming handleSearch called it
+       // But to support changing sort without changing search, we can just resort:
+       const sortValue = document.getElementById('sortSelect').value;
+       // ... (Sort logic duplicated here for safety or refactor) ...
+       filteredProducts.sort((a, b) => {
+          const tA = new Date(a.time).getTime() || 0;
+          const tB = new Date(b.time).getTime() || 0;
+          if (sortValue === 'time_desc') return tB - tA;
+          if (sortValue === 'time_asc') return tA - tB;
+          if (sortValue === 'name_asc') return (a.name || "").localeCompare(b.name || "");
+          if (sortValue === 'type_asc') return (a.type || "").localeCompare(b.type || "");
+          return 0;
+       });
+
+       const container = document.getElementById('allProductsList');
+       const paginationEl = document.getElementById('paginationContainer');
+       
+       const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+       if(currentPage > totalPages) currentPage = totalPages || 1;
+
+       const startIndex = (currentPage - 1) * itemsPerPage;
+       const slicedData = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
+       if (slicedData.length === 0) {
+          container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">ไม่พบสินค้า</div>';
+          paginationEl.innerHTML = '';
+          return;
+       }
+
+       container.innerHTML = slicedData.map(createProductCard).join('');
+       renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+       const paginationEl = document.getElementById('paginationContainer');
+       if(totalPages <= 1) { paginationEl.innerHTML = ''; return; }
+
+       let html = '';
+       // Prev
+       html += `<button onclick="changePage(${currentPage - 1})" class="px-3 py-1 rounded bg-white border hover:bg-gray-100 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+       
+       // Numbers (Simple logic for now: show all or simple range)
+       for(let i = 1; i <= totalPages; i++) {
+          // Show first, last, current, and surrounding
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+             html += `<button onclick="changePage(${i})" class="px-3 py-1 rounded border ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-100'}">${i}</button>`;
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+             html += `<span class="px-2">...</span>`;
+          }
+       }
+
+       // Next
+       html += `<button onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded bg-white border hover:bg-gray-100 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+       
+       paginationEl.innerHTML = html;
+    }
+
+    function changePage(page) {
+       currentPage = page;
+       renderAllProducts();
+       // Scroll to top of list
+       document.getElementById('tab-all').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // --- Helpers ---
+    function convertDriveLink(url) {
+       if (!url) return '';
+       if (url.includes('drive.google.com') && (url.includes('uc?') || url.includes('open?'))) {
+          try {
+             const idMatch = url.match(/id=([^&]+)/);
+             if (idMatch && idMatch[1]) return 'https://lh3.googleusercontent.com/d/' + idMatch[1];
+          } catch(e) { console.error('Error converting URL:', e); }
+       }
+       return url;
+    }
+
+    function createProductCard(product) {
+       // FIX DATE: backend sends ISO, so new Date works fine.
+       let dateStr = "-";
+       try { 
+          if(product.time) {
+             const d = new Date(product.time);
+             if(!isNaN(d.getTime())) dateStr = d.toLocaleDateString('th-TH') + ' ' + d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+          }
+       } catch(e){}
+       
+       const safeImgUrl = convertDriveLink(product.img);
+       const isSelected = selectedRows.has(product.row);
+       const selectClass = isSelected ? 'selected' : '';
+       
+       const selectionOverlay = isSelectionMode ? 
+          `<div class="absolute inset-0 z-20 cursor-pointer" onclick="toggleProductSelection(${product.row})">
+             <div class="checkbox-circle absolute top-2 left-2 w-6 h-6 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center ${isSelected ? 'bg-red-500 border-red-500' : ''}">
+                <i class="fas fa-check text-white text-xs ${isSelected ? 'block' : 'hidden'}"></i>
+             </div>
+          </div>` : '';
+
+       const imgHtml = safeImgUrl 
+         ? `<img src="${safeImgUrl}" onclick="${isSelectionMode ? '' : `openImageModal('${safeImgUrl}')`}" class="w-full h-40 object-cover rounded-t-2xl cursor-pointer hover:opacity-90 transition" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">`
+         : `<div class="w-full h-40 bg-gray-100 flex items-center justify-center rounded-t-2xl"><i class="fas fa-image text-gray-300 text-3xl"></i></div>`;
+
+       return `
+        <div id="product-card-${product.row}" class="product-card bg-white rounded-2xl shadow-sm border-2 border-transparent hover:shadow-md transition relative pb-2 group ${selectClass} overflow-hidden">
+          ${selectionOverlay}
+          <div class="absolute top-2 right-2 z-10 flex space-x-1 ${isSelectionMode ? 'hidden' : ''}">
+             <button onclick="openEditModal(${product.row})" class="bg-white/90 text-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow hover:bg-blue-500 hover:text-white transition"><i class="fas fa-pencil-alt text-sm"></i></button>
+             <button onclick="openDeleteModal(${product.row})" class="bg-white/90 text-red-500 rounded-full w-8 h-8 flex items-center justify-center shadow hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash-alt text-sm"></i></button>
+          </div>
+          <div class="relative overflow-hidden">${imgHtml}</div>
+          <div class="p-4">
+             <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">${product.type}</span>
+             <h3 class="font-bold text-gray-800 truncate" title="${product.name}">${product.name}</h3>
+             <p class="text-xs text-gray-400 mb-2">${dateStr}</p>
+             <div class="bg-gray-50 p-2 rounded border flex">
+                <input type="text" id="memo-${product.row}" value="${product.memo || ''}" class="bg-transparent text-xs text-gray-600 w-full outline-none" placeholder="Memo..." ${isSelectionMode ? 'disabled' : ''}>
+                <button onclick="saveMemo(${product.row}, 'memo-${product.row}')" class="ml-2 text-blue-500 hover:text-blue-700 ${isSelectionMode ? 'hidden' : ''}"><i class="fas fa-save"></i></button>
+             </div>
+          </div>
+        </div>`;
+    }
+
+    // --- FORM SUBMIT (Create & Edit & Memo) ---
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      toggleLoading(true);
+      const form = document.getElementById('addProductForm');
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      const basePayload = {
+        action: 'saveProduct',
+        type: form.type.value,
+        name: form.name.value,
+        memo: form.memo.value
+      };
+
+      const executeSave = (finalPayload) => {
+        if(isDemoMode) {
+             setTimeout(() => {
+                 toggleLoading(false);
+                 showToast('สำเร็จ (Demo)', 'บันทึกข้อมูลแล้ว', 'success');
+                 form.reset();
+                 document.getElementById('imagePreview').classList.add('hidden');
+             }, 1000);
+             return;
+        }
+
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(finalPayload)
+        }).then(() => {
+          setTimeout(() => {
+             toggleLoading(false);
+             showToast('สำเร็จ', 'บันทึกข้อมูลแล้ว', 'success');
+             form.reset();
+             document.getElementById('imagePreview').classList.add('hidden');
+             loadTypes();
+             loadAllProducts();
+          }, 1500);
+        }).catch(err => {
+             toggleLoading(false);
+             showToast('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error');
+        });
+      };
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+           basePayload.imageParams = { 
+               data: e.target.result.split(',')[1], 
+               type: file.type, 
+               name: file.name 
+           };
+           executeSave(basePayload);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        executeSave(basePayload);
+      }
+    }
+
+    function openEditModal(row) {
+      const product = productsData.find(p => p.row === row);
+      if (!product) return;
+      document.getElementById('editRow').value = product.row;
+      document.getElementById('editType').value = product.type;
+      document.getElementById('editName').value = product.name;
+      document.getElementById('editMemo').value = product.memo;
+      document.getElementById('editImagePreview').src = convertDriveLink(product.img) || 'https://via.placeholder.com/150?text=No+Image';
+      document.getElementById('editFileInput').value = '';
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+    function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
+    function previewEditImage(input) {
+      const preview = document.getElementById('editImagePreview');
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { preview.src = e.target.result; }
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+    function handleEditSubmit(e) {
+      e.preventDefault();
+      closeEditModal();
+      toggleLoading(true);
+      const row = document.getElementById('editRow').value;
+      const type = document.getElementById('editType').value;
+      const name = document.getElementById('editName').value;
+      const memo = document.getElementById('editMemo').value;
+      const fileInput = document.getElementById('editFileInput');
+      const file = fileInput.files[0];
+      const basePayload = { action: 'editProduct', row: row, type: type, name: name, memo: memo };
+      const executeEdit = (finalPayload) => {
+         if (isDemoMode) {
+             setTimeout(() => {
+                 toggleLoading(false);
+                 showToast('สำเร็จ (Demo)', 'แก้ไขข้อมูลแล้ว', 'success');
+                 renderAllProducts();
+             }, 1000);
+             return;
+         }
+         fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(finalPayload)
+         }).then(() => {
+            setTimeout(() => {
+                toggleLoading(false);
+                showToast('สำเร็จ', 'แก้ไขข้อมูลแล้ว (รอยืนยัน)', 'success');
+                loadAllProducts();
+            }, 1500);
+         });
+      };
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+           basePayload.imageParams = { data: e.target.result.split(',')[1], type: file.type, name: file.name };
+           executeEdit(basePayload);
+        };
+        reader.readAsDataURL(file);
+      } else { executeEdit(basePayload); }
+    }
+
+    function saveMemo(row, inputId) {
+      const newMemo = document.getElementById(inputId).value;
+      const btn = event.currentTarget;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      btn.disabled = true;
+      if(isDemoMode) {
+          setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; showToast('สำเร็จ (Demo)', 'อัพเดท Memo แล้ว', 'success'); }, 500);
+          return;
+      }
+      const payload = { action: 'updateMemo', row: row, memo: newMemo };
+      fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
+      .then(() => { setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; showToast('สำเร็จ', 'อัพเดท Memo แล้ว', 'success'); }, 1000); });
+    }
+
+    function previewImage(input) {
+      const preview = document.getElementById('imagePreview');
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { preview.src = e.target.result; preview.classList.remove('hidden'); }
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // --- Helpers (Modal & Delete) ---
+    function openImageModal(imgUrl) {
+      if (!imgUrl) return;
+      document.getElementById('expandedImage').src = imgUrl;
+      document.getElementById('imageModal').classList.remove('hidden');
+    }
+    function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); setTimeout(() => { document.getElementById('expandedImage').src = ""; }, 300); }
+
+    function toggleSelectionMode() {
+       isSelectionMode = !isSelectionMode;
+       const btn = document.getElementById('btn-select-mode');
+       const deleteBar = document.getElementById('selectionDeleteBar');
+       if(isSelectionMode) {
+          btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+          btn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+          btn.innerText = "ยกเลิก";
+          deleteBar.classList.remove('hidden');
+       } else {
+          btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+          btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+          btn.innerText = "เลือกรายการ";
+          deleteBar.classList.add('hidden');
+          selectedRows.clear();
+       }
+       renderAllProducts();
+       updateSelectedCount();
+    }
+    function toggleProductSelection(row) {
+       if(!isSelectionMode) return;
+       if(selectedRows.has(row)) selectedRows.delete(row);
+       else selectedRows.add(row);
+       const card = document.getElementById(`product-card-${row}`);
+       if(card) {
+          if(selectedRows.has(row)) card.classList.add('selected');
+          else card.classList.remove('selected');
+       }
+       updateSelectedCount();
+    }
+    function updateSelectedCount() { document.getElementById('selectedCount').innerText = selectedRows.size; }
+    function confirmBulkDelete() {
+       if(selectedRows.size === 0) { alert("กรุณาเลือกรายการที่ต้องการลบ"); return; }
+       document.getElementById('deleteModalTitle').innerText = `ลบ ${selectedRows.size} รายการ?`;
+       document.getElementById('deleteModalDesc').innerText = "การกระทำนี้จะลบสินค้าที่เลือกทั้งหมดและไม่สามารถเรียกคืนได้";
+       rowToDelete = 'BULK';
+       document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    function openDeleteModal(row) { 
+       rowToDelete = row; 
+       document.getElementById('deleteModalTitle').innerText = "ยืนยันการลบ?";
+       document.getElementById('deleteModalDesc').innerText = "การกระทำนี้ไม่สามารถเรียกคืนได้";
+       document.getElementById('deleteModal').classList.remove('hidden'); 
+    }
+    function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); }
+    function executeDelete() {
+       closeDeleteModal();
+       toggleLoading(true);
+       if (rowToDelete === 'BULK') {
+          const rowsToDelete = Array.from(selectedRows);
+          if(isDemoMode) {
+             setTimeout(() => {
+                toggleLoading(false);
+                productsData = productsData.filter(p => !selectedRows.has(p.row));
+                showToast('สำเร็จ (Demo)', `ลบ ${selectedRows.size} รายการแล้ว`, 'success');
+                toggleSelectionMode();
+             }, 800);
+             return;
+          }
+          const payload = { action: 'deleteBatchProducts', rows: rowsToDelete };
+          fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
+          .then(() => { setTimeout(() => { toggleLoading(false); showToast('สำเร็จ', 'กำลังลบรายการที่เลือก...', 'success'); toggleSelectionMode(); loadAllProducts(); }, 2000); });
+          return;
+       }
+       if(isDemoMode) {
+           setTimeout(() => { toggleLoading(false); showToast('สำเร็จ (Demo)', 'ลบข้อมูลแล้ว', 'success'); productsData = productsData.filter(p => p.row !== rowToDelete); renderAllProducts(); }, 800);
+           return;
+       }
+       const payload = { action: 'deleteProduct', row: rowToDelete };
+       fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
+       .then(() => { setTimeout(() => { toggleLoading(false); showToast('สำเร็จ', 'ลบข้อมูลแล้ว (รอยืนยัน)', 'success'); loadAllProducts(); }, 1500); });
+    }
+  </script>
+</body>
+</html>
