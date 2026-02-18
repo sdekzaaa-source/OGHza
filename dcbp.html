@@ -3,37 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROC GGT: Chrono Pass Diary</title>
+    <title>ROC GGT: Chrono Pass Diary Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --roc-red: #e11d48; --roc-gold: #f59e0b; }
-        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; color: #334155; }
+        :root { --roc-blue: #2563eb; --roc-gold: #f59e0b; --roc-bg: #f1f5f9; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--roc-bg); color: #334155; }
         .font-gaming { font-family: 'Rajdhani', sans-serif; }
-        .game-card { background: white; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden; }
+        .game-card { background: white; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; overflow: hidden; }
         .pkg-btn { border: 2px solid #e2e8f0; cursor: pointer; transition: all 0.2s; position: relative; }
-        .pkg-btn.active { border-color: var(--roc-red); background-color: #fff1f2; }
-        .btn-roc { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); color: white; box-shadow: 0 4px 0 #7f1d1d; transition: all 0.1s; }
-        .btn-roc:active { transform: translateY(2px); box-shadow: 0 1px 0 #7f1d1d; }
+        .pkg-btn.active { border-color: var(--roc-blue); background-color: #eff6ff; }
+        .pkg-btn.active::after { content: '✓'; position: absolute; top: -1px; right: -1px; background: var(--roc-blue); color: white; width: 20px; height: 20px; border-radius: 0 10px 0 10px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
+        .btn-roc { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 4px 0 #1e40af; transition: all 0.1s; }
+        .btn-roc:active { transform: translateY(2px); box-shadow: 0 1px 0 #1e40af; }
+        
+        .tab-btn { border-bottom: 3px solid transparent; transition: all 0.3s; color: #94a3b8; }
+        .tab-btn.active { border-color: var(--roc-blue); color: var(--roc-blue); font-weight: bold; }
+
+        .log-details summary::-webkit-details-marker { display: none; }
+        .log-details summary { list-style: none; outline: none; cursor: pointer; }
+        .log-details[open] .arrow-icon { transform: rotate(180deg); }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .quest-step { position: relative; padding-left: 30px; }
-        .quest-step::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+        
+        .q-badge { font-size: 9px; padding: 2px 6px; border-radius: 6px; font-weight: bold; display: flex; align-items: center; gap: 3px; }
+
+        .quest-step { position: relative; padding-left: 35px; }
+        .quest-step::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
         .quest-step:last-child::before { display: none; }
-        .step-bullet { position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: white; border: 2px solid #cbd5e1; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
-        .step-active .step-bullet { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
-        .step-done .step-bullet { background: #ef4444; border-color: #ef4444; color: white; }
+        .step-bullet { position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: white; border: 2px solid #cbd5e1; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
+        .step-active .step-bullet { border-color: var(--roc-blue); color: var(--roc-blue); box-shadow: 0 0 10px rgba(37, 99, 235, 0.2); }
+        .step-done .step-bullet { background: var(--roc-blue); border-color: var(--roc-blue); color: white; }
     </style>
 </head>
 <body class="pb-10">
 
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 p-4 shadow-sm">
+    <nav class="bg-white/90 backdrop-sm border-b border-slate-200 sticky top-0 z-50 p-4 shadow-sm">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white font-gaming text-xs font-bold leading-tight text-center shadow-lg">ROC<br>GGT</div>
-                <h1 class="font-gaming text-xl font-bold tracking-tight text-slate-800 uppercase">Chrono Pass <span class="text-red-600">Diary</span></h1>
+                <a href="/OGHza/index.html" class="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-blue-50 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <h1 class="font-gaming text-xl font-bold text-slate-800 uppercase tracking-tight">Chrono Pass <span class="text-blue-600">Diary Pro</span></h1>
             </div>
-            <button onclick="resetData()" class="text-[10px] font-bold text-slate-400 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition">RESET ALL</button>
+            <button onclick="resetData()" class="text-[10px] font-bold text-slate-400 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition uppercase tracking-widest">Reset Data</button>
         </div>
     </nav>
 
@@ -41,163 +55,224 @@
         
         <!-- PACKAGE SELECTION -->
         <section class="game-card p-4">
-            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">เริ่มต้นด้วยแพ็กเกจ (Starter Package)</h2>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-1">Active Package</h2>
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div onclick="selectPackage('normal')" id="pkg-normal" class="pkg-btn p-3 rounded-xl border-slate-200 bg-white shadow-sm active"><div class="text-[10px] font-bold text-slate-400 uppercase">Lv. 0 Start</div><div class="text-xs font-bold text-slate-700 mt-1">Normal Pass</div></div>
-                <div onclick="selectPackage('pre0')" id="pkg-pre0" class="pkg-btn p-3 rounded-xl border-slate-200 bg-white shadow-sm"><div class="text-[10px] font-bold text-blue-400 uppercase">Lv. 0 Start</div><div class="text-xs font-bold text-slate-700 mt-1">Premium Pass</div></div>
-                <div onclick="selectPackage('pre25')" id="pkg-pre25" class="pkg-btn p-3 rounded-xl border-slate-200 bg-white shadow-sm"><div class="text-[10px] font-bold text-orange-400 uppercase">Lv. 25 Start</div><div class="text-xs font-bold text-slate-700 mt-1">Premium +25</div></div>
-                <div onclick="selectPackage('pre100')" id="pkg-pre100" class="pkg-btn p-3 rounded-xl border-slate-200 bg-white shadow-sm"><div class="text-[10px] font-bold text-purple-400 uppercase">Lv. 100 Start</div><div class="text-xs font-bold text-slate-700 mt-1">Premium +100</div></div>
+                <div onclick="selectPackage('normal')" id="pkg-normal" class="pkg-btn p-3 rounded-xl active"><div class="text-[9px] font-bold text-slate-400 uppercase">Free</div><div class="text-xs font-bold text-slate-700">Normal Pass</div></div>
+                <div onclick="selectPackage('pre0')" id="pkg-pre0" class="pkg-btn p-3 rounded-xl"><div class="text-[9px] font-bold text-blue-400 uppercase">Unlock</div><div class="text-xs font-bold text-slate-700">Premium 0</div></div>
+                <div onclick="selectPackage('pre25')" id="pkg-pre25" class="pkg-btn p-3 rounded-xl"><div class="text-[9px] font-bold text-orange-400 uppercase">+25 Lv</div><div class="text-xs font-bold text-slate-700">Premium 25</div></div>
+                <div onclick="selectPackage('pre100')" id="pkg-pre100" class="pkg-btn p-3 rounded-xl"><div class="text-[9px] font-bold text-purple-400 uppercase">+100 Lv</div><div class="text-xs font-bold text-slate-700">Premium 100</div></div>
             </div>
         </section>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- LEFT: PROGRESS & TRACKER -->
+            <!-- LEFT: PROGRESS & PIPELINE -->
             <div class="lg:col-span-4 space-y-6">
-                <!-- Progress Dashboard -->
                 <div class="game-card p-5 bg-slate-900 text-white border-none shadow-xl">
                     <div class="flex justify-between items-end mb-2">
                         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Progress Level</span>
-                        <span id="bpBadge" class="text-[9px] font-bold px-2 py-0.5 rounded bg-red-600 font-gaming">ROC GGT</span>
+                        <span id="bpBadge" class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-600 font-gaming uppercase tracking-widest">ROC GGT</span>
                     </div>
                     <div class="flex items-baseline gap-1 mb-4">
                         <span class="text-6xl font-gaming font-bold text-white leading-none" id="currentLevel">0</span>
                         <span class="text-xl font-gaming text-slate-500">/ 2500</span>
                     </div>
-                    <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden mb-2 shadow-inner">
-                        <div id="progressBar" class="bg-red-500 h-full transition-all duration-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" style="width: 0%"></div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-2 shadow-inner">
+                        <div id="progressBar" class="bg-blue-500 h-full transition-all duration-500 shadow-[0_0_10px_rgba(37,99,235,0.5)]" style="width: 0%"></div>
                     </div>
                     <div class="flex justify-between items-center pt-3 mt-4 border-t border-white/5">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total SV Spent</span>
-                        <div class="text-right"><span class="text-xl font-gaming font-bold text-amber-400" id="totalSpent">0</span> <span class="text-[10px] font-bold text-amber-500">SV</span></div>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-[9px]">Total SV Spent</span>
+                        <div class="text-right font-gaming font-bold text-amber-400 text-xl"><span id="totalSpent">0</span> <span class="text-xs">SV</span></div>
                     </div>
                 </div>
 
-                <!-- Weekly Path -->
                 <div class="game-card p-5">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Weekly Mission Path</h2>
-                        <div id="weekRange" class="text-[9px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase tracking-widest">Wait Start</div>
+                        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Weekly Path Pipeline</h2>
+                        <div id="weekRange" class="text-[8px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase">Wait Start</div>
                     </div>
                     <div class="space-y-6">
-                        <div id="vStep1" class="quest-step step-active"><div class="step-bullet">1</div><div class="text-xs font-bold text-slate-700">Amdarais (80 XP)</div><div class="text-[10px] text-slate-400" id="vStatus1">พร้อมทำ</div></div>
-                        <div id="vStep2" class="quest-step"><div class="step-bullet">2</div><div class="text-xs font-bold text-slate-700">Evil Believer (100 XP)</div><div class="text-[10px] text-slate-400" id="vStatus2">ล็อกอยู่</div></div>
-                        <div id="vStep3" class="quest-step"><div class="step-bullet">3</div><div class="text-xs font-bold text-slate-700">Infinite Tao (120 XP)</div><div class="text-[10px] text-slate-400" id="vStatus3">ล็อกอยู่</div></div>
-                        <div id="vStepZ" class="quest-step"><div class="step-bullet">Z</div><div class="text-xs font-bold text-slate-700">10M Zeny (40 XP)</div><div class="text-[10px] text-slate-400" id="vStatusZ">เปิดตลอด</div></div>
+                        <div id="vStep1" class="quest-step step-active"><div class="step-bullet">1</div><div class="text-xs font-bold text-slate-700">Amdarais (80 XP)</div><div class="text-[9px] text-slate-400" id="vStatus1">Ready</div></div>
+                        <div id="vStep2" class="quest-step"><div class="step-bullet">2</div><div class="text-xs font-bold text-slate-700">Evil Believer (100 XP)</div><div class="text-[9px] text-slate-400" id="vStatus2">Locked</div></div>
+                        <div id="vStep3" class="quest-step"><div class="step-bullet">3</div><div class="text-xs font-bold text-slate-700">Infinite Tao (120 XP)</div><div class="text-[9px] text-slate-400" id="vStatus3">Locked</div></div>
+                        <div id="vStepZ" class="quest-step"><div class="step-bullet">Z</div><div class="text-xs font-bold text-slate-700">Weekly 10M Zeny (40 XP)</div><div class="text-[9px] text-slate-400" id="vStatusZ">Always Ready</div></div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT: ENTRY & HISTORY -->
+            <!-- RIGHT: ENTRY & TABS -->
             <div class="lg:col-span-8 space-y-6">
                 <!-- Entry Form -->
-                <div class="game-card p-5 border-t-4 border-t-amber-400">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="font-bold text-slate-700 flex items-center gap-2">✍️ จดบันทึกวันนี้</h2>
-                        <input type="date" id="logDate" onchange="resetTempState(); updateFormUI()" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-bold text-red-600 shadow-sm outline-none">
+                <div class="game-card p-5 border-t-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="font-bold text-slate-700 flex items-center gap-2">✍️ บันทึกกิจกรรม</h2>
+                        <input type="date" id="logDate" onchange="resetTempState(); updateFormUI()" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-bold text-blue-600 outline-none">
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <!-- Quests -->
-                        <div class="space-y-4">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">เควสประจำวัน</p>
-                            <div class="grid grid-cols-1 gap-2">
-                                <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white hover:border-red-200 transition">
-                                    <input type="checkbox" id="qDaily" checked class="w-5 h-5 text-red-600 rounded-lg border-slate-300">
-                                    <div class="text-sm font-bold text-slate-700">Daily Quest <span id="dailyXpHint" class="text-[10px] text-slate-400">(30 XP)</span></div>
-                                </label>
-                                <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white hover:border-emerald-200 transition">
-                                    <input type="checkbox" id="qZenyD" checked class="w-5 h-5 text-emerald-600 rounded-lg border-slate-300">
-                                    <div class="text-sm font-bold text-slate-700">Daily Zeny 1M <span class="text-[10px] text-slate-400">(30 XP)</span></div>
-                                </label>
-                            </div>
-                            <div id="weeklyInputArea" class="space-y-2 pt-2 border-t border-slate-100"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Daily Missions</p>
+                            <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-blue-50 transition">
+                                <input type="checkbox" id="qDaily" checked class="w-5 h-5 text-blue-600 rounded-lg">
+                                <div class="text-sm font-bold">Daily Quest <span id="dailyXpHint" class="text-[10px] text-slate-400">(30 XP)</span></div>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-emerald-50 transition">
+                                <input type="checkbox" id="qZenyD" checked class="w-5 h-5 text-emerald-600 rounded-lg">
+                                <div class="text-sm font-bold">Daily Zeny 1M <span class="text-[10px] text-slate-400">(30 XP)</span></div>
+                            </label>
+
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4">Weekly Pipeline</p>
+                            <div id="weeklyInputArea" class="space-y-2"></div>
                         </div>
-                        <!-- Silvervine -->
+
                         <div class="space-y-4">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">อัปเลเวลด้วย Silvervine</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Level Management</p>
                             <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-inner">
-                                <label class="block text-xs font-bold text-slate-500 mb-4 text-center uppercase tracking-widest">ซื้อเพิ่มวันนี้ (Lv)</label>
-                                <div class="flex items-center gap-4">
-                                    <input type="number" id="buyLv" value="0" min="0" class="w-full bg-white border border-slate-200 rounded-2xl text-center text-4xl font-gaming font-bold text-red-600 p-3 shadow-md outline-none">
-                                    <div class="text-center min-w-[70px]"><div class="text-2xl font-gaming font-bold text-amber-600 leading-none" id="svCostDisp">0</div><div class="text-[10px] font-bold text-amber-500 uppercase">SV</div></div>
-                                </div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-4 text-center uppercase tracking-widest">ซื้อเลเวลเพิ่มวันนี้ (Lv)</label>
+                                <input type="number" id="buyLv" value="0" min="0" class="w-full bg-white border border-slate-200 rounded-2xl text-center text-4xl font-gaming font-bold text-blue-600 p-3 shadow-md outline-none">
                             </div>
-                            <button onclick="saveEntry()" class="w-full btn-roc py-5 rounded-2xl font-bold text-lg uppercase tracking-widest shadow-xl">บันทึกกิจกรรม (Save)</button>
+                            <button onclick="saveEntry()" class="w-full btn-roc py-5 rounded-2xl font-bold text-lg uppercase tracking-widest shadow-xl">บันทึก (Save)</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- History -->
-                <div class="game-card h-full flex flex-col min-h-[400px]">
-                    <div class="p-5 border-b border-slate-50 bg-slate-50/30">
-                        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Diary History Log</h2>
+                <!-- View Switcher -->
+                <div class="game-card flex flex-col min-h-[450px]">
+                    <div class="flex border-b border-slate-100 bg-slate-50/50">
+                        <button onclick="switchTab('history')" id="tab-history" class="tab-btn active px-6 py-4 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left"></i> History
+                        </button>
+                        <button onclick="switchTab('bags')" id="tab-bags" class="tab-btn px-6 py-4 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-briefcase"></i> Bags
+                        </button>
                     </div>
-                    <div id="diaryList" class="divide-y divide-slate-100 flex-1 overflow-y-auto custom-scroll"></div>
+
+                    <!-- History Container -->
+                    <div id="view-history" class="flex-1 overflow-y-auto custom-scroll divide-y divide-slate-100">
+                        <div id="diaryList"></div>
+                    </div>
+
+                    <!-- Bags Container -->
+                    <div id="view-bags" class="hidden flex-1 overflow-y-auto custom-scroll p-4 space-y-6">
+                        <div class="space-y-3">
+                            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex justify-between px-1">
+                                <span>🆓 Free Rewards</span>
+                                <span id="freeBagCount" class="text-slate-400">0 Items</span>
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="bagFreeContent"></div>
+                        </div>
+                        <div id="bagPremiumSection" class="space-y-3 pt-4 border-t border-slate-100">
+                            <h3 class="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex justify-between px-1">
+                                <span>💎 Premium Rewards</span>
+                                <span id="premiumBagCount" class="text-blue-600">0 Items</span>
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="bagPremiumContent"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 border-t border-slate-50 bg-white flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase px-4">
+                        <span id="logCount">0 Records</span>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
+        // --- CONSTANTS ---
+        const PKG_INFO = { 'normal': {s:0,c:0,p:false}, 'pre0': {s:0,c:49,p:true}, 'pre25': {s:25,c:115,p:true}, 'pre100': {s:100,c:295,p:true} };
         const XP_VAL = { daily: 30, dailyzeny: 30, w1: 80, w2: 100, w3: 120, wzeny: 40 };
-        const NORMAL_DAILY_XP = 20;
-        const PACKAGES = {
-            'normal': { name: 'Normal Pass', startLv: 0, cost: 0, bpItem: '[Normal] Chrono Battle Pass', type: 'normal' },
-            'pre0': { name: 'Premium Unlock', startLv: 0, cost: 49, bpItem: '[Premium] Chrono Battle Pass', type: 'premium' },
-            'pre25': { name: 'Premium +25 Lv', startLv: 25, cost: 115, bpItem: '[Premium] Chrono Battle Pass', type: 'premium' },
-            'pre100': { name: 'Premium +100 Lv', startLv: 100, cost: 295, bpItem: '[Premium] Chrono Battle Pass', type: 'premium' }
-        };
+
+        // Full Database for accuracy
         const REWARDS = {
-            1: [{n: "Premium Service 10Day Box", q: 1, rare: true}, {n: "Mysterious Medal", q: 10, rare: true}],
-            10: [{n: "Treasure Box I", q: 1}],
-            23: [{n: "Mysterious Medal", q: 3, rare: true}],
-            100: [{n: "Chrono Pass Ticket", q: 1, rare: true}],
-            200: [{n: "Costume Cosmic Connection", q: 1, rare: true}, {n: "Treasure Box III", q: 2}],
-            300: [{n: "[Not For Sale] Chrono Pass Ticket", q: 1, rare: true}, {n: "Treasure Box I", q: 30}, {n: "Treasure Box III", q: 3}],
-            350: [{n: "[Event] Special Enchant Temporal Boots Ticket", q: 1, rare: true}, {n: "Guarantee Weapon 7 Up Pack", q: 1, rare: true}],
-            400: [{n: "Guarantee Armor 7 Up Pack", q: 1, rare: true}],
-            500: [{n: "Treasure Box II", q: 30}],
-            600: [{n: "Guarantee Weapon 9 Up Pack", q: 1, rare: true}],
-            700: [{n: "Guarantee Armor 9 Up Pack", q: 1, rare: true}],
-            900: [{n: "Treasure Box III", q: 30}],
-            1000: [{n: "Treasure Box III", q: 10, rare: true}],
-            1500: [{n: "Guarantee Weapon 11 Up Pack", q: 1, rare: true}],
-            2000: [{n: "Guarantee Armor 11 Up Pack", q: 1, rare: true}],
-            2500: [{n: "Costume Golden Valkyrie Wings", q: 1, rare: true}]
+            1: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "[NFS] Ultimate Cook", q: 5, p: false}, {n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false},
+                {n: "Premium Service 10Day Box", q: 1, p: true}, {n: "Mysterious Medal", q: 10, p: true}, {n: "Treasure Box I", q: 3, p: true}, {n: "Thai Perfume (MATK)", q: 2, p: true}, {n: "Thai Perfume (ATK)", q: 2, p: true}, {n: "Thai Perfume (ASPD)", q: 2, p: true}, {n: "[NFS] Small Life Potion", q: 20, p: true}, {n: "[NFS] Ultimate Cook", q: 10, p: true}, {n: "[NFS] Small Mana Potion", q: 15, p: true}, {n: "[NFS] Advanced Field Manual", q: 10, p: true}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 30, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 30, p: true}],
+            4: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            7: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "Thai Perfume (ATK)", q: 5, p: true}],
+            8: [{n: "Treasure Box I", q: 1, p: false}, {n: "Thai Perfume (ASPD)", q: 5, p: true}],
+            10: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            13: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
+            16: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
+            17: [{n: "Treasure Box I", q: 1, p: false}, {n: "Thai Perfume (ATK)", q: 5, p: true}],
+            19: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
+            20: [{n: "Treasure Box I", q: 1, p: true}],
+            22: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "[NFS] JOB Battle Manual", q: 3, p: true}],
+            23: [{n: "Mysterious Medal", q: 3, p: true}],
+            24: [{n: "Treasure Box II", q: 1, p: true}],
+            25: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            27: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
+            28: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
+            30: [{n: "Treasure Box I", q: 1, p: true}],
+            31: [{n: "Costume Bubble Archangeling Hairband", q: 1, rare: true, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
+            34: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "Treasure Box II", q: 1, p: true}],
+            36: [{n: "Mysterious Medal", q: 3, p: true}],
+            37: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Advanced Field Manual", q: 5, p: true}],
+            40: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            43: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
+            44: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
+            45: [{n: "Treasure Box I", q: 1, p: true}],
+            46: [{n: "Mysterious Medal", q: 3, p: true}],
+            47: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
+            50: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            51: [{n: "Treasure Box I", q: 1, p: true}],
+            53: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
+            55: [{n: "Treasure Box I", q: 1, p: true}],
+            56: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
+            57: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Advanced Field Manual", q: 5, p: true}],
+            59: [{n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "[NFS] JOB Battle Manual", q: 3, p: true}],
+            60: [{n: "Treasure Box I", q: 1, p: true}],
+            61: [{n: "Treasure Box II", q: 1, p: true}],
+            62: [{n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "Mysterious Medal", q: 3, p: true}],
+            65: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            66: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Ultimate Cook", q: 5, p: true}],
+            67: [{n: "Thai Perfume (MATK)", q: 5, p: true}],
+            68: [{n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "Thai Perfume (ATK)", q: 5, p: true}],
+            70: [{n: "Treasure Box I", q: 1, p: true}],
+            71: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
+            73: [{n: "Treasure Box II", q: 1, p: true}],
+            74: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
+            75: [{n: "Treasure Box I", q: 1, p: true}],
+            77: [{n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
+            80: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            81: [{n: "Treasure Box II", q: 1, p: true}],
+            82: [{n: "Mysterious Medal", q: 3, p: true}],
+            83: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Kafra Card", q: 5, p: true}],
+            84: [{n: "[NFS] Advanced Field Manual", q: 5, p: true}],
+            85: [{n: "Treasure Box I", q: 1, p: true}],
+            86: [{n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
+            87: [{n: "[NFS] Small Life Potion", q: 10, p: true}],
+            88: [{n: "Treasure Box III", q: 1, p: true}],
+            89: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
+            90: [{n: "Treasure Box I", q: 1, p: true}],
+            91: [{n: "Treasure Box II", q: 1, p: true}],
+            92: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
+            95: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
+            98: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
+            99: [{n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "[NFS] Ultimate Cook", q: 5, p: true}],
+            100: [{n: "[Event] Enchant Temporal & Diabolus Slot4 Ticket", q: 1, rare: true, p: false}, {n: "[NFS] Chrono Pass Ticket", q: 1, rare: true, p: true}, {n: "Treasure Box III", q: 1, p: true}],
+            200: [{n: "Costume Cosmic Connection", q: 1, rare: true, p: true}, {n: "Treasure Box III", q: 2, p: true}],
+            300: [{n: "[NFS] Chrono Pass Ticket", q: 1, rare: true, p: true}, {n: "Treasure Box I", q: 30, p: true}, {n: "Treasure Box III", q: 3, p: true}],
+            350: [{n: "[Event] Special Enchant Temporal Boots Ticket", q: 1, rare: true, p: true}, {n: "Guarantee Weapon 7 Up Pack", q: 1, rare: true, p: true}],
+            400: [{n: "Guarantee Armor 7 Up Pack", q: 1, rare: true, p: true}],
+            500: [{n: "Treasure Box II", q: 30, p: true}],
+            600: [{n: "Guarantee Weapon 9 Up Pack", q: 1, rare: true, p: true}],
+            700: [{n: "Guarantee Armor 9 Up Pack", q: 1, rare: true, p: true}],
+            900: [{n: "Treasure Box III", q: 30, p: true}],
+            1500: [{n: "Guarantee Weapon 11 Up Pack", q: 1, rare: true, p: true}],
+            2000: [{n: "Guarantee Armor 11 Up Pack", q: 1, rare: true, p: true}],
+            2500: [{n: "Costume Golden Valkyrie Wings", q: 1, rare: true, p: true}]
         };
 
-        let entries = JSON.parse(localStorage.getItem('roc_ggt_diary_v8_entries')) || [];
-        let config = JSON.parse(localStorage.getItem('roc_ggt_diary_v8_config')) || { package: 'normal' };
+        let entries = JSON.parse(localStorage.getItem('roc_ggt_diary_v30')) || [];
+        let config = JSON.parse(localStorage.getItem('roc_ggt_cfg_v30')) || { pkg: 'normal' };
         let tempQuests = { w1: false, w2: false, w3: false, wzeny: false };
 
-        const setUI = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.innerText = val;
-        };
-
-        document.getElementById('logDate').valueAsDate = new Date();
-
-        function selectPackage(pkgId) {
-            config.package = pkgId;
-            localStorage.setItem('roc_ggt_diary_v8_config', JSON.stringify(config));
-            render();
+        const setUI = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+        
+        function getItemEmoji(name) {
+            if (name.includes("Service")) return "🎖️"; if (name.includes("Medal")) return "🏅"; if (name.includes("Ticket")) return "🎫"; if (name.includes("Costume")) return "🎭"; if (name.includes("Weapon")) return "⚔️"; if (name.includes("Armor")) return "🛡️"; if (name.includes("Box")) return "🎁"; if (name.includes("Wings")) return "🧚"; return "🔹";
         }
 
-        function resetTempState() {
-            const dateStr = document.getElementById('logDate').value;
-            const existing = entries.find(e => e.date === dateStr);
-            if (existing) {
-                tempQuests = { 
-                    w1: existing.quests.includes('w1'), 
-                    w2: existing.quests.includes('w2'), 
-                    w3: existing.quests.includes('w3'), 
-                    wzeny: existing.quests.includes('wzeny') 
-                };
-            } else { 
-                tempQuests = { w1: false, w2: false, w3: false, wzeny: false }; 
-            }
-        }
-
+        // --- PIPELINE LOGIC ---
         function getWeeklyState(targetDateStr) {
             const past = entries.filter(e => e.date < targetDateStr).sort((a,b) => a.date.localeCompare(b.date));
             let start = null; let prog = { w1: false, w2: 0, w3: 0, wzeny: false };
@@ -215,8 +290,10 @@
         }
 
         function updateFormUI() {
-            const pkg = PACKAGES[config.package];
-            const { currentWeekStart, prog } = getWeeklyState(document.getElementById('logDate').value);
+            const logInput = document.getElementById('logDate');
+            if(!logInput) return;
+            const pkg = PKG_INFO[config.pkg];
+            const { currentWeekStart, prog } = getWeeklyState(logInput.value);
             
             let canDoW1 = !prog.w1;
             let canDoW2 = (prog.w1 || tempQuests.w1) && (prog.w2 < 2);
@@ -225,56 +302,46 @@
             let canDoZeny = !prog.wzeny;
 
             let html = "";
-            html += createQuestCard('w1', 'Amdarais (1/1)', canDoW1, tempQuests.w1, 'Step 1');
-            html += createQuestCard('w2', `Evil Believer (${prog.w2}/2)`, canDoW2, tempQuests.w2, 'Step 2 (1/day)');
-            html += createQuestCard('w3', `Infinite Tao (${prog.w3}/3)`, canDoW3, tempQuests.w3, 'Step 3 (1/day)');
-            html += createQuestCard('wzeny', 'Send 10M Zeny', canDoZeny, tempQuests.wzeny, 'Weekly Once');
+            html += createQuestCard('w1', 'Step 1: Amdarais (1/1)', canDoW1, tempQuests.w1, '80 XP');
+            html += createQuestCard('w2', `Step 2: Evil Believer (${prog.w2}/2)`, canDoW2, tempQuests.w2, '100 XP');
+            html += createQuestCard('w3', `Step 3: Infinite Tao (${prog.w3}/3)`, canDoW3, tempQuests.w3, '120 XP');
+            html += createQuestCard('wzeny', 'Weekly Zeny 10M (1/1)', canDoZeny, tempQuests.wzeny, '40 XP');
+            document.getElementById('weeklyInputArea').innerHTML = html;
             
-            const weeklyInputArea = document.getElementById('weeklyInputArea');
-            if (weeklyInputArea) weeklyInputArea.innerHTML = html;
+            const setV = (id, sid, state, txt) => { const e = document.getElementById(id); const s = document.getElementById(sid); if(e && s){e.className='quest-step '+(state==='done'?'step-done':state==='active'?'step-active':'opacity-30');s.innerText=txt;} };
+            setV('vStep1', 'vStatus1', prog.w1?'done':'active', prog.w1?'Finished':'Ready');
+            setV('vStep2', 'vStatus2', prog.w2>=2?'done':(prog.w1?'active':'locked'), prog.w2>=2?'Finished':(prog.w1?`${prog.w2}/2`:'Locked'));
+            setV('vStep3', 'vStatus3', prog.w3>=3?'done':(prog.w2>=2?'active':'locked'), prog.w3>=3?'Finished':(prog.w2>=2?`${prog.w3}/3`:'Locked'));
+            setV('vStepZ', 'vStatusZ', prog.wzeny?'done':'active', prog.wzeny?'Finished':'Ready');
 
-            document.querySelectorAll('.pkg-btn').forEach(el => el.classList.remove('active'));
-            const pkgBtn = document.getElementById(`pkg-${config.package}`);
-            if(pkgBtn) pkgBtn.classList.add('active');
-
-            const dailyXpHint = document.getElementById('dailyXpHint');
-            if(dailyXpHint) dailyXpHint.innerText = pkg.type === 'premium' ? '(30 XP)' : '(20 XP)';
-            
-            const weekRange = document.getElementById('weekRange');
-            if(weekRange) weekRange.innerText = currentWeekStart ? `Week Start: ${new Date(currentWeekStart).toLocaleDateString('th-TH')}` : "Not Started";
-            
-            updateVisualSteps(prog);
+            setUI('weekRange', currentWeekStart ? `Start: ${new Date(currentWeekStart).toLocaleDateString('th-TH')}` : "Wait Start");
+            document.querySelectorAll('.pkg-btn').forEach(b => b.classList.toggle('active', b.id === 'pkg-'+config.pkg));
+            document.getElementById('dailyXpHint').innerText = pkg.p ? '(30 XP)' : '(20 XP)';
         }
 
-        function handleCheckChange(id) { 
-            tempQuests[id] = document.getElementById(id).checked; 
-            updateFormUI(); 
+        function handleCheckChange(id) { tempQuests[id] = document.getElementById(id).checked; updateFormUI(); }
+        function createQuestCard(id, label, enabled, checked, hint) { return `<label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition ${enabled ? 'cursor-pointer hover:border-blue-300' : 'opacity-40 grayscale cursor-not-allowed'}"><input type="checkbox" id="${id}" ${checked?'checked':''} ${enabled?`onchange="handleCheckChange('${id}')"`:'disabled'} class="w-4 h-4 text-blue-600 rounded-lg"><div class="flex-1 text-[11px]"><div class="font-bold text-slate-700">${label}</div><div class="text-[9px] font-bold text-slate-400 uppercase">${hint}</div></div></label>`; }
+
+        function resetTempState() {
+            const dateStr = document.getElementById('logDate').value;
+            const existing = entries.find(e => e.date === dateStr);
+            if (existing) {
+                tempQuests = { w1: existing.quests.includes('w1'), w2: existing.quests.includes('w2'), w3: existing.quests.includes('w3'), wzeny: existing.quests.includes('wzeny') };
+            } else { tempQuests = { w1: false, w2: false, w3: false, wzeny: false }; }
         }
 
-        function createQuestCard(id, label, enabled, checked, hint) {
-            const finished = !enabled && !checked && (id==='w1' || id==='wzeny' || (id==='w2'&&label.includes('2/2')) || (id==='w3'&&label.includes('3/3')));
-            return `<label class="flex items-center gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm transition ${enabled ? 'cursor-pointer hover:border-red-300' : 'opacity-40 grayscale cursor-not-allowed'}">
-                <input type="checkbox" id="${id}" ${checked?'checked':''} ${enabled?`onchange="handleCheckChange('${id}')"`:'disabled'} class="w-5 h-5 text-red-600 rounded-lg">
-                <div class="flex-1"><div class="text-sm font-bold text-slate-700">${label}</div><div class="text-[9px] font-bold ${finished?'text-green-500':'text-slate-400'} uppercase">${finished?'Completed':hint}</div></div>
-            </label>`;
+        function switchTab(t) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active');
+            document.getElementById('view-history').classList.toggle('hidden', t !== 'history');
+            document.getElementById('view-bags').classList.toggle('hidden', t !== 'bags');
         }
 
-        function updateVisualSteps(prog) {
-            const set = (id, sid, state, c=0, m=1) => {
-                const e = document.getElementById(id); const s = document.getElementById(sid);
-                if (e && s) { 
-                    e.className = 'quest-step ' + (state==='done' ? 'step-done' : state==='active' ? 'step-active' : 'opacity-30'); 
-                    s.innerText = state==='done'?'Finished':state==='active'?(m>1?`${c}/${m}`:'Open'):'Locked'; 
-                }
-            };
-            set('vStep1', 'vStatus1', prog.w1?'done':'active');
-            if(prog.w1) set('vStep2', 'vStatus2', prog.w2>=2?'done':'active', prog.w2, 2); else set('vStep2', 'vStatus2', 'locked');
-            if(prog.w2>=2) set('vStep3', 'vStatus3', prog.w3>=3?'done':'active', prog.w3, 3); else set('vStep3', 'vStatus3', 'locked');
-            set('vStepZ', 'vStatusZ', prog.wzeny?'done':'active');
-        }
+        function selectPackage(id) { config.pkg = id; localStorage.setItem('roc_ggt_cfg_v30', JSON.stringify(config)); render(); }
 
         function saveEntry() {
             const date = document.getElementById('logDate').value;
+            if(!date) return;
             const quests = [];
             if(document.getElementById('qDaily')?.checked) quests.push('daily');
             if(document.getElementById('qZenyD')?.checked) quests.push('dailyzeny');
@@ -282,64 +349,105 @@
             const buyLv = parseInt(document.getElementById('buyLv').value) || 0;
             const idx = entries.findIndex(e => e.date === date);
             if(idx > -1) entries[idx] = { date, quests, buyLv }; else entries.push({ date, quests, buyLv });
-            localStorage.setItem('roc_ggt_diary_v8_entries', JSON.stringify(entries));
+            localStorage.setItem('roc_ggt_diary_v30', JSON.stringify(entries));
             document.getElementById('buyLv').value = 0; render();
         }
 
         function render() {
             entries.sort((a,b) => a.date.localeCompare(b.date));
-            const pkg = PACKAGES[config.package];
-            let currentLv = pkg.startLv; let currentXP = 0; let currentSV = pkg.cost;
+            const pkg = PKG_INFO[config.pkg];
+            let currentLv = pkg.s; let currentXP = 0; let totalSV = pkg.c;
             let wStart = null; let wProg = { w1:false, w2:0, w3:0, wzeny:false };
             const logs = [];
 
-            entries.forEach((e, idx) => {
-                const startLv = currentLv;
+            let freeInv = {}; let preInv = {}; 
+            
+            // 1. ADD STARTER LOG
+            const startGained = [];
+            if(pkg.p) { preInv["[Premium] Chrono Pass"] = 1; startGained.push({n:"[Premium] Chrono Pass", q:1, p:true}); } 
+            else { freeInv["[Normal] Chrono Pass"] = 1; startGained.push({n:"[Normal] Chrono Pass", q:1, p:false}); }
+            
+            // Loop for Starter Items (Level 1 to Start Level)
+            for(let l=1; l<=pkg.s; l++) {
+                 if(REWARDS[l]) REWARDS[l].forEach(i => {
+                    if(pkg.p || !i.p) { 
+                        if(i.p) preInv[i.n] = (preInv[i.n]||0)+i.q; 
+                        else freeInv[i.n] = (freeInv[i.n]||0)+i.q; 
+                        startGained.push({...i});
+                    }
+                });
+                if(l > 100 && pkg.p) {
+                    if(l % 10 === 0) { preInv["Treasure Box I"] = (preInv["Treasure Box I"]||0)+1; startGained.push({n:"Treasure Box I", q:1, p:true}); }
+                    if(l % 20 === 0) { preInv["Treasure Box II"] = (preInv["Treasure Box II"]||0)+1; startGained.push({n:"Treasure Box II", q:1, p:true}); }
+                    if(l % 50 === 0) { preInv["Treasure Box III"] = (preInv["Treasure Box III"]||0)+1; startGained.push({n:"Treasure Box III", q:1, p:true}); }
+                }
+            }
+            if(startGained.length > 0) {
+                logs.push({ date: "🎁 Starter Package", level: pkg.s, buyLv: 0, quests: [], gained: startGained, isStart: true });
+            }
+
+            entries.forEach((e) => {
+                const dayStartLv = currentLv;
                 if(wStart && (((new Date(e.date)-new Date(wStart))/86400000)>=7)) { wStart=null; wProg={w1:false,w2:0,w3:0,wzeny:false}; }
-                currentLv += e.buyLv; currentSV += (e.buyLv * 3);
+                currentLv += e.buyLv; totalSV += (e.buyLv * 3);
                 e.quests.forEach(q => {
-                    if(q==='daily') currentXP += (pkg.type==='premium'?30:NORMAL_DAILY_XP);
+                    if(q==='daily') currentXP += (pkg.p ? 30 : 20);
                     if(q==='dailyzeny') currentXP += 30;
+                    if(q==='w1') currentXP += XP_VAL.w1;
+                    if(q==='w2') currentXP += XP_VAL.w2;
+                    if(q==='w3') currentXP += XP_VAL.w3;
+                    if(q==='wzeny') currentXP += XP_VAL.wzeny;
                     if(['w1','w2','w3','wzeny'].includes(q) && !wStart) wStart = e.date;
-                    if(q==='w1'&&!wProg.w1) { wProg.w1=true; currentXP+=XP_VAL.w1; }
-                    if(q==='w2'&&wProg.w2<2) { wProg.w2+=1; if(wProg.w2===2) currentXP+=XP_VAL.w2; }
-                    if(q==='w3'&&wProg.w3<3) { wProg.w3+=1; if(wProg.w3===3) currentXP+=XP_VAL.w3; }
-                    if(q==='wzeny'&&!wProg.wzeny) { wProg.wzeny=true; currentXP+=XP_VAL.wzeny; }
                 });
                 currentLv += Math.floor(currentXP / 10); currentXP %= 10;
-                const gained = []; if(idx===0) gained.push({n: pkg.bpItem, q:1, rare:true});
-                for(let l=startLv+1; l<=currentLv; l++) {
-                    if(REWARDS[l]) REWARDS[l].forEach(item => gained.push({...item}));
-                    if(l>100 && pkg.type==='premium') { if(l%10===0) gained.push({n:"Treasure Box I", q:1}); if(l%20===0) gained.push({n:"Treasure Box II", q:1}); if(l%50===0) gained.push({n:"Treasure Box III", q:1}); }
+                
+                const gained = [];
+                for(let l = dayStartLv + 1; l <= currentLv; l++) {
+                    if(REWARDS[l]) REWARDS[l].forEach(i => {
+                        if(pkg.p || !i.p) {
+                            if(i.p) preInv[i.n] = (preInv[i.n] || 0) + i.q;
+                            else freeInv[i.n] = (freeInv[i.n] || 0) + i.q;
+                            gained.push(i);
+                        }
+                    });
+                    if(l > 100 && pkg.p) {
+                        const boxAdd = (n) => { preInv[n] = (preInv[n]||0)+1; gained.push({n, q:1, p:true}); };
+                        if(l % 10 === 0) boxAdd("Treasure Box I");
+                        if(l % 20 === 0) boxAdd("Treasure Box II");
+                        if(l % 50 === 0) boxAdd("Treasure Box III");
+                    }
                 }
-                logs.push({ ...e, endLv: currentLv, gained });
+                logs.push({ ...e, levelAtEnd: currentLv, gained });
             });
 
-            setUI('currentLevel', currentLv);
-            setUI('totalSpent', currentSV.toLocaleString());
+            setUI('currentLevel', currentLv); setUI('totalSpent', totalSV.toLocaleString());
             const progressBar = document.getElementById('progressBar');
             if(progressBar) progressBar.style.width = Math.min(100, (currentLv/2500)*100) + '%';
             
-            const historyHTML = logs.reverse().map(e => `
-                <div class="p-5 hover:bg-slate-50 transition flex gap-6">
-                    <div class="flex-none w-16 text-center border-r border-slate-100 pr-2">
-                        <div class="text-[9px] font-bold text-slate-400 uppercase leading-none">${new Date(e.date).toLocaleDateString('th-TH',{day:'2-digit',month:'short'})}</div>
-                        <div class="text-2xl font-gaming font-bold text-red-600 mt-1">${e.endLv}</div>
-                        <div class="text-[8px] font-bold text-slate-300">LEVEL</div>
-                    </div>
-                    <div class="flex-1 space-y-3">
-                        <div class="flex gap-2 flex-wrap">${e.quests.map(q => `<span class="text-[8px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 uppercase">${q}</span>`).join('')}</div>
-                        <div class="flex flex-wrap gap-1.5">${e.gained.length?e.gained.map(i=>`<span class="bg-white border border-red-100 text-red-700 text-[9px] px-2 py-0.5 rounded shadow-sm font-bold flex items-center gap-1">🔹 ${i.n} x${i.q}</span>`).join(''):'<span class="text-[9px] text-slate-300 italic">No New Items</span>'}</div>
-                    </div>
-                </div>`).join('');
-            const diaryList = document.getElementById('diaryList');
-            if(diaryList) diaryList.innerHTML = historyHTML || '<div class="p-20 text-center text-slate-300 text-sm font-bold tracking-widest">LOG IS EMPTY</div>';
+            document.getElementById('diaryList').innerHTML = logs.slice().reverse().map(e => {
+                if(e.isStart) {
+                    return `<div class="p-4 bg-yellow-50 border-l-4 border-yellow-400"><details class="log-details group"><summary class="flex items-center gap-4"><div class="flex-none w-14 text-center"><div class="text-[9px] font-bold text-yellow-600 uppercase">PKG</div><div class="text-xl font-gaming font-bold text-yellow-700 mt-1">${e.level}</div></div><div class="flex-1"><div class="text-xs font-bold text-yellow-800">🎁 Starter Package Received</div><div class="text-[9px] text-yellow-600 mt-1">${e.gained.length} Items Added to Bag</div></div><div class="flex-none text-yellow-400 arrow-icon"><i class="fa-solid fa-chevron-down text-xs"></i></div></summary><div class="mt-4 pt-3 border-t border-yellow-200 grid grid-cols-1 gap-1">${e.gained.map(i => `<div class="flex justify-between p-2 bg-white rounded-lg border border-yellow-100 text-[10px]"><span>${getItemEmoji(i.n)} ${i.n}</span><span class="font-bold text-yellow-600">x${i.q}</span></div>`).join('')}</div></details></div>`;
+                }
+                
+                const qIcons = e.quests.map(q => {
+                    if(q==='daily') return '<span class="q-badge bg-blue-50 text-blue-600">📅 Daily</span>';
+                    if(q==='dailyzeny') return '<span class="q-badge bg-emerald-50 text-emerald-600">💰 Zeny</span>';
+                    return '<span class="q-badge bg-indigo-50 text-indigo-600">⚔️ Step</span>';
+                }).join('');
+                return `<div class="p-4 hover:bg-slate-50 transition border-l-4 ${e.buyLv>0?'border-amber-400 bg-amber-50/10':'border-transparent'}"><details class="log-details group"><summary class="flex items-center gap-4"><div class="flex-none w-14 text-center"><div class="text-[9px] font-bold text-slate-400 uppercase">${new Date(e.date).toLocaleDateString('th-TH',{day:'2-digit',month:'short'})}</div><div class="text-2xl font-gaming font-bold text-blue-600 mt-1">${e.levelAtEnd}</div></div><div class="flex-1 space-y-1.5"><div class="flex flex-wrap gap-1.5">${qIcons} ${e.buyLv>0?`<span class="q-badge bg-amber-100 text-amber-600">+${e.buyLv} LV</span>`:''}</div><div class="text-[9px] font-bold text-slate-400 truncate">${e.gained.length>0?`<span class="text-blue-500">✨ ${e.gained.length} Items</span>`:'No new rewards'}</div></div><div class="flex-none text-slate-300 arrow-icon"><i class="fa-solid fa-chevron-down text-xs"></i></div></summary><div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-1 gap-1">${e.gained.map(i => `<div class="flex justify-between p-2 bg-white rounded-lg border border-slate-100 text-[10px]"><span>${getItemEmoji(i.n)} ${i.n}</span><span class="font-bold text-blue-600">x${i.q}</span></div>`).join('')}</div></details></div>`;
+            }).join('') || '<div class="p-20 text-center text-slate-300 text-xs italic font-bold">LOG IS EMPTY</div>';
+
+            const renderBag = (inv, color) => Object.entries(inv).sort((a,b)=>b[1]-a[1]).map(([n, q]) => `<div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex justify-between items-center group hover:border-blue-300 transition"><div class="flex items-center gap-3 overflow-hidden"><div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-blue-500">${getItemEmoji(n)}</div><span class="text-xs font-bold text-slate-700 truncate">${n}</span></div><span class="font-gaming font-bold ${color} flex-shrink-0 ml-2">x${q.toLocaleString()}</span></div>`).join('');
+            document.getElementById('bagFreeContent').innerHTML = renderBag(freeInv, 'text-slate-500') || '<div class="col-span-full p-10 text-center text-slate-300 text-xs italic">NO ITEMS</div>';
+            document.getElementById('bagPremiumContent').innerHTML = renderBag(preInv, 'text-blue-600');
+            setUI('freeBagCount', `${Object.keys(freeInv).length} Items`); setUI('premiumBagCount', `${Object.keys(preInv).length} Items`);
+            document.getElementById('bagPremiumSection').classList.toggle('hidden', !pkg.p);
+            
             resetTempState(); updateFormUI();
         }
 
-        function resetData() { if(confirm('Erase all diary records?')){ entries = []; localStorage.removeItem('roc_ggt_diary_v8_entries'); render(); }}
-        document.getElementById('buyLv')?.addEventListener('input', (e) => { const disp = document.getElementById('svCostDisp'); if(disp) disp.innerText = (parseInt(e.target.value || 0) * 3).toLocaleString(); });
-        render();
+        function resetData() { if(confirm('คุณต้องการล้างข้อมูลทั้งหมดใช่หรือไม่?')){ entries = []; localStorage.removeItem('roc_ggt_diary_v30'); render(); } }
+        window.addEventListener('DOMContentLoaded', () => { document.getElementById('logDate').valueAsDate = new Date(); render(); });
     </script>
 </body>
 </html>
