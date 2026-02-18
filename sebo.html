@@ -2,26 +2,18 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <!-- ✅ 2. แก้ไข Viewport ให้สามารถซูมได้ (user-scalable=yes, maximum-scale=5.0) -->
+    <!-- ✅ Viewport Settings: รองรับการซูมและการแสดงผลบนมือถือ -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>Work Management - SEBOFFICIAL</title>
     
-    <!-- ✅ PWA Settings: เปลี่ยน href เป็น URL เต็มของรูปภาพหากรันบน Google Apps Script -->
+    <!-- ✅ PWA Settings -->
     <link rel="icon" type="image/png" href="sebo.png">
     <link rel="apple-touch-icon" href="sebo.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="sebo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="sebo.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="sebo.png">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SEBOFFICIAL">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#f1f5f9">
+    <meta name="theme-color" content="#ffffff">
     
-    <!-- Manifest data URI (ใช้ URL เต็มใน src ของ icons เพื่อผลลัพธ์ที่ดีที่สุดบนมือถือ) -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"SEBOFFICIAL Work Management","short_name":"SEB WORK","start_url":".","display":"standalone","background_color":"#f1f5f9","theme_color":"#f1f5f9","icons":[{"src":"sebo.png","sizes":"192x192","type":"image/png"},{"src":"sebo.png","sizes":"512x512","type":"image/png"}]}'>
-
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -41,17 +33,22 @@
         .urgent-card { background-color: white; border: 2px solid #ef4444; animation: red-glow-pulse 2s ease-in-out infinite; }
         @keyframes red-glow-pulse { 0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); } 50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.4); } }
         .will-change-transform { will-change: transform; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         
-        /* ✅ 4. เพิ่ม Class สำหรับเว้นระยะ Safe Area ด้านบน (iPhone Notch) */
-        .pt-safe { padding-top: env(safe-area-inset-top); }
-        
-        /* Pin Display Styles */
+        /* ✅ CSS ปรับแต่งสำหรับ iPhone Notch และ Safe Area */
+        .navbar-ios {
+            padding-top: calc(12px + env(safe-area-inset-top));
+            padding-bottom: 12px;
+        }
+
+        .bottom-bar-ios {
+            padding-bottom: env(safe-area-inset-bottom);
+            height: calc(64px + env(safe-area-inset-bottom));
+        }
+
         .pin-dot { transition: all 0.2s; }
         .pin-dot.filled { background-color: white; transform: scale(1.1); }
         .pin-dot.empty { background-color: #334155; border: 2px solid #475569; }
 
-        /* Remove Number Arrows */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -65,7 +62,6 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, memo } = React;
 
-        // --- 1. Global Helper Functions & Components ---
         const LucideIcon = memo(({ name, size = 20, className = "" }) => {
             const ref = useRef(null);
             useEffect(() => {
@@ -117,19 +113,14 @@
             return result;
         };
 
-        // --- 2. Main App Component ---
         const App = () => {
-            // ==========================================
-            // ⚡️ SETUP AREA
-            // ==========================================
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwC1JLHanSCqFCQJdjBMvEfi4AQWkgEC4J1wCRXLTzVnDLoXp5gLdxW51Cdsy37itKS/exec"; 
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwosdft_deppe7PCwz29GvVZVJrv6kTGtVuMnUgWl8Y04EL3vc97V8IlgYOalFT2YOX/exec"; 
             
             const SHEET_ID = "108d2PHlbqt5h6p6_O-6qRfGHqs2MNK6GBRjVYdpxAZM";
             const MASTER_GID = "519893714"; 
             const RECORDS_GID = "379151214";
             const SETTINGS_GID = "1966833161"; 
             const LOGS_GID = "2045434061"; 
-            // ==========================================
 
             const [masterProducts, setMasterProducts] = useState([]);
             const [usersData, setUsersData] = useState([]); 
@@ -180,12 +171,15 @@
             const [isDevWorking, setIsDevWorking] = useState(false);
             const [devPassInput, setDevPassInput] = useState('');
             
-            // ✅ New State for Logs
             const [logsData, setLogsData] = useState([]);
             const [logsLoading, setLogsLoading] = useState(false);
             const [showLogs, setShowLogs] = useState(false);
+            
+            // ✅ Global Refresh State
+            const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
 
-            // --- Data Fetching ---
+            const searchContainerRef = useRef(null);
+
             const fetchCsvData = async (gid) => {
                 const u = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&ts=${Date.now()}`;
                 try { 
@@ -202,7 +196,7 @@
             };
 
             const fetchData = async () => {
-                setLoading(true);
+                // setLoading(true); // Don't block UI on background refresh
                 setErrorMsg(null);
                 try {
                     const [masterText, settingsText] = await Promise.all([ 
@@ -242,33 +236,63 @@
                             isDoing: String(row[6]).toUpperCase() === 'TRUE',
                             isUrgent: String(row[7]).toUpperCase() === 'TRUE',
                             memo: row[8],
-                            uuid: row[10]
+                            uuid: row[10],
+                            doingBy: row[11] || '',
+                            doneBy: row[12] || ''
                         };
                     }).filter(Boolean);
                     setSavedItems(records);
                 } finally { setRecordsLoading(false); }
             };
             
-            // ✅ Fetch Logs Function
             const fetchLogs = async () => {
                 setLogsLoading(true);
                 try {
                     const text = await fetchCsvData(LOGS_GID);
-                    const rows = parseCSV(text).slice(1); // Assuming row 1 is header
+                    const rows = parseCSV(text).slice(1);
                     const formatted = rows.map((r, i) => ({
                         id: i,
                         timestamp: r[0],
                         user: r[1],
                         action: r[2],
                         details: r[3]
-                    })).reverse(); // Show newest first
+                    })).reverse();
                     setLogsData(formatted);
                     setShowLogs(true);
                 } catch(e) { console.error(e); }
                 finally { setLogsLoading(false); }
             };
 
-            // --- Handlers ---
+            // ✅ Global Refresh Handler
+            const handleGlobalRefresh = async () => {
+                setIsGlobalRefreshing(true);
+                await Promise.all([fetchData(), fetchSavedRecords()]);
+                setIsGlobalRefreshing(false);
+            };
+
+            useEffect(() => {
+                function handleClickOutside(event) {
+                    if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+                        setShowSuggestions(false);
+                    }
+                }
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => {
+                    document.removeEventListener("mousedown", handleClickOutside);
+                };
+            }, [searchContainerRef]);
+
+            useEffect(() => { 
+                fetchData(); fetchSavedRecords();
+                const u = localStorage.getItem('seb_current_user');
+                if (u) { 
+                    setCurrentUser(u); 
+                    setCurrentUserRank(localStorage.getItem('seb_current_rank') || 'User'); 
+                    setShowUserModal(false); 
+                }
+            }, []);
+
+            // ... (Handlers: handleUserSelect, handleNumInput, handleNumDelete, renderPinDots, handleSetNewPassword, handleVerifyPassword) omitted for brevity ...
             const handleUserSelect = (userObj) => {
                 if (userObj.rank === 'Guest' || userObj.pass === 'guest') {
                     setCurrentUser(userObj.name);
@@ -295,7 +319,6 @@
                 }
             };
 
-            // --- Numpad Logic ---
             const handleNumInput = (num) => {
                 if (modalStep === 'password') {
                     if (passwordInput.length < 4) {
@@ -369,22 +392,6 @@
                 }
             };
 
-            const handleVerifyPassword = () => {
-                if (passwordInput === String(selectedTempUser.pass)) {
-                    setCurrentUser(selectedTempUser.name);
-                    setCurrentUserRank(selectedTempUser.rank);
-                    localStorage.setItem('seb_current_user', selectedTempUser.name);
-                    localStorage.setItem('seb_current_rank', selectedTempUser.rank);
-                    setShowUserModal(false);
-                    setModalStep('select');
-                    setSelectedTempUser(null);
-                    setActiveTab('record');
-                } else {
-                    setPassError(true);
-                    setTimeout(() => setPassError(false), 500);
-                }
-            };
-
             const handleInputChange = (e) => {
                 const val = e.target.value;
                 setSearchTerm(val);
@@ -419,7 +426,6 @@
                         method: "POST", mode: "no-cors", 
                         body: JSON.stringify({ action: 'add', ...form, isDoing: false, isDone: false, timestamp: ts, user: currentUser, uuid: uuid }) 
                     });
-                    // ✅ 3. เคลียร์รูปภาพ (imageUrl: '') พร้อมกับข้อมูลอื่นๆ
                     setForm({ ...form, productName: '', imageUrl: '', quantity: '1', memo: '', isUrgent: false }); 
                     setSearchTerm('');
                     setTimeout(() => { fetchSavedRecords(); setIsSaving(false); }, 1500);
@@ -428,6 +434,12 @@
 
             const handleCheckboxClick = (item) => {
                 if (currentUserRank === 'Guest') return;
+                
+                if (item.isDoing && item.doingBy && item.doingBy !== currentUser) {
+                    alert(`งานนี้กำลังดำเนินการโดย ${item.doingBy} คุณไม่สามารถแก้ไขได้`);
+                    return;
+                }
+
                 const key = item.timestamp + item.productName;
                 setExitingItems(prev => new Set(prev).add(key));
                 setTimeout(async () => {
@@ -436,12 +448,26 @@
                     else if (viewSubTab === 'doing') nextStatus = { isDoing: false, isDone: true };
                     else if (viewSubTab === 'completed') nextStatus = { isDoing: false, isDone: false };
 
-                    setSavedItems(p => p.map(i => (i.timestamp === item.timestamp && i.productName === item.productName) ? { ...i, ...nextStatus } : i));
+                    setSavedItems(p => p.map(i => (i.timestamp === item.timestamp && i.productName === item.productName) ? { 
+                        ...i, 
+                        ...nextStatus,
+                        doingBy: nextStatus.isDoing ? currentUser : (nextStatus.isDone ? i.doingBy : ''), 
+                        doneBy: nextStatus.isDone ? currentUser : ''
+                    } : i));
+                    
                     setExitingItems(p => { const n = new Set(p); n.delete(key); return n; });
                     try {
                         await fetch(GOOGLE_SCRIPT_URL, { 
                             method: "POST", mode: "no-cors", 
-                            body: JSON.stringify({ action: 'update_status_3way', productName: item.productName, timestamp: item.timestamp, uuid: item.uuid, isDoing: nextStatus.isDoing, isDone: nextStatus.isDone }) 
+                            body: JSON.stringify({ 
+                                action: 'update_status_3way', 
+                                productName: item.productName, 
+                                timestamp: item.timestamp, 
+                                uuid: item.uuid, 
+                                isDoing: nextStatus.isDoing, 
+                                isDone: nextStatus.isDone,
+                                user: currentUser
+                            }) 
                         });
                         fetchSavedRecords();
                     } catch (e) {}
@@ -499,7 +525,6 @@
                     if (editMasterItem.imageBase64) { body.imageBase64 = editMasterItem.imageBase64; body.imageType = editMasterItem.imageType; }
                     await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(body) });
                     setEditMasterItem(null); 
-                    // ✅ Alert & Refresh
                     alert("บันทึกข้อมูลเรียบร้อย!");
                     setTimeout(fetchData, 2000);
                 } finally { setIsEditingMaster(false); }
@@ -552,26 +577,14 @@
                 } catch (e) { return new Date(0); }
             };
 
-            useEffect(() => { 
-                fetchData(); fetchSavedRecords();
-                const u = localStorage.getItem('seb_current_user');
-                if (u) { 
-                    setCurrentUser(u); 
-                    setCurrentUserRank(localStorage.getItem('seb_current_rank') || 'User'); 
-                    setShowUserModal(false); 
-                }
-            }, []);
-
             const filteredItemsRender = useMemo(() => {
                 if (viewSubTab === 'pending') return savedItems.filter(i => !i.isDoing && !i.isDone);
                 if (viewSubTab === 'doing') return savedItems.filter(i => i.isDoing && !i.isDone);
-                
                 if (viewSubTab === 'completed') {
                     const today = new Date();
                     today.setHours(0,0,0,0);
                     return savedItems.filter(i => i.isDone && parseThaiDate(i.timestamp) >= today);
                 }
-                
                 return [];
             }, [savedItems, viewSubTab]);
 
@@ -579,14 +592,23 @@
 
             const analysisData = useMemo(() => {
                 const agg = {};
+                const userPerformance = {};
+
                 savedItems.forEach(i => {
                     if (!agg[i.productName]) agg[i.productName] = { name: i.productName, qty: 0, image: i.imageUrl };
                     agg[i.productName].qty += parseInt(i.quantity) || 0;
+
+                    if (i.isDone && i.doneBy) {
+                        if (!userPerformance[i.doneBy]) userPerformance[i.doneBy] = 0;
+                        userPerformance[i.doneBy] += parseInt(i.quantity) || 0;
+                    }
                 });
+
                 return {
                     totalQty: savedItems.reduce((acc, curr) => acc + (parseInt(curr.quantity) || 0), 0),
                     totalRecords: savedItems.length,
-                    topProducts: Object.values(agg).sort((a, b) => b.qty - a.qty).slice(0, 5)
+                    topProducts: Object.values(agg).sort((a, b) => b.qty - a.qty).slice(0, 5),
+                    topUsers: Object.entries(userPerformance).sort(([,a], [,b]) => b - a)
                 };
             }, [savedItems]);
 
@@ -630,7 +652,7 @@
 
             return (
                 <div className="min-h-screen flex flex-col pb-24 md:pb-6 relative">
-                    {/* User Selection Modal */}
+                    {/* User Selection Modal (Omitted for brevity) */}
                     {showUserModal && (
                         <div className="fixed inset-0 z-[200] bg-[#141414] flex flex-col items-center justify-center p-6 animate-modal text-center">
                             <div className="max-w-6xl w-full">
@@ -724,9 +746,8 @@
                         </div>
                     )}
 
-                    {/* Navbar */}
-                    {/* ✅ 4. เพิ่ม class pt-safe ใน navbar */}
-                    <nav className="bg-white border-b sticky top-0 z-50 px-6 py-4 pt-safe flex items-center justify-between shadow-sm">
+                    {/* ✅ Navbar */}
+                    <nav className="bg-white border-b sticky top-0 z-50 px-6 navbar-ios flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-100"><img src="sebo.png" className="w-full h-full object-cover" /></div>
                             <div>
@@ -734,19 +755,25 @@
                                 <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{currentUserRank} ACCESS</span>
                             </div>
                         </div>
-                        <div onClick={() => setShowUserModal(true)} className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full cursor-pointer hover:bg-slate-200 transition-all active:scale-95">
-                            <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold uppercase">{currentUser.charAt(0) || '?'}</div>
-                            <span className="text-xs font-bold text-slate-600 hidden sm:block font-bold">{currentUser || 'ระบุตัวตน'}</span>
+                        <div className="flex items-center gap-2">
+                            {/* ✅ Global Refresh Button */}
+                            <button onClick={handleGlobalRefresh} className={`w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 active:scale-90 transition-all ${isGlobalRefreshing ? 'animate-spin text-indigo-600' : ''}`}>
+                                <LucideIcon name="refresh-cw" size={16} />
+                            </button>
+                            
+                            <div onClick={() => setShowUserModal(true)} className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full cursor-pointer hover:bg-slate-200 transition-all active:scale-95">
+                                <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold uppercase">{currentUser.charAt(0) || '?'}</div>
+                                <span className="text-xs font-bold text-slate-600 hidden sm:block font-bold">{currentUser || 'ระบุตัวตน'}</span>
+                            </div>
                         </div>
                     </nav>
 
                     <main className="max-w-5xl mx-auto w-full p-4 md:p-8 space-y-6 flex-1">
-                        {/* Tab Switcher */}
                         <div className="hidden md:flex p-1.5 bg-white border rounded-[1.5rem] shadow-sm overflow-x-auto no-scrollbar font-bold justify-around">
                             {renderMenuTabs()}
                         </div>
 
-                        {/* Content: Record */}
+                        {/* Record Tab */}
                         {activeTab === 'record' && currentUserRank !== 'Guest' && (
                             <div className="bg-white rounded-[2.5rem] p-6 md:p-10 border custom-shadow animate-modal relative overflow-hidden">
                                 {isSaving && <div className="absolute inset-0 bg-white/80 z-20 flex items-center justify-center flex-col gap-3 backdrop-blur-sm"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div><span className="font-bold text-indigo-600 animate-pulse font-bold">กำลังบันทึก...</span></div>}
@@ -758,7 +785,8 @@
                                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                             </select>
                                         </div>
-                                        <div className="space-y-1.5 relative"><label className="text-xs font-black text-slate-400 uppercase tracking-widest font-bold">ชื่อสินค้า</label>
+                                        <div className="space-y-1.5 relative" ref={searchContainerRef}>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-bold">ชื่อสินค้า</label>
                                             <input type="text" placeholder="ค้นหาชื่อสินค้า..." className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 font-bold text-slate-700 outline-none shadow-sm transition-all" value={searchTerm} onChange={handleInputChange} onFocus={() => setShowSuggestions(true)} />
                                             {showSuggestions && masterProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).length > 0 && (
                                                 <div className="absolute z-50 w-full top-[105%] bg-white border rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto shadow-indigo-100">
@@ -772,11 +800,10 @@
                                             )}
                                         </div>
                                         
-                                        {/* ✅ 1. แก้ไข Layout: ใช้ Grid แถวเดียวบน Mobile และ 2 คอลัมน์บนจอใหญ่ (md) */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> 
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6"> 
                                             <div className="space-y-2">
                                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-bold leading-none">จำนวน</label>
-                                                <div className="flex items-center justify-between bg-slate-50 rounded-2xl border-2 border-transparent focus-within:border-indigo-500 p-1 shadow-inner h-14"> {/* Fixed height */}
+                                                <div className="flex items-center justify-between bg-slate-50 rounded-2xl border-2 border-transparent focus-within:border-indigo-500 p-1 shadow-inner h-14">
                                                     <button onClick={() => adjustQuantity(-1)} className="w-12 h-full flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm transition-all active:scale-90 shrink-0">
                                                         <LucideIcon name="minus" size={20} />
                                                     </button>
@@ -811,7 +838,7 @@
                             </div>
                         )}
 
-                        {/* Content: Tasks List */}
+                        {/* View Tab */}
                         {activeTab === 'view' && (
                             <div className="space-y-6 pb-10 animate-modal">
                                 <div className="flex items-center justify-between px-2">
@@ -829,11 +856,14 @@
                                         const key = item.timestamp + item.productName;
                                         const isExiting = exitingItems.has(key);
                                         const isGuest = currentUserRank === 'Guest';
+                                        
+                                        const isMyWork = item.doingBy === currentUser;
+                                        const isLocked = item.isDoing && !isMyWork;
+
                                         return (
-                                            <div key={key} className={`group relative p-5 rounded-[2.2rem] border flex items-center gap-5 transition-all duration-700 ${isExiting ? 'opacity-0 scale-95 translate-x-10 pointer-events-none' : 'opacity-100'} ${item.isUrgent && !item.isDone ? 'urgent-card' : 'bg-white border-slate-100 shadow-sm'} ${item.isDone ? 'border-emerald-600 bg-emerald-50/10' : (item.isDoing ? 'border-amber-400 bg-amber-50/10' : '')}`}>
+                                            <div key={key} className={`group relative p-5 rounded-[2.2rem] border flex items-center gap-5 transition-all duration-700 ${isExiting ? 'opacity-0 scale-95 translate-x-10 pointer-events-none' : 'opacity-100'} ${item.isUrgent && !item.isDone ? 'urgent-card' : 'bg-white border-slate-100 shadow-sm'} ${item.isDone ? 'border-emerald-600 bg-emerald-50/10' : (item.isDoing ? 'border-amber-400 bg-amber-50/10' : '')} ${isLocked ? 'opacity-70 grayscale-[0.5]' : ''}`}>
                                                 <div className="shrink-0">
-                                                    {/* ✅ Guest Cannot Click Checkbox */}
-                                                    <button onClick={() => !isGuest && handleCheckboxClick(item)} className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all ${item.isDone ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm' : (item.isDoing ? 'bg-amber-500 border-amber-400 text-white shadow-md' : 'bg-slate-50 text-slate-300 shadow-sm')} ${isGuest ? 'cursor-not-allowed opacity-50' : 'active:scale-90'}`}>
+                                                    <button onClick={() => !isGuest && handleCheckboxClick(item)} className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all ${item.isDone ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm' : (item.isDoing ? 'bg-amber-500 border-amber-400 text-white shadow-md' : 'bg-slate-50 text-slate-300 shadow-sm')} ${isGuest || isLocked ? 'cursor-not-allowed opacity-50' : 'active:scale-90'}`}>
                                                         <LucideIcon name={item.isDone || item.isDoing ? "check-circle" : "circle"} size={28} />
                                                     </button>
                                                 </div>
@@ -844,15 +874,27 @@
                                                         <span className="text-[9px] text-slate-400 truncate leading-none">{item.timestamp}</span>
                                                     </div>
                                                     <h4 className={`font-bold text-sm truncate leading-tight ${item.isDone ? 'text-emerald-700 italic opacity-60' : 'text-slate-800'} font-bold`}>{item.productName}</h4>
+                                                    
+                                                    {item.isDoing && !item.isDone && (
+                                                        <div className="text-[10px] font-bold text-amber-600 bg-amber-50 inline-block px-2 py-0.5 rounded-md border border-amber-100 mt-1">
+                                                            ⚡ กำลังทำโดย: {item.doingBy}
+                                                        </div>
+                                                    )}
+
+                                                    {/* ✅ Show Done By */}
+                                                    {item.isDone && item.doneBy && (
+                                                        <div className="text-[10px] font-bold text-emerald-600 bg-emerald-50 inline-block px-2 py-0.5 rounded-md border border-emerald-100 mt-1">
+                                                            ✅ เสร็จโดย: {item.doneBy}
+                                                        </div>
+                                                    )}
+                                                    
                                                     <div className="flex items-baseline gap-2 mt-2 leading-none">
                                                         <span className="text-[10px] uppercase text-slate-400 font-bold font-bold leading-none">จำนวน:</span>
-                                                        {/* ✅ Guest Cannot Edit Quantity */}
-                                                        <span onClick={() => { if(!isGuest) { setEditQuantityItem(item); setEditQuantityValue(item.quantity); } }} className={`text-3xl font-black text-slate-900 leading-none font-mono font-black ${!isGuest ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}>{item.quantity}</span>
+                                                        <span onClick={() => { if(!isGuest && !isLocked) { setEditQuantityItem(item); setEditQuantityValue(item.quantity); } }} className={`text-3xl font-black text-slate-900 leading-none font-mono font-black ${!isGuest && !isLocked ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}>{item.quantity}</span>
                                                     </div>
                                                     {item.memo && <p className="text-[10px] text-slate-400 italic mt-1 truncate font-bold">บันทึก: {item.memo}</p>}
                                                 </div>
-                                                {/* ✅ Guest Cannot Delete */}
-                                                {!isGuest && (
+                                                {!isGuest && !isLocked && (
                                                     <button onClick={() => setItemToDelete(item)} className="absolute top-4 right-4 p-2.5 text-red-600 bg-red-100/50 hover:bg-red-600 hover:text-white transition-all rounded-full border border-red-200 shadow-sm active:scale-90 group-hover:opacity-100 opacity-100 md:opacity-0"><LucideIcon name="trash-2" size={18} /></button>
                                                 )}
                                             </div>
@@ -863,7 +905,7 @@
                             </div>
                         )}
 
-                        {/* Content: Analysis */}
+                        {/* Analysis Tab */}
                         {activeTab === 'analysis' && (
                             <div className="space-y-6 pb-10 animate-modal text-center md:text-left">
                                 <div className="bg-white rounded-[2.5rem] p-8 border custom-shadow">
@@ -885,15 +927,33 @@
                                             <div className="text-5xl font-black tracking-tight leading-none">{analysisData.totalRecords} <span className="text-sm font-normal">รายการ</span></div>
                                         </div>
                                     </div>
-                                    <h3 className="font-black text-slate-700 mb-6 uppercase text-sm tracking-widest text-center md:text-left font-bold font-bold font-bold">สินค้าที่ถูกบันทึกสูงสุด (Top 5)</h3>
-                                    <div className="space-y-4 text-left">
-                                        {analysisData.topProducts.map((p, i) => (
-                                            <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left font-bold shadow-sm font-bold">
-                                                <div className="w-12 h-12 rounded-xl bg-white border overflow-hidden shrink-0 shadow-sm font-bold"><img src={p.image} className="w-full h-full object-cover" /></div>
-                                                <div className="flex-1 font-bold truncate text-slate-700 font-bold font-bold font-bold">{p.name}</div>
-                                                <div className="text-right font-black text-indigo-600 font-bold font-black font-black">{p.qty} ชิ้น</div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div>
+                                            <h3 className="font-black text-slate-700 mb-6 uppercase text-sm tracking-widest text-left font-bold font-bold font-bold">สินค้าสูงสุด (Top 5)</h3>
+                                            <div className="space-y-4 text-left">
+                                                {analysisData.topProducts.map((p, i) => (
+                                                    <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left font-bold shadow-sm font-bold">
+                                                        <div className="w-12 h-12 rounded-xl bg-white border overflow-hidden shrink-0 shadow-sm font-bold"><img src={p.image} className="w-full h-full object-cover" /></div>
+                                                        <div className="flex-1 font-bold truncate text-slate-700 font-bold font-bold font-bold">{p.name}</div>
+                                                        <div className="text-right font-black text-indigo-600 font-bold font-black font-black">{p.qty} ชิ้น</div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
+                                        </div>
+                                        
+                                        <div>
+                                            <h3 className="font-black text-slate-700 mb-6 uppercase text-sm tracking-widest text-left font-bold font-bold font-bold">ผลงานพนักงาน (เสร็จแล้ว)</h3>
+                                            <div className="space-y-4 text-left">
+                                                {analysisData.topUsers.length > 0 ? analysisData.topUsers.map(([user, qty], i) => (
+                                                    <div key={i} className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-left font-bold shadow-sm font-bold">
+                                                        <div className="w-12 h-12 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-emerald-600 font-black text-xl shadow-sm">{i+1}</div>
+                                                        <div className="flex-1 font-bold truncate text-slate-700 font-bold font-bold font-bold">{user}</div>
+                                                        <div className="text-right font-black text-emerald-600 font-bold font-black font-black">{qty} ชิ้น</div>
+                                                    </div>
+                                                )) : <div className="text-slate-400 text-center py-4">ยังไม่มีข้อมูล</div>}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -903,7 +963,6 @@
                             <div className="space-y-6 animate-modal pb-10">
                                 <div className="flex justify-center"><div className="bg-white p-1.5 rounded-full border shadow-sm inline-flex font-bold">
                                     <button onClick={() => setManageSubTab('search')} className={`px-6 py-2 rounded-full font-bold text-xs transition-all ${manageSubTab === 'search' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}>รายการสินค้า</button>
-                                    {/* ✅ User/Guest Cannot Add */}
                                     {(currentUserRank === 'Admin' || currentUserRank === 'Dev') && (
                                         <button onClick={() => setManageSubTab('add')} className={`px-6 py-2 rounded-full font-bold text-xs transition-all ${manageSubTab === 'add' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}>เพิ่มใหม่</button>
                                     )}
@@ -912,7 +971,6 @@
                                     <>
                                         <div className="bg-white rounded-[2rem] p-4 border flex items-center px-6 shadow-sm font-bold"><LucideIcon name="search" size={20} className="text-slate-300 mr-4"/><input type="text" placeholder="ค้นหา..." className="flex-1 bg-transparent font-bold outline-none text-slate-700 font-bold font-bold font-black" value={productSearchInput} onChange={(e) => setProductSearchInput(e.target.value)} /></div>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 font-bold font-black">
-                                            {/* Show items only if search input exists */}
                                             {productSearchInput && masterProducts.filter(p => p.name.toLowerCase().includes(productSearchInput.toLowerCase())).map((p, i) => (
                                                 <div key={i} className="bg-white p-3 rounded-[1.8rem] border shadow-sm group relative overflow-hidden transition-all hover:shadow-xl hover:border-indigo-200">
                                                     <div className="aspect-square bg-slate-50 rounded-2xl overflow-hidden mb-3 border shadow-inner"><img src={p.imgUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110 shadow-sm" /></div>
@@ -928,7 +986,6 @@
                                                     </div>
                                                 </div>
                                             ))}
-                                            {/* Show empty state if no search */}
                                             {!productSearchInput && (
                                                 <div className="col-span-full text-center py-20 opacity-30">
                                                     <LucideIcon name="search" size={48} className="mx-auto mb-4" />
@@ -984,7 +1041,6 @@
                                             </div>
                                         </div>
                                         <div className="space-y-6 font-bold">
-                                            {/* ✅ Added System Logs Section */}
                                             <h3 className="font-black text-slate-800 flex items-center gap-2 px-2 uppercase text-xs tracking-[0.2em] font-black leading-none"><LucideIcon name="file-text" size={20} className="text-blue-600" /> System Logs</h3>
                                             <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-200 shadow-sm">
                                                  <div className="flex justify-between items-center mb-4">
@@ -994,7 +1050,6 @@
                                                         {logsLoading ? 'Loading...' : 'Refresh Logs'}
                                                     </button>
                                                  </div>
-
                                                  {showLogs ? (
                                                     <div className="max-h-[300px] overflow-y-auto no-scrollbar border rounded-2xl bg-white text-xs">
                                                         <table className="w-full text-left border-collapse">
@@ -1025,7 +1080,6 @@
                                                     </div>
                                                  )}
                                             </div>
-
                                             <h3 className="font-black text-slate-800 flex items-center gap-2 px-2 uppercase text-xs tracking-[0.2em] font-black leading-none font-black pt-4"><LucideIcon name="database" size={20} className="text-red-600" /> Database Maintenance</h3>
                                             <div className="space-y-4 bg-red-50/50 p-6 rounded-[2.5rem] border border-red-100 shadow-inner">
                                                 <div className="bg-white p-6 rounded-3 shadow-sm border border-red-100 shadow-red-50"><p className="font-black text-slate-800 mb-1 uppercase tracking-tight text-[10px] leading-none font-black">Reset Activity Log</p><button onClick={() => setDevActionModal('clear_logs')} className="w-full py-4 rounded-2xl bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 font-black text-sm transition-all active:scale-95 uppercase tracking-widest leading-none shadow-sm">Clear Logs History</button></div>
@@ -1038,7 +1092,21 @@
                         )}
                     </main>
 
-                    {/* MODALS */}
+                    {/* ✅ Navbar: ใช้คลาส bottom-bar-ios เพื่อเว้นระยะ Safe Area ด้านล่าง */}
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] bottom-bar-ios z-50">
+                        <div className="flex justify-around items-center h-16">
+                            {renderMenuTabs()}
+                        </div>
+                    </nav>
+
+                    <footer className="hidden md:flex bg-white border-t p-5 mt-auto flex-col sm:flex-row justify-between items-center gap-3 text-[10px] font-black text-slate-300 tracking-widest uppercase shadow-inner font-bold font-black">
+                        <span>SEBOFFICIAL V4.5.0 ENTERPRISE</span>
+                        <div className="flex items-center gap-4 text-slate-400 font-bold uppercase tracking-tighter leading-none font-bold font-black">
+                            <LucideIcon name="database" size={12} className="text-emerald-500 font-bold font-black" /> Google Cloud Sync | Active: {currentUser} ({currentUserRank})
+                        </div>
+                    </footer>
+                    
+                    {/* Modals */}
                     {devActionModal && (
                         <div className="fixed inset-0 z-[300] bg-slate-900/90 flex items-center justify-center p-4 backdrop-blur-md animate-modal">
                             <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl max-w-sm w-full text-center border-t-[10px] border-red-500">
@@ -1053,123 +1121,15 @@
                             </div>
                         </div>
                     )}
+                    
+                    {editUserRankModal && ( <div className="fixed inset-0 z-[310] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal"> <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-indigo-600"> <LucideIcon name="shield-check" size={64} className="text-indigo-600 mx-auto mb-6" /> <h3 className="font-black text-2xl text-slate-800 mb-6 uppercase tracking-tighter leading-none font-black">Assign Position</h3> <div className="space-y-3"> {['Dev', 'Admin', 'User', 'Guest'].map(r => (<button key={r} onClick={() => handleUpdateUserSetting(editUserRankModal.name, r, editUserRankModal.pass)} className={`w-full py-5 rounded-2xl border-2 font-black transition-all active:scale-95 shadow-sm leading-none ${editUserRankModal.rank === r ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl' : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{r}</button>))} <button onClick={() => setEditUserRankModal(null)} className="w-full py-3 mt-4 text-slate-400 font-bold hover:text-red-500 transition-colors uppercase text-[10px] tracking-[0.2em] leading-none font-black">Close Window</button> </div> </div> </div> )}
+                    {editUserPassModal && ( <div className="fixed inset-0 z-[310] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal"> <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-amber-500"> <LucideIcon name="key" size={64} className="text-amber-500 mx-auto mb-6" /> <h3 className="font-black text-2xl text-slate-800 mb-6 uppercase tracking-tighter font-black leading-none font-black text-2xl">Login Password</h3> <div className="space-y-6"> <input autoFocus type="number" inputMode="numeric" placeholder="0000" className="w-full py-6 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 text-center font-black text-5xl text-amber-600 outline-none shadow-inner leading-none" value={newPassValue} onChange={(e) => setNewPassValue(e.target.value.slice(0, 4))} /> <div className="grid grid-cols-2 gap-4 font-bold"> <button onClick={() => setEditUserPassModal(null)} className="h-14 rounded-2xl text-slate-400 bg-slate-50 active:scale-95 shadow-sm border border-transparent font-black leading-none uppercase font-black">ยกเลิก</button> <button onClick={() => handleUpdateUserSetting(editUserPassModal.name, editUserPassModal.rank, newPassValue)} className="h-14 rounded-2xl bg-amber-500 text-white shadow-lg active:scale-95 shadow-amber-100 font-black leading-none uppercase font-black">บันทึกรหัส</button> </div> </div> </div> </div> )}
+                    {itemToDelete && ( <div className="fixed inset-0 z-[250] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md animate-modal text-center text-white font-bold"> <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-red-600"> <LucideIcon name="trash-2" size={64} className="text-red-600 mx-auto mb-6 animate-bounce" /> <h3 className="font-black text-2xl text-slate-800 mb-2 font-bold font-bold font-bold">ลบรายการงาน?</h3> <p className="text-slate-400 text-sm mb-10 font-bold uppercase truncate font-bold font-bold">{itemToDelete.productName}</p> <div className="grid grid-cols-2 gap-4"> <button onClick={() => setItemToDelete(null)} className="h-14 rounded-2xl font-bold text-slate-400 bg-slate-50 border-2 border-transparent active:scale-95 transition-all uppercase leading-none font-bold font-bold">ยกเลิก</button> <button onClick={confirmDelete} className="h-14 rounded-2xl font-black bg-red-600 text-white shadow-lg active:scale-95 transition-all uppercase font-bold leading-none font-bold font-black text-white">ยืนยัน</button> </div> </div> </div> )}
+                    {editQuantityItem && ( <div className="fixed inset-0 z-[250] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md animate-modal text-center text-white font-bold font-bold font-black"> <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-indigo-600"> <h3 className="font-black text-2xl text-slate-800 mb-8 font-bold font-black font-bold font-black font-black">แก้ไขจำนวนสินค้า</h3> <div className="flex items-center justify-center gap-6 mb-10"> <button onClick={() => { setEditQuantityValue(prev => String(Math.max(1, parseInt(prev) - 1))); }} className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 font-black text-3xl active:scale-90 shadow-sm font-bold font-black">-</button> <input type="number" className="w-28 h-16 bg-slate-50 border-2 border-indigo-100 rounded-2xl font-black text-4xl text-center text-indigo-600 outline-none shadow-inner font-bold font-black font-black" value={editQuantityValue} onChange={(e) => setEditQuantityValue(e.target.value)} /> <button onClick={() => { setEditQuantityValue(prev => String(parseInt(prev) + 1)); }} className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 font-black text-3xl active:scale-90 shadow-sm font-bold font-black">+</button> </div> <button onClick={confirmEditQuantity} className="w-full h-16 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl active:scale-95 shadow-indigo-100 font-bold font-bold font-black font-black leading-none">บันทึก</button> <button onClick={() => setEditQuantityItem(null)} className="w-full mt-4 text-slate-400 font-bold text-sm uppercase font-bold font-bold">ปิดหน้าต่าง</button> </div> </div> )}
+                    {masterItemToDelete && ( <div className="fixed inset-0 z-[250] bg-black/60 flex items-center justify-center p-4 animate-modal text-center text-white font-bold font-black font-black"> <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-red-600 text-center font-bold font-black font-black"> <LucideIcon name="alert-triangle" size={64} className="text-red-600 mx-auto mb-6 font-bold" /> <h3 className="font-black text-2xl mb-8 text-slate-800 font-bold font-black font-black font-black">ลบสินค้าออกจากคลัง?</h3> <div className="grid grid-cols-2 gap-4 text-white font-bold font-black font-black"> <button onClick={() => setMasterItemToDelete(null)} className="h-14 rounded-2xl bg-slate-100 font-bold text-slate-400 uppercase active:scale-95 transition-all leading-none font-bold font-bold font-black font-black">ยกเลิก</button> <button onClick={() => confirmDeleteMaster(masterItemToDelete)} className="h-14 rounded-2xl bg-red-600 text-white font-black shadow-lg uppercase font-bold active:scale-95 transition-all leading-none font-bold font-bold font-black font-black text-white">ลบทันที</button> </div> </div> </div> )}
+                    {editMasterItem && ( <div className="fixed inset-0 z-[210] bg-black/60 flex items-center justify-center p-4 backdrop-blur-md animate-modal"> <div className="bg-white p-8 md:p-10 rounded-[3.5rem] shadow-2xl max-w-md w-full relative border-t-8 border-indigo-600 shadow-indigo-100/50"> <button onClick={() => setEditMasterItem(null)} className="absolute top-8 right-8 bg-slate-100 p-2.5 rounded-full hover:bg-red-50 transition-all active:scale-90"><LucideIcon name="x" size={20} /></button> <h3 className="font-black text-2xl text-slate-800 mb-10 text-center uppercase tracking-tighter font-black leading-none font-black">Modify Product</h3> <div className="space-y-7 font-bold"> <div className="space-y-2"> <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 leading-none font-black">ชื่อสินค้าหลัก</label> <input type="text" className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 font-bold outline-none transition-all shadow-inner leading-none" value={editMasterItem.name} onChange={(e) => setEditMasterItem({...editMasterItem, name: e.target.value})} /> </div> <div className="space-y-2"> <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 leading-none font-black">รูปภาพสินค้า</label> <div className="relative group h-44 w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all hover:bg-indigo-50/50 hover:border-indigo-200 shadow-inner"> <input type="file" accept="image/*" className="absolute inset-0 opacity-0 z-10 cursor-pointer" onChange={(e) => handleFileChangeInternal(e, setEditMasterItem)} /> {editMasterItem.preview || editMasterItem.imgUrl ? <img src={editMasterItem.preview || editMasterItem.imgUrl} className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" /> : <div className="text-center opacity-30 font-bold uppercase leading-none"><LucideIcon name="image-plus" size={32} className="mx-auto mb-2" />New Image</div>} </div> </div> <button onClick={handleUpdateMaster} disabled={isEditingMaster} className="w-full h-16 bg-indigo-600 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-3 leading-none uppercase font-black">{isEditingMaster ? <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div> : <><LucideIcon name="check-circle" /> บันทึกการแก้ไข</>}</button> </div> </div> </div> )}
+                    {previewImage && ( <div className="fixed inset-0 z-[400] bg-black/95 flex items-center justify-center p-4 shadow-2xl font-bold font-black" onClick={() => setPreviewImage(null)}> <div className="bg-white p-3 rounded-[3rem] max-w-2xl max-h-[90vh] overflow-hidden relative shadow-2xl border-4 border-white animate-modal font-bold font-black font-black"> <button className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full active:scale-90 shadow-lg font-bold font-black"><LucideIcon name="x" size={20}/></button> <img src={previewImage} className="w-full h-full object-contain rounded-[2.5rem] font-bold" /> </div> </div> )}
 
-                    {editUserRankModal && (
-                        <div className="fixed inset-0 z-[310] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal">
-                            <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-indigo-600">
-                                <LucideIcon name="shield-check" size={64} className="text-indigo-600 mx-auto mb-6" />
-                                <h3 className="font-black text-2xl text-slate-800 mb-6 uppercase tracking-tighter leading-none font-black">Assign Position</h3>
-                                <div className="space-y-3">
-                                    {['Dev', 'Admin', 'User', 'Guest'].map(r => (<button key={r} onClick={() => handleUpdateUserSetting(editUserRankModal.name, r, editUserRankModal.pass)} className={`w-full py-5 rounded-2xl border-2 font-black transition-all active:scale-95 shadow-sm leading-none ${editUserRankModal.rank === r ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl' : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{r}</button>))}
-                                    <button onClick={() => setEditUserRankModal(null)} className="w-full py-3 mt-4 text-slate-400 font-bold hover:text-red-500 transition-colors uppercase text-[10px] tracking-[0.2em] leading-none font-black">Close Window</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {editUserPassModal && (
-                        <div className="fixed inset-0 z-[310] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal">
-                            <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-amber-500">
-                                <LucideIcon name="key" size={64} className="text-amber-500 mx-auto mb-6" />
-                                <h3 className="font-black text-2xl text-slate-800 mb-6 uppercase tracking-tighter font-black leading-none font-black text-2xl">Login Password</h3>
-                                <div className="space-y-6">
-                                    <input autoFocus type="number" inputMode="numeric" placeholder="0000" className="w-full py-6 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 text-center font-black text-5xl text-amber-600 outline-none shadow-inner leading-none" value={newPassValue} onChange={(e) => setNewPassValue(e.target.value.slice(0, 4))} />
-                                    <div className="grid grid-cols-2 gap-4 font-bold">
-                                        <button onClick={() => setEditUserPassModal(null)} className="h-14 rounded-2xl text-slate-400 bg-slate-50 active:scale-95 shadow-sm border border-transparent font-black leading-none uppercase font-black">ยกเลิก</button>
-                                        <button onClick={() => handleUpdateUserSetting(editUserPassModal.name, editUserPassModal.rank, newPassValue)} className="h-14 rounded-2xl bg-amber-500 text-white shadow-lg active:scale-95 shadow-amber-100 font-black leading-none uppercase font-black">บันทึกรหัส</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {itemToDelete && (
-                        <div className="fixed inset-0 z-[250] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md animate-modal text-center text-white font-bold">
-                            <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-red-600">
-                                <LucideIcon name="trash-2" size={64} className="text-red-600 mx-auto mb-6 animate-bounce" />
-                                <h3 className="font-black text-2xl text-slate-800 mb-2 font-bold font-bold font-bold">ลบรายการงาน?</h3>
-                                <p className="text-slate-400 text-sm mb-10 font-bold uppercase truncate font-bold font-bold">{itemToDelete.productName}</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={() => setItemToDelete(null)} className="h-14 rounded-2xl font-bold text-slate-400 bg-slate-50 border-2 border-transparent active:scale-95 transition-all uppercase leading-none font-bold font-bold">ยกเลิก</button>
-                                    <button onClick={confirmDelete} className="h-14 rounded-2xl font-black bg-red-600 text-white shadow-lg active:scale-95 transition-all uppercase font-bold leading-none font-bold font-black text-white">ยืนยัน</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {editQuantityItem && (
-                        <div className="fixed inset-0 z-[250] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md animate-modal text-center text-white font-bold font-bold font-black">
-                            <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-indigo-600">
-                                <h3 className="font-black text-2xl text-slate-800 mb-8 font-bold font-black font-bold font-black font-black">แก้ไขจำนวนสินค้า</h3>
-                                <div className="flex items-center justify-center gap-6 mb-10">
-                                    <button onClick={() => { setEditQuantityValue(prev => String(Math.max(1, parseInt(prev) - 1))); }} className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 font-black text-3xl active:scale-90 shadow-sm font-bold font-black">-</button>
-                                    <input type="number" className="w-28 h-16 bg-slate-50 border-2 border-indigo-100 rounded-2xl font-black text-4xl text-center text-indigo-600 outline-none shadow-inner font-bold font-black font-black" value={editQuantityValue} onChange={(e) => setEditQuantityValue(e.target.value)} />
-                                    <button onClick={() => { setEditQuantityValue(prev => String(parseInt(prev) + 1)); }} className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 font-black text-3xl active:scale-90 shadow-sm font-bold font-black">+</button>
-                                </div>
-                                <button onClick={confirmEditQuantity} className="w-full h-16 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl active:scale-95 shadow-indigo-100 font-bold font-bold font-black font-black leading-none">บันทึก</button>
-                                <button onClick={() => setEditQuantityItem(null)} className="w-full mt-4 text-slate-400 font-bold text-sm uppercase font-bold font-bold">ปิดหน้าต่าง</button>
-                            </div>
-                        </div>
-                    )}
-
-                    {masterItemToDelete && (
-                        <div className="fixed inset-0 z-[250] bg-black/60 flex items-center justify-center p-4 animate-modal text-center text-white font-bold font-black font-black">
-                            <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-red-600 text-center font-bold font-black font-black">
-                                <LucideIcon name="alert-triangle" size={64} className="text-red-600 mx-auto mb-6 font-bold" />
-                                <h3 className="font-black text-2xl mb-8 text-slate-800 font-bold font-black font-black font-black">ลบสินค้าออกจากคลัง?</h3>
-                                <div className="grid grid-cols-2 gap-4 text-white font-bold font-black font-black">
-                                    <button onClick={() => setMasterItemToDelete(null)} className="h-14 rounded-2xl bg-slate-100 font-bold text-slate-400 uppercase active:scale-95 transition-all leading-none font-bold font-bold font-black font-black">ยกเลิก</button>
-                                    <button onClick={() => confirmDeleteMaster(masterItemToDelete)} className="h-14 rounded-2xl bg-red-600 text-white font-black shadow-lg uppercase font-bold active:scale-95 transition-all leading-none font-bold font-bold font-black font-black text-white">ลบทันที</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {editMasterItem && (
-                        <div className="fixed inset-0 z-[210] bg-black/60 flex items-center justify-center p-4 backdrop-blur-md animate-modal">
-                            <div className="bg-white p-8 md:p-10 rounded-[3.5rem] shadow-2xl max-w-md w-full relative border-t-8 border-indigo-600 shadow-indigo-100/50">
-                                <button onClick={() => setEditMasterItem(null)} className="absolute top-8 right-8 bg-slate-100 p-2.5 rounded-full hover:bg-red-50 transition-all active:scale-90"><LucideIcon name="x" size={20} /></button>
-                                <h3 className="font-black text-2xl text-slate-800 mb-10 text-center uppercase tracking-tighter font-black leading-none font-black">Modify Product</h3>
-                                <div className="space-y-7 font-bold">
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 leading-none font-black">ชื่อสินค้าหลัก</label>
-                                        <input type="text" className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 font-bold outline-none transition-all shadow-inner leading-none" value={editMasterItem.name} onChange={(e) => setEditMasterItem({...editMasterItem, name: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 leading-none font-black">รูปภาพสินค้า</label>
-                                        <div className="relative group h-44 w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all hover:bg-indigo-50/50 hover:border-indigo-200 shadow-inner">
-                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 z-10 cursor-pointer" onChange={(e) => handleFileChangeInternal(e, setEditMasterItem)} />
-                                            {editMasterItem.preview || editMasterItem.imgUrl ? <img src={editMasterItem.preview || editMasterItem.imgUrl} className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" /> : <div className="text-center opacity-30 font-bold uppercase leading-none"><LucideIcon name="image-plus" size={32} className="mx-auto mb-2" />New Image</div>}
-                                        </div>
-                                    </div>
-                                    <button onClick={handleUpdateMaster} disabled={isEditingMaster} className="w-full h-16 bg-indigo-600 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-3 leading-none uppercase font-black">{isEditingMaster ? <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div> : <><LucideIcon name="check-circle" /> บันทึกการแก้ไข</>}</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {previewImage && (
-                        <div className="fixed inset-0 z-[400] bg-black/95 flex items-center justify-center p-4 shadow-2xl font-bold font-black" onClick={() => setPreviewImage(null)}>
-                            <div className="bg-white p-3 rounded-[3rem] max-w-2xl max-h-[90vh] overflow-hidden relative shadow-2xl border-4 border-white animate-modal font-bold font-black font-black">
-                                <button className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full active:scale-90 shadow-lg font-bold font-black"><LucideIcon name="x" size={20}/></button>
-                                <img src={previewImage} className="w-full h-full object-contain rounded-[2.5rem] font-bold" />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ✅ Mobile Navigation Bottom Bar */}
-                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] pb-safe z-50">
-                        <div className="flex justify-around items-center h-16">
-                            {renderMenuTabs()}
-                        </div>
-                    </nav>
-
-                    <footer className="hidden md:flex bg-white border-t p-5 mt-auto flex-col sm:flex-row justify-between items-center gap-3 text-[10px] font-black text-slate-300 tracking-widest uppercase shadow-inner font-bold font-black">
-                        <span>SEBOFFICIAL V4.5.0 ENTERPRISE</span>
-                        <div className="flex items-center gap-4 text-slate-400 font-bold uppercase tracking-tighter leading-none font-bold font-black">
-                            <LucideIcon name="database" size={12} className="text-emerald-500 font-bold font-black" /> Google Cloud Sync | Active: {currentUser} ({currentUserRank})
-                        </div>
-                    </footer>
                 </div>
             );
         };
