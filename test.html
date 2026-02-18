@@ -3,269 +3,456 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจสอบพ่อค้า (Merchant Verify)</title>
-    
-    <!-- 1. โหลดไลบรารีที่จำเป็น (React, Tailwind, Babel) จาก CDN -->
+    <title>Chrono Battle Pass Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- ฟอนต์ภาษาไทยสวยๆ -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" xintegrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        body { font-family: 'Sarabun', sans-serif; }
-        .animate-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Kanit', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
-    <div id="root"></div>
+<body class="gradient-bg min-h-screen text-slate-800 p-4 md:p-8">
 
-    <!-- 2. ส่วนของโค้ด React (Logic การทำงาน) -->
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+                <i class="fa-solid fa-hourglass-half text-yellow-400 mr-2"></i>Chrono Calculator
+            </h1>
+            <p class="text-slate-400 text-lg">วางแผนเก็บเลเวล Battle Pass และคำนวณความคุ้มค่า Silvervine</p>
+            
+            <div class="flex justify-center gap-3 mt-4 flex-wrap">
+                <div class="bg-slate-800/50 text-yellow-400 px-4 py-1.5 rounded-full text-sm border border-yellow-500/30 shadow-lg backdrop-blur-sm">
+                    <i class="fa-regular fa-calendar-check mr-1"></i> กิจกรรม: 18 ก.พ. - 25 มี.ค. 69
+                </div>
+                <div class="bg-purple-900/50 text-purple-300 px-4 py-1.5 rounded-full text-sm border border-purple-500/30 shadow-lg backdrop-blur-sm animate-pulse">
+                    <i class="fa-solid fa-medal mr-1"></i> โปรฯ Medal: 18-25 ก.พ. นี้เท่านั้น!
+                </div>
+            </div>
+        </header>
 
-        // --- ตั้งค่า Google Sheets ตรงนี้ ---
-        const SPREADSHEET_ID = '1PQkLSV5H98zaMp2qU6isgBbfNYjEIHwop6fWX0MVZC4';
-        const GID = '0';
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
-        
-        // เริ่มอ่านข้อมูลจากบรรทัดที่ 7 (A7) -> Index 6
-        const DATA_START_INDEX = 6;
-
-        // --- ไอคอน SVG (เขียนเองเพื่อให้ไฟล์เดียวจบไม่ต้องโหลดเพิ่ม) ---
-        const Icons = {
-            ShieldCheck: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>,
-            UserCheck: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
-            Phone: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
-            Facebook: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>,
-            AlertTriangle: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
-            RefreshCw: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
-            ExternalLink: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
-            CheckCircle2: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>,
-            X: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
-            Briefcase: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
-            Hash: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-        };
-
-        const App = () => {
-            const [merchants, setMerchants] = useState([]);
-            const [loading, setLoading] = useState(true);
-            const [error, setError] = useState(null);
-            const [searchTerm, setSearchTerm] = useState('');
-
-            const fetchData = async () => {
-                setLoading(true);
-                setError(null);
-                try {
-                    const response = await fetch(CSV_URL);
-                    if (!response.ok) throw new Error('เชื่อมต่อ Google Sheets ไม่สำเร็จ');
-                    
-                    const csvText = await response.text();
-                    if (csvText.trim().startsWith('<!DOCTYPE')) {
-                        throw new Error('กรุณาตั้งค่า Google Sheets เป็น "ทุกคนที่มีลิงก์" (Anyone with the link)');
-                    }
-
-                    const rows = csvText.split('\n');
-                    if (rows.length <= DATA_START_INDEX) throw new Error('ไม่พบข้อมูลในบรรทัดที่กำหนด');
-
-                    const parseCSVRow = (row) => {
-                        const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
-                        return row.split(regex).map(cell => cell.replace(/^"|"$/g, '').trim());
-                    };
-
-                    const jsonData = rows.slice(DATA_START_INDEX).map((row, index) => {
-                        if (!row.trim()) return null;
-                        const cells = parseCSVRow(row);
-                        
-                        let rawLink = cells[3] || '';
-                        if (rawLink && !rawLink.startsWith('http://') && !rawLink.startsWith('https://')) {
-                            rawLink = `https://${rawLink}`;
-                        }
-
-                        return {
-                            _id: index,
-                            code: cells[0] || '',       // Col A
-                            name: cells[1] || '-',      // Col B
-                            fbName: cells[2] || '-',    // Col C
-                            fbLink: rawLink,            // Col D
-                            phone: cells[4] || '-',     // Col E
-                            service: cells[5] || '-'    // Col F
-                        };
-                    }).filter(item => item !== null && item.code !== '');
-
-                    setMerchants(jsonData);
-                } catch (err) {
-                    setError(err.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            useEffect(() => { fetchData(); }, []);
-
-            const filteredMerchants = useMemo(() => {
-                const term = searchTerm.trim().toUpperCase();
-                if (!term) return [];
-                return merchants.filter(item => {
-                    const codeVal = item.code.toUpperCase();
-                    const parts = codeVal.split(/[- ]+/);
-                    return codeVal === term || parts.some(part => part === term);
-                });
-            }, [searchTerm, merchants]);
-
-            return (
-                <div className="min-h-screen pb-10">
-                    {/* Top Alert */}
-                    <div className="bg-red-600 text-white px-4 py-2 text-center text-[10px] md:text-xs font-bold uppercase tracking-widest sticky top-0 z-30 shadow-md flex items-center justify-center gap-2">
-                        <span className="w-4 h-4"><Icons.AlertTriangle /></span>
-                        <span>ระวังตัวปลอม! เช็คชื่อและเลขบัญชีให้ตรงก่อนโอน</span>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT PANEL: Configuration -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- 1. Target Settings -->
+                <div class="glass rounded-2xl p-6 shadow-xl card-hover">
+                    <div class="flex items-center mb-4 border-b border-slate-200 pb-3">
+                        <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shadow-md">1</div>
+                        <h2 class="text-xl font-bold text-slate-800">ตั้งค่าเป้าหมาย</h2>
                     </div>
-
-                    <div className="max-w-md mx-auto px-4 py-6">
-                        {/* Header */}
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-blue-600 p-3 rounded-2xl text-white shadow-lg shadow-blue-200">
-                                <span className="w-7 h-7 block"><Icons.ShieldCheck /></span>
+                    
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1.5">วันที่เริ่มคำนวณ</label>
+                            <input type="date" id="currentDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-700 font-medium">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1.5">เลเวลเป้าหมาย (Target)</label>
+                            <div class="relative">
+                                <input type="number" id="targetLevel" value="2500" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pr-16 text-2xl font-bold text-blue-700 focus:ring-2 focus:ring-blue-500 outline-none transition shadow-inner">
+                                <span class="absolute right-4 top-4 text-slate-400 font-medium">Lv.</span>
                             </div>
-                            <div>
-                                <h1 className="text-xl font-black text-slate-800">ระบบเช็คพ่อค้า</h1>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">VIP/MVP Verification</p>
+                            
+                            <!-- Quick Select Buttons -->
+                            <div class="grid grid-cols-3 gap-2 mt-3">
+                                <button onclick="setTarget(300)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-lg transition border border-slate-200">
+                                    Lv.300 (ตั๋ว)
+                                </button>
+                                <button onclick="setTarget(600)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-lg transition border border-slate-200">
+                                    Lv.600 (ใบ+9)
+                                </button>
+                                <button onclick="setTarget(2500)" class="text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-700 py-2 rounded-lg transition border border-yellow-300 font-bold">
+                                    Lv.2500 (ปีกทอง)
+                                </button>
                             </div>
                         </div>
-
-                        {/* Search Box */}
-                        <div className="bg-white p-2 rounded-[1.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 mb-8 relative">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-blue-600">
-                                    <span className="w-5 h-5"><Icons.Hash /></span>
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="พิมพ์เลขรหัส (เช่น 1657)"
-                                    className="block w-full pl-12 pr-12 py-4 bg-transparent border-none text-xl font-black text-slate-800 placeholder:text-slate-300 focus:outline-none"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                                {searchTerm && (
-                                    <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-300 hover:text-slate-500">
-                                        <span className="w-6 h-6"><Icons.X /></span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        {loading ? (
-                            <div className="text-center py-12">
-                                <div className="animate-spin w-8 h-8 text-blue-500 mx-auto mb-3"><Icons.RefreshCw /></div>
-                                <p className="text-xs font-bold text-slate-400">กำลังเชื่อมต่อฐานข้อมูล...</p>
-                            </div>
-                        ) : error ? (
-                            <div className="bg-red-50 p-6 rounded-2xl text-center border border-red-100">
-                                <div className="text-red-500 w-8 h-8 mx-auto mb-2"><Icons.AlertTriangle /></div>
-                                <p className="text-red-700 font-bold text-sm">{error}</p>
-                            </div>
-                        ) : !searchTerm ? (
-                            <div className="text-center py-10 opacity-40">
-                                <div className="w-12 h-12 mx-auto mb-2 text-slate-400"><Icons.CheckCircle2 /></div>
-                                <p className="font-bold text-slate-500">รอการค้นหา</p>
-                                <p className="text-xs text-slate-400">ค้นหาเฉพาะรหัสที่ตรงเป๊ะๆ</p>
-                            </div>
-                        ) : filteredMerchants.length > 0 ? (
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-2 px-2">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">พบข้อมูลที่ตรงกัน</span>
-                                </div>
-
-                                {filteredMerchants.map((m) => (
-                                    <div key={m._id} className="bg-white rounded-[2rem] shadow-xl shadow-slate-200 overflow-hidden border border-slate-100 animate-in">
-                                        
-                                        {/* Card Header */}
-                                        <div className="bg-blue-600 px-6 py-4 flex items-center justify-between text-white">
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase opacity-70 tracking-widest">Merchant Code</p>
-                                                <h2 className="text-3xl font-black tracking-tight">{m.code}</h2>
-                                            </div>
-                                            <div className="bg-white/20 p-2 rounded-xl w-10 h-10 flex items-center justify-center">
-                                                <Icons.CheckCircle2 />
-                                            </div>
-                                        </div>
-
-                                        <div className="p-6 space-y-4">
-                                            {/* Name */}
-                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
-                                                <div className="flex items-center gap-2 mb-1 text-slate-400">
-                                                    <span className="w-4 h-4"><Icons.UserCheck /></span>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider">ชื่อ-นามสกุล</span>
-                                                </div>
-                                                <p className="text-lg font-bold text-slate-800">{m.name}</p>
-                                            </div>
-
-                                            {/* Facebook */}
-                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
-                                                <div className="flex items-center gap-2 mb-1 text-slate-400">
-                                                    <span className="w-4 h-4"><Icons.Facebook /></span>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider">Facebook</span>
-                                                </div>
-                                                <p className="text-base font-bold text-slate-800">{m.fbName}</p>
-                                                {m.fbLink && (
-                                                    <a href={m.fbLink} target="_blank" rel="noopener noreferrer" 
-                                                       className="flex items-center justify-center gap-2 mt-3 bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all w-full shadow-md shadow-blue-200 active:scale-95">
-                                                        <span className="w-4 h-4"><Icons.ExternalLink /></span> ไปที่หน้าโปรไฟล์
-                                                    </a>
-                                                )}
-                                            </div>
-
-                                            {/* Phone */}
-                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
-                                                <div className="flex items-center gap-2 mb-1 text-slate-400">
-                                                    <span className="w-4 h-4"><Icons.Phone /></span>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider">เบอร์โทรศัพท์</span>
-                                                </div>
-                                                <p className="text-lg font-mono font-bold text-slate-800">{m.phone}</p>
-                                            </div>
-
-                                            {/* Service */}
-                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
-                                                <div className="flex items-center gap-2 mb-1 text-slate-400">
-                                                    <span className="w-4 h-4"><Icons.Briefcase /></span>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider">รายละเอียดบริการ</span>
-                                                </div>
-                                                <p className="text-sm font-medium text-slate-700 whitespace-pre-line leading-relaxed">{m.service}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="px-6 py-4 bg-amber-50 border-t border-amber-100 flex gap-3">
-                                            <span className="w-5 h-5 text-amber-500 shrink-0"><Icons.AlertTriangle /></span>
-                                            <p className="text-xs font-bold text-amber-800 leading-relaxed">
-                                                ข้อมูลนี้อ้างอิงจากรหัส <span className="font-black">{m.code}</span> <br/>
-                                                หากบัญชีโอนเงินไม่ตรงกับชื่อนี้ <span className="underline decoration-2 text-red-600">ห้ามโอนเงินเด็ดขาด</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="bg-white border-2 border-dashed border-red-200 rounded-[2rem] p-8 text-center mt-4">
-                                <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500">
-                                    <span className="w-8 h-8"><Icons.X /></span>
-                                </div>
-                                <h3 className="text-red-600 font-black text-lg">ไม่พบรหัส "{searchTerm}"</h3>
-                                <p className="text-slate-500 text-sm mt-1">กรุณาตรวจสอบตัวเลขอีกครั้ง</p>
-                            </div>
-                        )}
                     </div>
                 </div>
-            );
+
+                <!-- 2. Grinding Config -->
+                <div class="glass rounded-2xl p-6 shadow-xl card-hover">
+                    <div class="flex items-center mb-4 border-b border-slate-200 pb-3">
+                        <div class="bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shadow-md">2</div>
+                        <h2 class="text-xl font-bold text-slate-800">กิจวัตรรายวัน (Quest)</h2>
+                    </div>
+
+                    <div class="space-y-3">
+                        <!-- Daily -->
+                        <div class="flex items-start space-x-3 p-3 rounded-xl bg-blue-50/50 hover:bg-blue-50 transition cursor-pointer border border-transparent hover:border-blue-200" onclick="document.getElementById('questDaily').click()">
+                            <input type="checkbox" id="questDaily" checked class="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                            <div>
+                                <div class="font-bold text-slate-700">Premium Daily Quest</div>
+                                <div class="text-xs text-slate-500">ได้ 30 EXP ต่อวัน</div>
+                            </div>
+                        </div>
+
+                        <!-- Daily Zeny -->
+                        <div class="flex items-start space-x-3 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition cursor-pointer border border-transparent hover:border-green-200" onclick="document.getElementById('questZenyDaily').click()">
+                            <input type="checkbox" id="questZenyDaily" checked class="mt-1 w-5 h-5 text-green-600 rounded focus:ring-green-500 cursor-pointer">
+                            <div>
+                                <div class="font-bold text-slate-700">Daily Zeny (ส่งเงินรายวัน)</div>
+                                <div class="text-xs text-green-700 font-medium">จ่าย 1,000,000 Zeny ได้ 30 EXP</div>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-200 my-2">
+
+                        <!-- Weekly -->
+                        <div class="flex items-start space-x-3 p-3 rounded-xl bg-purple-50/50 hover:bg-purple-50 transition cursor-pointer border border-transparent hover:border-purple-200" onclick="document.getElementById('questWeekly').click()">
+                            <input type="checkbox" id="questWeekly" checked class="mt-1 w-5 h-5 text-purple-600 rounded focus:ring-purple-500 cursor-pointer">
+                            <div>
+                                <div class="font-bold text-slate-700">Weekly Quest</div>
+                                <div class="text-xs text-slate-500">ได้ 300 EXP ต่อสัปดาห์</div>
+                            </div>
+                        </div>
+
+                        <!-- Weekly Zeny (Trap) -->
+                        <div class="flex items-start space-x-3 p-3 rounded-xl bg-red-50/50 hover:bg-red-50 transition cursor-pointer border border-transparent hover:border-red-200 opacity-80" onclick="document.getElementById('questZenyWeekly').click()">
+                            <input type="checkbox" id="questZenyWeekly" class="mt-1 w-5 h-5 text-red-600 rounded focus:ring-red-500 cursor-pointer">
+                            <div>
+                                <div class="font-bold text-slate-700">Weekly Zeny (ไม่แนะนำ)</div>
+                                <div class="text-xs text-red-600 font-bold">จ่าย 10,000,000 Zeny ได้แค่ 40 EXP</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Promo Toggle -->
+                <div class="glass rounded-2xl p-4 shadow-md border-l-4 border-yellow-400">
+                    <label class="flex items-center justify-between cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-yellow-100 p-2 rounded-lg text-yellow-600 group-hover:bg-yellow-200 transition">
+                                <i class="fa-solid fa-gift text-xl"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-700 block">โปรโมชั่น Medal (18-25 ก.พ.)</span>
+                                <span class="text-xs text-slate-500">แถม Mysterious Medal เมื่อซื้อเลเวล</span>
+                            </div>
+                        </div>
+                        <div class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="usePromo" checked class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                        </div>
+                    </label>
+                </div>
+
+                <button onclick="calculate()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-1 active:scale-95 text-lg">
+                    <i class="fa-solid fa-calculator mr-2"></i> คำนวณผลลัพธ์
+                </button>
+            </div>
+
+            <!-- RIGHT PANEL: Results -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Summary Dashboard -->
+                <div id="resultCard" class="glass rounded-2xl p-6 shadow-xl border-t-4 border-slate-300 relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">สรุปแผนการเล่น</h2>
+                            <p class="text-sm text-slate-500" id="dateRangeDisplay">ระยะเวลาที่เหลือ: 0 วัน</p>
+                        </div>
+                        <div id="statusBadge" class="px-3 py-1 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wide">
+                            Waiting
+                        </div>
+                    </div>
+
+                    <!-- Level Stats -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                                <i class="fa-solid fa-person-digging text-4xl text-slate-800"></i>
+                            </div>
+                            <p class="text-xs text-slate-500 font-bold uppercase mb-1">เลเวลจากการเล่นเอง</p>
+                            <div class="text-4xl font-black text-slate-700" id="grindLevel">0</div>
+                            <p class="text-xs text-green-600 mt-1 font-medium bg-green-100 inline-block px-2 py-0.5 rounded-full">สายฟรี</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 text-center relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                                <i class="fa-solid fa-cart-shopping text-4xl text-blue-800"></i>
+                            </div>
+                            <p class="text-xs text-blue-600 font-bold uppercase mb-1">ต้องซื้อเพิ่ม</p>
+                            <div class="text-4xl font-black text-blue-700" id="buyLevel">0</div>
+                            <p class="text-xs text-blue-600 mt-1 font-medium bg-blue-100 inline-block px-2 py-0.5 rounded-full">สายเปย์</p>
+                        </div>
+                    </div>
+
+                    <!-- Costs -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4 shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                    <i class="fa-solid fa-gem text-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500 font-medium">ใช้ Silvervine รวม</div>
+                                    <div class="text-xs text-slate-400">ต้นทุนเงินจริง</div>
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-purple-600" id="totalSV">0 SV</div>
+                        </div>
+                        
+                        <div class="border-t border-slate-100"></div>
+
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                    <i class="fa-solid fa-coins text-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500 font-medium">ใช้ Zeny รวม</div>
+                                    <div class="text-xs text-slate-400">ต้นทุนเงินในเกม</div>
+                                </div>
+                            </div>
+                            <div class="text-xl font-bold text-green-600" id="totalZeny">0 M</div>
+                        </div>
+
+                        <div class="border-t border-slate-100"></div>
+
+                        <div class="flex justify-between items-center bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                            <div class="flex items-center space-x-2 text-yellow-700">
+                                <i class="fa-solid fa-medal"></i>
+                                <span class="text-sm font-bold">ของแถม Medal</span>
+                            </div>
+                            <div class="text-xl font-bold text-yellow-600" id="totalMedal">0 ea</div>
+                        </div>
+                    </div>
+
+                    <!-- Buying Plan -->
+                    <div class="mt-4">
+                        <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-basket-shopping mr-1"></i> แผนการซื้อที่แนะนำ:</h3>
+                        <div class="bg-slate-50 rounded-xl border border-slate-200 p-3">
+                            <ul id="buyingPlan" class="space-y-2 text-sm text-slate-600">
+                                <li class="text-center text-slate-400 italic py-2">กดคำนวณเพื่อดูข้อมูล</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward List -->
+                <div class="glass rounded-2xl p-6 shadow-xl border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-slate-800">
+                            <i class="fa-solid fa-trophy text-yellow-500 mr-2"></i>ของรางวัล
+                        </h2>
+                        <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200" id="finalLevelDisplay">Lv. 0</span>
+                    </div>
+                    
+                    <div class="space-y-2 max-h-[400px] overflow-y-auto pr-2" id="rewardList">
+                        <!-- JS Generated -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Constants & Config ---
+        const CONFIG = {
+            startDate: new Date('2026-02-18'),
+            endDate: new Date('2026-03-25'),
+            promoEndDate: new Date('2026-02-25'),
+            expPerLevel: 10
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const MILESTONES = [
+            { lv: 100, name: "[Not For Sale] Chrono Pass Ticket (1st)", type: "ticket" },
+            { lv: 200, name: "Costume Cosmic Connection", type: "costume" },
+            { lv: 300, name: "[Not For Sale] Chrono Pass Ticket (2nd)", type: "ticket" },
+            { lv: 350, name: "Guarantee Weapon +7 Pack", type: "refine" },
+            { lv: 350, name: "Special Enchant Temporal Boots", type: "item" },
+            { lv: 400, name: "Guarantee Armor +7 Pack", type: "refine" },
+            { lv: 600, name: "Guarantee Weapon +9 Pack", type: "refine" },
+            { lv: 700, name: "Guarantee Armor +9 Pack", type: "refine" },
+            { lv: 1500, name: "Guarantee Weapon +11 Pack", type: "refine" },
+            { lv: 2000, name: "Guarantee Armor +11 Pack", type: "refine" },
+            { lv: 2500, name: "Costume Golden Valkyrie Wings", type: "grand" },
+        ];
+
+        // --- Helper Functions ---
+        const formatNum = (num) => num.toLocaleString('en-US');
+        const getElem = (id) => document.getElementById(id);
+
+        // --- Core Logic ---
+        function setTarget(val) {
+            getElem('targetLevel').value = val;
+            calculate();
+        }
+
+        function calculate() {
+            // 1. Get Inputs
+            let inputDate = new Date(getElem('currentDate').value);
+            const targetLv = parseInt(getElem('targetLevel').value) || 0;
+            let usePromo = getElem('usePromo').checked;
+
+            // 2. Date Validation
+            if (isNaN(inputDate.getTime())) {
+                inputDate = new Date(); // Fallback to today
+            }
+
+            if (inputDate > CONFIG.endDate) {
+                alert("วันที่เลือกเกินระยะเวลากิจกรรม (25 มี.ค. 69)");
+                return;
+            }
+
+            // Check Promo Validity
+            let promoActive = usePromo;
+            if (usePromo && inputDate > CONFIG.promoEndDate) {
+                promoActive = false;
+                // Visual feedback only, don't uncheck to annoy user, just warn in logic or UI
+                getElem('usePromo').checked = false; // Actually uncheck to be clear
+                alert("วันที่เลือกเกินระยะเวลาโปรโมชั่น Medal (25 ก.พ.)");
+            }
+
+            // 3. Time Calculations
+            // Clamp start date to event start
+            const effectiveStartDate = inputDate < CONFIG.startDate ? CONFIG.startDate : inputDate;
+            const diffTime = Math.abs(CONFIG.endDate - effectiveStartDate);
+            const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include current day
+            const remainingWeeks = Math.ceil(remainingDays / 7);
+
+            getElem('dateRangeDisplay').innerText = `เหลือเวลาเก็บเลเวล: ${remainingDays} วัน (${remainingWeeks} สัปดาห์)`;
+
+            // 4. Grind EXP Calculation
+            let dailyExp = 0;
+            let dailyCost = 0;
+            if (getElem('questDaily').checked) dailyExp += 30;
+            if (getElem('questZenyDaily').checked) { dailyExp += 30; dailyCost += 1000000; }
+
+            let weeklyExp = 0;
+            let weeklyCost = 0;
+            if (getElem('questWeekly').checked) weeklyExp += 300;
+            if (getElem('questZenyWeekly').checked) { weeklyExp += 40; weeklyCost += 10000000; }
+
+            const totalGrindExp = (dailyExp * remainingDays) + (weeklyExp * remainingWeeks);
+            const totalZeny = (dailyCost * remainingDays) + (weeklyCost * remainingWeeks);
+            
+            const grindLv = Math.floor(totalGrindExp / CONFIG.expPerLevel);
+
+            // 5. Buying Logic
+            let neededLv = Math.max(0, targetLv - grindLv);
+            
+            let costSV = 0;
+            let medals = 0;
+            let planHTML = "";
+            
+            if (neededLv > 0) {
+                let remaining = neededLv;
+                let pack3000 = Math.floor(remaining / 1000);
+                remaining %= 1000;
+                let pack300 = Math.floor(remaining / 100);
+                remaining %= 100;
+                let pack30 = Math.floor(remaining / 10);
+                remaining %= 10;
+                let pack3 = remaining;
+
+                // Calculate Costs & Medals
+                if (pack3000 > 0) {
+                    let c = pack3000 * 3000;
+                    costSV += c;
+                    if(promoActive) medals += pack3000 * 6000;
+                    planHTML += `<li class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span class="font-bold text-purple-700">แพ็ก 3,000 SV</span> <span class="bg-white px-2 rounded text-slate-500 text-xs border">x${pack3000}</span></li>`;
+                }
+                if (pack300 > 0) {
+                    let c = pack300 * 300;
+                    costSV += c;
+                    if(promoActive) medals += pack300 * 500;
+                    planHTML += `<li class="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100"><span class="font-bold text-blue-700">แพ็ก 300 SV</span> <span class="bg-white px-2 rounded text-slate-500 text-xs border">x${pack300}</span></li>`;
+                }
+                if (pack30 > 0) {
+                    costSV += pack30 * 30;
+                    planHTML += `<li class="flex justify-between items-center bg-slate-100 p-2 rounded border border-slate-200"><span class="text-slate-700">แพ็ก 30 SV</span> <span class="bg-white px-2 rounded text-slate-500 text-xs border">x${pack30}</span></li>`;
+                }
+                if (pack3 > 0) {
+                    costSV += pack3 * 3;
+                    planHTML += `<li class="flex justify-between items-center bg-slate-100 p-2 rounded border border-slate-200"><span class="text-slate-700">แพ็ก 3 SV</span> <span class="bg-white px-2 rounded text-slate-500 text-xs border">x${pack3}</span></li>`;
+                }
+            } else {
+                planHTML = `<li class="text-center text-green-600 font-bold py-2 bg-green-50 rounded"><i class="fa-solid fa-check-circle mr-1"></i> ไม่ต้องเติมเงินเพิ่ม!</li>`;
+            }
+
+            // 6. UI Updates
+            getElem('grindLevel').innerText = formatNum(grindLv);
+            getElem('buyLevel').innerText = formatNum(neededLv);
+            getElem('totalSV').innerText = formatNum(costSV) + " SV";
+            getElem('totalZeny').innerText = (totalZeny / 1000000).toFixed(1) + " M";
+            getElem('totalMedal').innerText = formatNum(medals) + " ea";
+            getElem('buyingPlan').innerHTML = planHTML;
+
+            // Status Badge & Card Color
+            const resultCard = getElem('resultCard');
+            const statusBadge = getElem('statusBadge');
+            
+            resultCard.classList.remove('border-slate-300', 'border-green-500', 'border-purple-500');
+            statusBadge.classList.remove('bg-slate-200', 'text-slate-600', 'bg-green-100', 'text-green-700', 'bg-purple-100', 'text-purple-700');
+
+            if (neededLv <= 0) {
+                resultCard.classList.add('border-green-500');
+                statusBadge.classList.add('bg-green-100', 'text-green-700');
+                statusBadge.innerText = "SUCCESS (สายฟรี)";
+            } else {
+                resultCard.classList.add('border-purple-500');
+                statusBadge.classList.add('bg-purple-100', 'text-purple-700');
+                statusBadge.innerText = "REQUIRE TOPUP";
+            }
+
+            // 7. Rewards List
+            const list = getElem('rewardList');
+            list.innerHTML = "";
+            const finalLevel = Math.max(targetLv, grindLv);
+            getElem('finalLevelDisplay').innerText = `Total Lv. ${formatNum(finalLevel)}`;
+
+            MILESTONES.forEach(m => {
+                const reached = finalLevel >= m.lv;
+                const div = document.createElement('div');
+                
+                // Style Logic
+                let bgClass = reached ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-100 opacity-60 grayscale';
+                let icon = reached ? '<i class="fa-solid fa-check text-green-500"></i>' : '<i class="fa-solid fa-lock text-slate-300"></i>';
+                
+                if (m.type === 'grand' && reached) {
+                    bgClass = 'bg-yellow-50 border-yellow-300 ring-1 ring-yellow-200 shadow-sm';
+                    icon = '<i class="fa-solid fa-star text-yellow-500 animate-spin-slow"></i>';
+                }
+
+                div.className = `flex justify-between items-center p-3 rounded-xl border transition ${bgClass}`;
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-bold w-14 text-center py-1 rounded-md ${reached ? 'bg-white text-slate-700 shadow-sm' : 'bg-slate-200 text-slate-500'}">Lv.${m.lv}</span>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-semibold text-slate-700">${m.name}</span>
+                            ${m.type === 'grand' ? '<span class="text-[10px] text-yellow-600 font-bold uppercase">Grand Prize</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm border border-slate-100">
+                        ${icon}
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // --- Init ---
+        window.onload = () => {
+            getElem('currentDate').valueAsDate = new Date();
+            calculate();
+        };
     </script>
 </body>
 </html>
+
 
