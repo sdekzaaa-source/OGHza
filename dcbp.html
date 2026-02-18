@@ -97,15 +97,13 @@
                 <div class="rox-panel">
                     <div class="rox-header flex justify-between items-center">
                         <h2 class="font-bold text-sm text-slate-600">📊 ลำดับภารกิจ Weekly</h2>
-                        <!-- Added missing element that caused the error -->
-                        <div id="weekRangeDisp" class="text-[9px] bg-red-100 px-2 py-0.5 rounded text-red-600 font-bold">ยังไม่เริ่มสัปดาห์</div>
+                        <div id="weekRangeDisp" class="text-[9px] bg-red-100 px-2 py-0.5 rounded text-red-600 font-bold">รอเริ่มสัปดาห์</div>
                     </div>
                     <div class="p-5 space-y-5">
                         <div id="vStep1" class="quest-step step-active"><div class="step-bullet">1</div><div class="text-xs font-bold text-slate-700">Amdarais</div><div class="text-[10px] text-slate-400" id="vStatus1">ยังไม่เริ่ม</div></div>
                         <div id="vStep2" class="quest-step"><div class="step-bullet">2</div><div class="text-xs font-bold text-slate-700">Evil Believer (x2)</div><div class="text-[10px] text-slate-400" id="vStatus2">ล็อกอยู่</div></div>
                         <div id="vStep3" class="quest-step"><div class="step-bullet">3</div><div class="text-xs font-bold text-slate-700">Infinite Tao (x3)</div><div class="text-[10px] text-slate-400" id="vStatus3">ล็อกอยู่</div></div>
                         <div id="vStepZ" class="quest-step"><div class="step-bullet">Z</div><div class="text-xs font-bold text-slate-700">10M Zeny</div><div class="text-[10px] text-slate-400" id="vStatusZ">ยังไม่ทำ</div></div>
-                        <div id="weekResetNotice" class="text-[10px] text-red-500 font-bold bg-red-50 p-2 rounded-lg hidden mt-2">⏳ รีเซ็ตใน <span id="daysToReset">0</span> วัน</div>
                     </div>
                 </div>
             </div>
@@ -132,6 +130,7 @@
                                     </label>
                                 </div>
                                 <div id="weeklyInputArea" class="space-y-2 pt-2 border-t border-slate-50"></div>
+                                <p class="text-[9px] text-slate-400 italic">ปล. หากติ๊ก Amdarais หรือ Evil ครบ ระบบจะเปิดข้อถัดไปให้เลือกทำได้ทันทีในวันเดียวกัน</p>
                             </div>
                             <div class="space-y-4">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Buy Levels (SV)</p>
@@ -165,6 +164,7 @@
         const REWARDS = {
             1: [{n: "Premium Service 10Day Box", q: 1, rare: true}, {n: "Mysterious Medal", q: 10, rare: true}],
             10: [{n: "Treasure Box I", q: 1}],
+            23: [{n: "Mysterious Medal", q: 3, rare: true}],
             100: [{n: "Chrono Pass Ticket", q: 1, rare: true}],
             200: [{n: "Costume Cosmic Connection", q: 1, rare: true}],
             300: [{n: "Chrono Pass Ticket", q: 1, rare: true}],
@@ -173,17 +173,18 @@
             2500: [{n: "Costume Golden Valkyrie Wings", q: 1, rare: true}]
         };
 
-        let entries = JSON.parse(localStorage.getItem('roc_ggt_diary_v3_entries')) || [];
-        let config = JSON.parse(localStorage.getItem('roc_ggt_diary_v3_config')) || { package: 'normal' };
+        let entries = JSON.parse(localStorage.getItem('roc_ggt_diary_v4_entries')) || [];
+        let config = JSON.parse(localStorage.getItem('roc_ggt_diary_v4_config')) || { package: 'normal' };
 
         document.getElementById('logDate').valueAsDate = new Date();
 
         function selectPackage(pkgId) {
             config.package = pkgId;
-            localStorage.setItem('roc_ggt_diary_v3_config', JSON.stringify(config));
+            localStorage.setItem('roc_ggt_diary_v4_config', JSON.stringify(config));
             render();
         }
 
+        // --- Logic: Check Sequential and Same-Day Overlap ---
         function getWeeklyState(targetDateStr) {
             const past = entries.filter(e => e.date < targetDateStr).sort((a,b) => a.date.localeCompare(b.date));
             let start = null; let prog = { w1: false, w2: 0, w3: 0, wzeny: false };
@@ -208,23 +209,35 @@
             const existing = entries.find(e => e.date === dateStr);
             const quests = existing ? existing.quests : [];
 
+            // Same-day logic: Read checkboxes currently on screen if they are not yet in "entries"
+            const isW1CheckedNow = document.getElementById('w1')?.checked || quests.includes('w1');
+            const isW2CheckedNow = document.getElementById('w2')?.checked || quests.includes('w2');
+
+            // Sequential Control
             let canDoW1 = !prog.w1;
-            let canDoW2 = prog.w1 && prog.w2 < 2;
-            let canDoW3 = prog.w1 && prog.w2 >= 2 && prog.w3 < 3;
+            let canDoW2 = (prog.w1 || isW1CheckedNow) && (prog.w2 < 2);
+            // If already killed 1 in past, and checking 2nd now -> enables W3
+            let currentTotalW2 = prog.w2 + (isW2CheckedNow ? 1 : 0);
+            let canDoW3 = (prog.w1 || isW1CheckedNow) && currentTotalW2 >= 2 && prog.w3 < 3;
             let canDoZeny = !prog.wzeny;
 
             let html = "";
             html += createQuestCard('w1', 'Amdarais (1/1)', canDoW1, quests.includes('w1'), 'Step 1');
             html += createQuestCard('w2', `Evil Believer (${prog.w2}/2)`, canDoW2, quests.includes('w2'), 'Step 2 (1/day)');
             html += createQuestCard('w3', `Infinite Tao (${prog.w3}/3)`, canDoW3, quests.includes('w3'), 'Step 3 (1/day)');
-            html += createQuestCard('wzeny', 'Send 10M Zeny', canDoZeny, quests.includes('wzeny'), 'One-time');
+            html += createQuestCard('wzeny', 'Send 10M Zeny', canDoZeny, quests.includes('wzeny'), '1/week');
             if (container) container.innerHTML = html;
 
-            const pkgCard = document.getElementById(`pkg-${config.package}`);
-            if (pkgCard) {
-                document.querySelectorAll('.package-card').forEach(el => el.classList.remove('active'));
-                pkgCard.classList.add('active');
-            }
+            // Setup Listeners for real-time UI unlocking
+            ['w1', 'w2'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.addEventListener('change', updateFormUI);
+            });
+
+            // Package Visuals
+            document.querySelectorAll('.package-card').forEach(el => el.classList.remove('active'));
+            const activePkg = document.getElementById(`pkg-${config.package}`);
+            if(activePkg) activePkg.classList.add('active');
 
             const bpBadge = document.getElementById('bpBadge');
             if (bpBadge) bpBadge.innerText = pkg.name;
@@ -233,20 +246,11 @@
             if (dailyXpHint) dailyXpHint.innerText = pkg.type === 'premium' ? '30 XP' : '20 XP';
 
             const rangeDisp = document.getElementById('weekRangeDisp');
-            const resetNotice = document.getElementById('weekResetNotice');
-            const daysToReset = document.getElementById('daysToReset');
-            
             if (rangeDisp) {
                 if (currentWeekStart) {
                     const rD = new Date(currentWeekStart); rD.setDate(rD.getDate() + 7);
-                    rangeDisp.innerText = `${new Date(currentWeekStart).toLocaleDateString('th-TH')} - ${rD.toLocaleDateString('th-TH')}`;
-                    let diff = 7 - Math.floor((new Date(dateStr) - new Date(currentWeekStart)) / (1000 * 60 * 60 * 24));
-                    if (resetNotice) resetNotice.classList.remove('hidden'); 
-                    if (daysToReset) daysToReset.innerText = Math.max(0, diff);
-                } else { 
-                    rangeDisp.innerText = "ยังไม่เริ่มสัปดาห์"; 
-                    if (resetNotice) resetNotice.classList.add('hidden'); 
-                }
+                    rangeDisp.innerText = `Week: ${new Date(currentWeekStart).toLocaleDateString('th-TH')} - ${rD.toLocaleDateString('th-TH')}`;
+                } else { rangeDisp.innerText = "ยังไม่เริ่มสัปดาห์"; }
             }
             updateVisualSteps(prog);
         }
@@ -264,7 +268,7 @@
                 const e = document.getElementById(id); const s = document.getElementById(sid);
                 if (e && s) {
                     e.className = 'quest-step ' + (state==='done' ? 'step-done' : state==='active' ? 'step-active' : 'opacity-30');
-                    s.innerText = state==='done'?'สำเร็จ':state==='active'?(m>1?`คืบหน้า ${c}/${m}`:'พร้อมทำ'):'ล็อก';
+                    s.innerText = state==='done'?'Completed':state==='active'?(m>1?`Progress ${c}/${m}`:'Ready'):'Locked';
                 }
             };
             set('vStep1', 'vStatus1', prog.w1?'done':'active');
@@ -280,7 +284,7 @@
             const buyLv = parseInt(document.getElementById('buyLv').value) || 0;
             const idx = entries.findIndex(e => e.date === date);
             if(idx > -1) entries[idx] = { date, quests, buyLv }; else entries.push({ date, quests, buyLv });
-            localStorage.setItem('roc_ggt_diary_v3_entries', JSON.stringify(entries));
+            localStorage.setItem('roc_ggt_diary_v4_entries', JSON.stringify(entries));
             document.getElementById('buyLv').value = 0; render();
         }
 
@@ -313,29 +317,22 @@
                 logs.push({ ...e, endLv: currentLv, gained });
             });
 
-            const currentLvEl = document.getElementById('currentLevel');
-            if (currentLvEl) currentLvEl.innerText = currentLv;
-            
-            const totalSpentDisp = document.getElementById('totalSpentDisp');
-            if (totalSpentDisp) totalSpentDisp.innerText = currentSV.toLocaleString();
+            if (document.getElementById('currentLevel')) document.getElementById('currentLevel').innerText = currentLv;
+            if (document.getElementById('totalSpentDisp')) document.getElementById('totalSpentDisp').innerText = currentSV.toLocaleString();
             
             const perc = Math.min(100, (currentLv/2500)*100).toFixed(1);
-            const progressBar = document.getElementById('progressBar');
-            if (progressBar) progressBar.style.width = perc + '%';
-            
-            const percentDisp = document.getElementById('percentDisp');
-            if (percentDisp) percentDisp.innerText = perc + '%';
+            if (document.getElementById('progressBar')) document.getElementById('progressBar').style.width = perc + '%';
+            if (document.getElementById('percentDisp')) document.getElementById('percentDisp').innerText = perc + '%';
 
-            const historyHTML = logs.reverse().map(e => `<div class="p-5 hover:bg-slate-50 transition flex gap-5 border-l-4 ${e.buyLv>0?'border-l-yellow-400':'border-l-transparent'}"><div class="flex-none w-16 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">${new Date(e.date).toLocaleDateString('th-TH',{day:'2-digit',month:'short'})}</div><div class="text-3xl font-gaming font-bold text-red-600 mt-1">${e.endLv}</div><div class="text-[9px] font-bold text-slate-300 mt-1 uppercase">LV</div></div><div class="flex-1 overflow-hidden"><div class="flex flex-wrap items-center gap-2 mb-3"><span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">${e.quests.length} ภารกิจ</span>${e.buyLv>0?`<span class="text-[9px] font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-md border border-yellow-200">🛒 +${e.buyLv} LV</span>`:''}</div><div class="flex flex-wrap gap-1.5">${e.gained.length?e.gained.map(i=>`<span class="inline-block bg-white border border-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded shadow-sm font-bold">${i.n} x${i.q}</span>`).join(''):'<span class="text-[9px] text-slate-300 italic">No Items</span>'}</div></div></div>`).join('');
-            const diaryList = document.getElementById('diaryList');
-            if (diaryList) diaryList.innerHTML = historyHTML || '<div class="p-20 text-center text-slate-300 text-sm italic font-bold">NO RECORDS FOUND</div>';
+            const historyHTML = logs.reverse().map(e => `<div class="p-5 hover:bg-slate-50 transition flex gap-5 border-l-4 ${e.buyLv>0?'border-l-yellow-400':'border-l-transparent'}"><div class="flex-none w-16 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">${new Date(e.date).toLocaleDateString('th-TH',{day:'2-digit',month:'short'})}</div><div class="text-3xl font-gaming font-bold text-red-600 mt-1">${e.endLv}</div><div class="text-[9px] font-bold text-slate-300 mt-1 uppercase leading-none">LV</div></div><div class="flex-1 overflow-hidden"><div class="flex flex-wrap items-center gap-2 mb-3"><span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">${e.quests.length} ภารกิจ</span>${e.buyLv>0?`<span class="text-[9px] font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-md border border-yellow-200">🛒 +${e.buyLv} LV</span>`:''}</div><div class="flex flex-wrap gap-1.5">${e.gained.length?e.gained.map(i=>`<span class="inline-block bg-white border border-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded shadow-sm font-bold">${i.n} x${i.q}</span>`).join(''):'<span class="text-[9px] text-slate-300 italic">No Items</span>'}</div></div></div>`).join('');
+            if (document.getElementById('diaryList')) document.getElementById('diaryList').innerHTML = historyHTML || '<div class="p-20 text-center text-slate-300 text-sm italic font-bold">NO RECORDS FOUND</div>';
             updateFormUI();
         }
 
-        function resetData() { if(confirm('ยืนยันที่จะล้างบันทึกความคืบหน้าทั้งหมด?')){ entries = []; localStorage.removeItem('roc_ggt_diary_v3_entries'); render(); }}
-        document.getElementById('buyLv').addEventListener('input', (e) => { 
-            const svCostDisp = document.getElementById('svCostDisp');
-            if (svCostDisp) svCostDisp.innerText = (parseInt(e.target.value || 0) * 3).toLocaleString(); 
+        function resetData() { if(confirm('ยืนยันที่จะล้างบันทึกความคืบหน้าทั้งหมด?')){ entries = []; localStorage.removeItem('roc_ggt_diary_v4_entries'); render(); }}
+        document.getElementById('buyLv')?.addEventListener('input', (e) => { 
+            const disp = document.getElementById('svCostDisp');
+            if(disp) disp.innerText = (parseInt(e.target.value || 0) * 3).toLocaleString(); 
         });
         render();
     </script>
