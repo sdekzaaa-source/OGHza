@@ -113,7 +113,7 @@
                 <div class="rox-panel border-t-4 border-t-yellow-400 shadow-lg shadow-slate-200">
                     <div class="rox-header flex justify-between items-center">
                         <h2 class="font-bold text-slate-700">✍️ บันทึกวันนี้</h2>
-                        <input type="date" id="logDate" onchange="updateFormUI()" class="bg-white border border-slate-200 rounded-lg p-1 text-xs font-bold text-red-600 shadow-sm outline-none">
+                        <input type="date" id="logDate" onchange="resetTempState(); updateFormUI()" class="bg-white border border-slate-200 rounded-lg p-1 text-xs font-bold text-red-600 shadow-sm outline-none">
                     </div>
                     <div class="p-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -130,7 +130,7 @@
                                     </label>
                                 </div>
                                 <div id="weeklyInputArea" class="space-y-2 pt-2 border-t border-slate-50"></div>
-                                <p class="text-[9px] text-slate-400 italic">ปล. หากติ๊ก Amdarais หรือ Evil ครบ ระบบจะเปิดข้อถัดไปให้เลือกทำได้ทันทีในวันเดียวกัน</p>
+                                <p class="text-[9px] text-slate-400 italic">ปล. ระบบจะเปิดข้อถัดไปให้อัตโนมัติเมื่อเงื่อนไขครบในวันเดียวกัน</p>
                             </div>
                             <div class="space-y-4">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Buy Levels (SV)</p>
@@ -173,18 +173,35 @@
             2500: [{n: "Costume Golden Valkyrie Wings", q: 1, rare: true}]
         };
 
-        let entries = JSON.parse(localStorage.getItem('roc_ggt_diary_v4_entries')) || [];
-        let config = JSON.parse(localStorage.getItem('roc_ggt_diary_v4_config')) || { package: 'normal' };
+        let entries = JSON.parse(localStorage.getItem('roc_ggt_diary_v5_entries')) || [];
+        let config = JSON.parse(localStorage.getItem('roc_ggt_diary_v5_config')) || { package: 'normal' };
+        
+        // Temporary state to handle checkboxes before saving
+        let tempQuests = { w1: false, w2: false, w3: false, wzeny: false };
 
         document.getElementById('logDate').valueAsDate = new Date();
 
         function selectPackage(pkgId) {
             config.package = pkgId;
-            localStorage.setItem('roc_ggt_diary_v4_config', JSON.stringify(config));
+            localStorage.setItem('roc_ggt_diary_v5_config', JSON.stringify(config));
             render();
         }
 
-        // --- Logic: Check Sequential and Same-Day Overlap ---
+        function resetTempState() {
+            const dateStr = document.getElementById('logDate').value;
+            const existing = entries.find(e => e.date === dateStr);
+            if (existing) {
+                tempQuests = {
+                    w1: existing.quests.includes('w1'),
+                    w2: existing.quests.includes('w2'),
+                    w3: existing.quests.includes('w3'),
+                    wzeny: existing.quests.includes('wzeny')
+                };
+            } else {
+                tempQuests = { w1: false, w2: false, w3: false, wzeny: false };
+            }
+        }
+
         function getWeeklyState(targetDateStr) {
             const past = entries.filter(e => e.date < targetDateStr).sort((a,b) => a.date.localeCompare(b.date));
             let start = null; let prog = { w1: false, w2: 0, w3: 0, wzeny: false };
@@ -206,44 +223,29 @@
             const pkg = PACKAGES[config.package];
             const { currentWeekStart, prog } = getWeeklyState(dateStr);
             const container = document.getElementById('weeklyInputArea');
-            const existing = entries.find(e => e.date === dateStr);
-            const quests = existing ? existing.quests : [];
 
-            // Same-day logic: Read checkboxes currently on screen if they are not yet in "entries"
-            const isW1CheckedNow = document.getElementById('w1')?.checked || quests.includes('w1');
-            const isW2CheckedNow = document.getElementById('w2')?.checked || quests.includes('w2');
-
-            // Sequential Control
+            // Sequential Logic with Same-day support
             let canDoW1 = !prog.w1;
-            let canDoW2 = (prog.w1 || isW1CheckedNow) && (prog.w2 < 2);
-            // If already killed 1 in past, and checking 2nd now -> enables W3
-            let currentTotalW2 = prog.w2 + (isW2CheckedNow ? 1 : 0);
-            let canDoW3 = (prog.w1 || isW1CheckedNow) && currentTotalW2 >= 2 && prog.w3 < 3;
+            let canDoW2 = (prog.w1 || tempQuests.w1) && (prog.w2 < 2);
+            // Current EB count includes previous days + today's temp check
+            let totalEB = prog.w2 + (tempQuests.w2 ? 1 : 0);
+            let canDoW3 = (prog.w1 || tempQuests.w1) && totalEB >= 2 && prog.w3 < 3;
             let canDoZeny = !prog.wzeny;
 
             let html = "";
-            html += createQuestCard('w1', 'Amdarais (1/1)', canDoW1, quests.includes('w1'), 'Step 1');
-            html += createQuestCard('w2', `Evil Believer (${prog.w2}/2)`, canDoW2, quests.includes('w2'), 'Step 2 (1/day)');
-            html += createQuestCard('w3', `Infinite Tao (${prog.w3}/3)`, canDoW3, quests.includes('w3'), 'Step 3 (1/day)');
-            html += createQuestCard('wzeny', 'Send 10M Zeny', canDoZeny, quests.includes('wzeny'), '1/week');
+            html += createQuestCard('w1', 'Amdarais (1/1)', canDoW1, tempQuests.w1, 'Step 1');
+            html += createQuestCard('w2', `Evil Believer (${prog.w2}/2)`, canDoW2, tempQuests.w2, 'Step 2 (1/day)');
+            html += createQuestCard('w3', `Infinite Tao (${prog.w3}/3)`, canDoW3, tempQuests.w3, 'Step 3 (1/day)');
+            html += createQuestCard('wzeny', 'Send 10M Zeny', canDoZeny, tempQuests.wzeny, 'One-time');
+            
             if (container) container.innerHTML = html;
 
-            // Setup Listeners for real-time UI unlocking
-            ['w1', 'w2'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) el.addEventListener('change', updateFormUI);
-            });
-
-            // Package Visuals
+            // Visual Sync
             document.querySelectorAll('.package-card').forEach(el => el.classList.remove('active'));
-            const activePkg = document.getElementById(`pkg-${config.package}`);
-            if(activePkg) activePkg.classList.add('active');
-
-            const bpBadge = document.getElementById('bpBadge');
-            if (bpBadge) bpBadge.innerText = pkg.name;
-
-            const dailyXpHint = document.getElementById('dailyXpHint');
-            if (dailyXpHint) dailyXpHint.innerText = pkg.type === 'premium' ? '30 XP' : '20 XP';
+            if(document.getElementById(`pkg-${config.package}`)) document.getElementById(`pkg-${config.package}`).classList.add('active');
+            
+            if(document.getElementById('bpBadge')) document.getElementById('bpBadge').innerText = pkg.name;
+            if(document.getElementById('dailyXpHint')) document.getElementById('dailyXpHint').innerText = pkg.type === 'premium' ? '30 XP' : '20 XP';
 
             const rangeDisp = document.getElementById('weekRangeDisp');
             if (rangeDisp) {
@@ -255,10 +257,15 @@
             updateVisualSteps(prog);
         }
 
+        function handleCheckChange(id) {
+            tempQuests[id] = document.getElementById(id).checked;
+            updateFormUI(); // Re-render to unlock next step instantly
+        }
+
         function createQuestCard(id, label, enabled, checked, hint) {
             const finished = !enabled && !checked && (id==='w1' || id==='wzeny' || (id==='w2'&&label.includes('2/2')) || (id==='w3'&&label.includes('3/3')));
             return `<label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 transition ${enabled ? 'cursor-pointer hover:bg-red-50 shadow-sm' : 'opacity-40 grayscale cursor-not-allowed'}">
-                <input type="checkbox" id="${id}" ${checked?'checked':''} ${enabled?'':'disabled'} class="w-5 h-5 text-red-600 rounded border-slate-300">
+                <input type="checkbox" id="${id}" ${checked?'checked':''} ${enabled?`onchange="handleCheckChange('${id}')"`:'disabled'} class="w-5 h-5 text-red-600 rounded border-slate-300">
                 <div class="flex-1"><div class="text-sm font-bold text-slate-700">${label}</div><div class="text-[9px] font-bold ${finished?'text-green-500':'text-slate-400'} uppercase">${finished?'DONE IN WEEK':hint}</div></div>
             </label>`;
         }
@@ -280,12 +287,17 @@
         function saveEntry() {
             const date = document.getElementById('logDate').value;
             const quests = [];
-            ['qDaily', 'qZenyD', 'w1', 'w2', 'w3', 'wzeny'].forEach(id => { if(document.getElementById(id)?.checked) quests.push(id.replace('q', '').toLowerCase()); });
+            if(document.getElementById('qDaily')?.checked) quests.push('daily');
+            if(document.getElementById('qZenyD')?.checked) quests.push('dailyzeny');
+            Object.keys(tempQuests).forEach(key => { if(tempQuests[key]) quests.push(key); });
+            
             const buyLv = parseInt(document.getElementById('buyLv').value) || 0;
             const idx = entries.findIndex(e => e.date === date);
             if(idx > -1) entries[idx] = { date, quests, buyLv }; else entries.push({ date, quests, buyLv });
-            localStorage.setItem('roc_ggt_diary_v4_entries', JSON.stringify(entries));
-            document.getElementById('buyLv').value = 0; render();
+            
+            localStorage.setItem('roc_ggt_diary_v5_entries', JSON.stringify(entries));
+            document.getElementById('buyLv').value = 0;
+            render();
         }
 
         function render() {
@@ -317,23 +329,24 @@
                 logs.push({ ...e, endLv: currentLv, gained });
             });
 
-            if (document.getElementById('currentLevel')) document.getElementById('currentLevel').innerText = currentLv;
-            if (document.getElementById('totalSpentDisp')) document.getElementById('totalSpentDisp').innerText = currentSV.toLocaleString();
-            
+            if(document.getElementById('currentLevel')) document.getElementById('currentLevel').innerText = currentLv;
+            if(document.getElementById('totalSpentDisp')) document.getElementById('totalSpentDisp').innerText = currentSV.toLocaleString();
             const perc = Math.min(100, (currentLv/2500)*100).toFixed(1);
-            if (document.getElementById('progressBar')) document.getElementById('progressBar').style.width = perc + '%';
-            if (document.getElementById('percentDisp')) document.getElementById('percentDisp').innerText = perc + '%';
+            if(document.getElementById('progressBar')) document.getElementById('progressBar').style.width = perc + '%';
+            if(document.getElementById('percentDisp')) document.getElementById('percentDisp').innerText = perc + '%';
 
             const historyHTML = logs.reverse().map(e => `<div class="p-5 hover:bg-slate-50 transition flex gap-5 border-l-4 ${e.buyLv>0?'border-l-yellow-400':'border-l-transparent'}"><div class="flex-none w-16 text-center"><div class="text-[10px] font-bold text-slate-400 uppercase">${new Date(e.date).toLocaleDateString('th-TH',{day:'2-digit',month:'short'})}</div><div class="text-3xl font-gaming font-bold text-red-600 mt-1">${e.endLv}</div><div class="text-[9px] font-bold text-slate-300 mt-1 uppercase leading-none">LV</div></div><div class="flex-1 overflow-hidden"><div class="flex flex-wrap items-center gap-2 mb-3"><span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">${e.quests.length} ภารกิจ</span>${e.buyLv>0?`<span class="text-[9px] font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-md border border-yellow-200">🛒 +${e.buyLv} LV</span>`:''}</div><div class="flex flex-wrap gap-1.5">${e.gained.length?e.gained.map(i=>`<span class="inline-block bg-white border border-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded shadow-sm font-bold">${i.n} x${i.q}</span>`).join(''):'<span class="text-[9px] text-slate-300 italic">No Items</span>'}</div></div></div>`).join('');
-            if (document.getElementById('diaryList')) document.getElementById('diaryList').innerHTML = historyHTML || '<div class="p-20 text-center text-slate-300 text-sm italic font-bold">NO RECORDS FOUND</div>';
+            if(document.getElementById('diaryList')) document.getElementById('diaryList').innerHTML = historyHTML || '<div class="p-20 text-center text-slate-300 text-sm italic font-bold">NO RECORDS FOUND</div>';
+            resetTempState();
             updateFormUI();
         }
 
-        function resetData() { if(confirm('ยืนยันที่จะล้างบันทึกความคืบหน้าทั้งหมด?')){ entries = []; localStorage.removeItem('roc_ggt_diary_v4_entries'); render(); }}
+        function resetData() { if(confirm('ยืนยันที่จะล้างบันทึกความคืบหน้าทั้งหมด?')){ entries = []; localStorage.removeItem('roc_ggt_diary_v5_entries'); render(); }}
         document.getElementById('buyLv')?.addEventListener('input', (e) => { 
             const disp = document.getElementById('svCostDisp');
             if(disp) disp.innerText = (parseInt(e.target.value || 0) * 3).toLocaleString(); 
         });
+        
         render();
     </script>
 </body>
