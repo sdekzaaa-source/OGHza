@@ -96,7 +96,7 @@
                         <!-- Primary Inputs Row -->
                         <div class="grid-compact">
                             <div class="min-w-0">
-                                <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1.5 tracking-wider font-kanit">เลเวลปัจจุบัน</label>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 tracking-wider font-kanit">เลเวลปัจจุบัน</label>
                                 <input type="number" id="currentLevel" value="0" 
                                        inputmode="numeric" pattern="[0-9]*" 
                                        onfocus="if(this.value=='0')this.value=''" 
@@ -146,10 +146,10 @@
                         <!-- Goal Status -->
                         <div id="goalStatus" class="bg-white/5 rounded-xl p-4 border border-white/10 flex items-center gap-4">
                             <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shrink-0 shadow-lg">
-                                <i class="fa-solid fa-bullseye text-white text-sm"></i>
+                                <i class="fa-solid fa-calendar-check text-white text-sm"></i>
                             </div>
                             <div class="font-kanit overflow-hidden">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">สถานะเป้าหมาย ณ วันสุดท้าย</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">สถานะเป้าหมาย</p>
                                 <div id="goalReachDate" class="text-[11px] font-medium text-slate-200 leading-tight">
                                     --
                                 </div>
@@ -179,7 +179,7 @@
                     </div>
                     <div class="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <label class="flex items-center justify-between text-xs p-1.5 hover:bg-white rounded transition cursor-pointer font-bold">
-                            <span class="text-slate-700 font-bold">Weekly Dungeon (300 XP/7 Days)</span>
+                            <span class="text-slate-700">Weekly Dungeon (300 XP/7 Days)</span>
                             <input type="checkbox" id="qWeeklyAll" checked onchange="calculate()" class="w-4 h-4 text-blue-500 rounded shrink-0">
                         </label>
                         <label class="flex flex-col p-1.5 hover:bg-white rounded transition cursor-pointer font-bold">
@@ -358,11 +358,8 @@
             const currentLv = parseInt(document.getElementById('currentLevel').value) || 0;
             const targetLv = parseInt(document.getElementById('targetLevel').value) || 0;
             
-            // "วันนี้" (Thursday, Feb 19, 2026 ตาม context ของระบบ)
             const today = new Date();
             today.setHours(0,0,0,0);
-            
-            // คำนวณวันจบกิจกรรม (25 มี.ค. 2569)
             const daysRemaining = Math.max(0, Math.ceil((EVENT_END - today) / 86400000));
             const weeksRemaining = Math.floor(daysRemaining / 7);
             
@@ -383,7 +380,7 @@
                 zenyHint.style.color = "#94a3b8";
             }
 
-            // EXP Calculation
+            // XP Calculation
             const dailyExpAmt = (pkg.t === 'premium' ? 30 : 20);
             document.getElementById('dailyXpVal').innerText = `${dailyExpAmt} XP/DAY`;
             let dailyEXP = 0;
@@ -395,11 +392,10 @@
             const lvFromPlaying = currentLv + grindLvGain;
             const gapLv = Math.max(0, targetLv - lvFromPlaying);
             
-            // อัปเดตการแสดงผล Days Left ในวงเล็บ
             document.getElementById('projectedLv').innerHTML = `${lvFromPlaying.toLocaleString()} <span class="text-xs font-kanit font-normal opacity-70">Lv.</span>`;
             document.getElementById('daysLeftLabel').innerText = `(เหลืออีก ${daysRemaining} วัน)`;
-            
             document.getElementById('neededLv').innerText = gapLv.toLocaleString();
+            
             const totalSVCost = (gapLv * 3);
             document.getElementById('resSV').innerText = totalSVCost.toLocaleString();
             
@@ -407,13 +403,30 @@
             document.getElementById('resFinalLv').innerText = finalLvToDisplay.toLocaleString();
             document.getElementById('resType').innerText = pkg.t.toUpperCase();
 
-            let reachDateStr = "";
-            if (lvFromPlaying >= targetLv) {
-                reachDateStr = `<span class='text-emerald-400 font-bold font-kanit'>ยินดีด้วย! เก็บเควสทันเป้าหมายแน่นอน (ภายใน ${daysRemaining} วัน)</span>`;
+            // คำนวณวันที่พยากรณ์ใหม่
+            let reachStatus = "";
+            if (currentLv >= targetLv) {
+                reachStatus = `<span class='text-emerald-400 font-bold font-kanit'>ถึงเป้าหมายที่ตั้งไว้แล้ว!</span>`;
+            } else if (lvFromPlaying >= targetLv) {
+                // หาว่าวันไหนจะถึง
+                let tempDate = new Date(today);
+                let dayCount = 0;
+                let projectionLv = currentLv;
+                while (projectionLv < targetLv && tempDate <= EVENT_END) {
+                    dayCount++;
+                    tempDate.setDate(tempDate.getDate() + 1);
+                    projectionLv += (dailyEXP / 10);
+                    if (dayCount % 7 === 0) projectionLv += (weeklyEXP / 10);
+                    
+                    if (projectionLv >= targetLv) {
+                        reachStatus = `จะถึงประมาณวันที่: <span class='text-blue-300 font-bold font-gaming'>${tempDate.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}</span>`;
+                        break;
+                    }
+                }
             } else {
-                reachDateStr = `แผนการ: เก็บเควสรายวันไปจนจบกิจกรรม + ซื้อเพิ่มอีก <span class='text-amber-400 font-bold font-gaming'>${gapLv} Lv.</span> (${gapLv * 3} SV) เพื่อให้ถึงเป้าหมาย`;
+                reachStatus = `ต้องเพิ่มอีก <span class='text-amber-400 font-bold font-gaming'>${gapLv} Lv.</span> เพื่อให้ถึงเป้าหมายภายใน 25 มี.ค.`;
             }
-            document.getElementById('goalReachDate').innerHTML = reachDateStr;
+            document.getElementById('goalReachDate').innerHTML = reachStatus;
 
             generateInventory(finalLvToDisplay, pkg.t, pkg.item);
         }
@@ -441,7 +454,7 @@
 
             document.getElementById('rareList').innerHTML = rares.map(i => `
                 <div class="bg-white border ${i.p ? 'border-blue-100' : 'border-slate-100'} p-2.5 rounded-xl flex justify-between items-center shadow-sm">
-                    <span class="text-[10px] font-bold text-slate-700 truncate mr-2">${i.p ? '💎' : '🆓'} ${i.n}</span>
+                    <span class="text-[10px] font-bold text-slate-700 truncate mr-2 font-kanit">${i.p ? '💎' : '🆓'} ${i.n}</span>
                     <span class="text-[10px] font-gaming font-bold ${i.p ? 'text-blue-600 bg-blue-50' : 'text-slate-500 bg-slate-50'} px-2 py-0.5 rounded-md">x${i.q}</span>
                 </div>`).join('') || '<div class="col-span-2 text-center text-xs text-slate-400 py-4 italic font-kanit">ไม่มีไอเทมหายากในช่วงนี้</div>';
 
@@ -459,11 +472,10 @@
                 <tr class="hover:bg-blue-50/30 transition"><td class="p-3 text-[11px] font-medium text-slate-600 flex items-center gap-2 font-kanit"><span>${getItemEmoji(n)}</span> ${n}</td><td class="p-3 text-right font-gaming font-bold text-blue-800 font-kanit">x${q.toLocaleString()}</td></tr>
             `).join('');
 
-            document.getElementById('freeTotalList').innerHTML = renderTable(freeInv) || '<tr><td colspan="2" class="p-4 text-center text-slate-300 italic text-xs">ไม่มีรายการไอเทม</td></tr>';
+            document.getElementById('freeTotalList').innerHTML = renderTable(freeInv) || '<tr><td colspan="2" class="p-4 text-center text-slate-300 italic text-xs font-kanit">ไม่มีรายการไอเทม</td></tr>';
             document.getElementById('premiumTotalList').innerHTML = renderTable(preInv);
         }
         window.onload = calculate;
     </script>
 </body>
 </html>
-
