@@ -19,6 +19,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- ❌ ลบ Library สแกน QR ออกแล้ว -->
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;600;700&display=swap');
@@ -145,10 +146,12 @@
             const [newPasswordInput, setNewPasswordInput] = useState('');
             const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
             const [setPasswordError, setSetPasswordError] = useState('');
+            const [activeSetPassField, setActiveSetPassField] = useState('new');
             const [isRegistering, setIsRegistering] = useState(false);
 
             const [searchTerm, setSearchTerm] = useState('');
             const [showSuggestions, setShowSuggestions] = useState(false);
+            const [isCustomProduct, setIsCustomProduct] = useState(false);
             const [form, setForm] = useState({ type: '', productName: '', imageUrl: '', quantity: '1', memo: '', isUrgent: false });
             const [isSaving, setIsSaving] = useState(false);
             
@@ -174,8 +177,6 @@
             const [logsData, setLogsData] = useState([]);
             const [logsLoading, setLogsLoading] = useState(false);
             const [showLogs, setShowLogs] = useState(false);
-            
-            // ✅ Global Refresh State
             const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
 
             const searchContainerRef = useRef(null);
@@ -196,7 +197,6 @@
             };
 
             const fetchData = async () => {
-                // setLoading(true); // Don't block UI on background refresh
                 setErrorMsg(null);
                 try {
                     const [masterText, settingsText] = await Promise.all([ 
@@ -263,11 +263,25 @@
                 finally { setLogsLoading(false); }
             };
 
-            // ✅ Global Refresh Handler
             const handleGlobalRefresh = async () => {
                 setIsGlobalRefreshing(true);
                 await Promise.all([fetchData(), fetchSavedRecords()]);
                 setIsGlobalRefreshing(false);
+            };
+
+            // ✅ Copy Text Logic
+            const copyToClipboard = (text) => {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('คัดลอก: "' + text + '" เรียบร้อยแล้ว');
+                }).catch(err => {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textArea);
+                    alert('คัดลอกเรียบร้อย');
+                });
             };
 
             useEffect(() => {
@@ -292,7 +306,6 @@
                 }
             }, []);
 
-            // ... (Handlers: handleUserSelect, handleNumInput, handleNumDelete, renderPinDots, handleSetNewPassword, handleVerifyPassword) omitted for brevity ...
             const handleUserSelect = (userObj) => {
                 if (userObj.rank === 'Guest' || userObj.pass === 'guest') {
                     setCurrentUser(userObj.name);
@@ -421,13 +434,26 @@
                 setIsSaving(true);
                 const ts = new Date().toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const uuid = generateUUID(); 
+                
+                const payload = { 
+                    action: 'add', 
+                    ...form, 
+                    imageUrl: isCustomProduct ? '' : form.imageUrl, 
+                    isDoing: false, 
+                    isDone: false, 
+                    timestamp: ts, 
+                    user: currentUser, 
+                    uuid: uuid 
+                };
+
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { 
                         method: "POST", mode: "no-cors", 
-                        body: JSON.stringify({ action: 'add', ...form, isDoing: false, isDone: false, timestamp: ts, user: currentUser, uuid: uuid }) 
+                        body: JSON.stringify(payload) 
                     });
                     setForm({ ...form, productName: '', imageUrl: '', quantity: '1', memo: '', isUrgent: false }); 
                     setSearchTerm('');
+                    setIsCustomProduct(false); 
                     setTimeout(() => { fetchSavedRecords(); setIsSaving(false); }, 1500);
                 } catch (e) { setIsSaving(false); }
             };
@@ -652,7 +678,7 @@
 
             return (
                 <div className="min-h-screen flex flex-col pb-24 md:pb-6 relative">
-                    {/* User Selection Modal (Omitted for brevity) */}
+                    {/* User Selection Modal */}
                     {showUserModal && (
                         <div className="fixed inset-0 z-[200] bg-[#141414] flex flex-col items-center justify-center p-6 animate-modal text-center">
                             <div className="max-w-6xl w-full">
@@ -746,7 +772,7 @@
                         </div>
                     )}
 
-                    {/* ✅ Navbar */}
+                    {/* ✅ Navbar: ใช้คลาส navbar-ios เพื่อเว้นระยะ Notch */}
                     <nav className="bg-white border-b sticky top-0 z-50 px-6 navbar-ios flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-100"><img src="sebo.png" className="w-full h-full object-cover" /></div>
@@ -785,17 +811,31 @@
                                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                             </select>
                                         </div>
-                                        <div className="space-y-1.5 relative" ref={searchContainerRef}>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-bold">ชื่อสินค้า</label>
-                                            <input type="text" placeholder="ค้นหาชื่อสินค้า..." className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 font-bold text-slate-700 outline-none shadow-sm transition-all" value={searchTerm} onChange={handleInputChange} onFocus={() => setShowSuggestions(true)} />
-                                            {showSuggestions && masterProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).length > 0 && (
-                                                <div className="absolute z-50 w-full top-[105%] bg-white border rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto shadow-indigo-100">
-                                                    {masterProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 10).map((p, i) => (
-                                                        <div key={i} className="px-5 py-3 hover:bg-indigo-50 cursor-pointer flex items-center gap-4 border-b last:border-0 text-left font-bold text-slate-600 font-bold" onClick={() => { setForm({...form, productName: p.name, imageUrl: p.imgUrl}); setSearchTerm(p.name); setShowSuggestions(false); }}>
-                                                            <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden shrink-0 shadow-inner font-bold"><img src={p.imgUrl} className="w-full h-full object-cover" /></div>
-                                                            <span className="truncate font-bold">{p.name}</span>
+                                        
+                                        {/* ✅ Custom Product Toggle & Inputs */}
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-bold">ชื่อสินค้า</label>
+                                                <button onClick={() => { setIsCustomProduct(!isCustomProduct); setForm({...form, productName: '', imageUrl: ''}); setSearchTerm(''); }} className={`text-[10px] px-2 py-1 rounded-md border font-bold transition-all ${isCustomProduct ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-400 border-slate-200'}`}>
+                                                    สินค้าสั่งทำ (Custom)
+                                                </button>
+                                            </div>
+                                            
+                                            {isCustomProduct ? (
+                                                <input type="text" placeholder="ระบุชื่อสินค้า..." className="w-full h-14 bg-slate-50 border-2 border-dashed border-indigo-300 rounded-2xl px-5 font-bold text-indigo-700 outline-none shadow-sm transition-all placeholder-indigo-300" value={form.productName} onChange={(e) => setForm({...form, productName: e.target.value})} />
+                                            ) : (
+                                                <div className="relative" ref={searchContainerRef}>
+                                                    <input type="text" placeholder="ค้นหาชื่อสินค้า..." className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 font-bold text-slate-700 outline-none shadow-sm transition-all" value={searchTerm} onChange={handleInputChange} onFocus={() => setShowSuggestions(true)} />
+                                                    {showSuggestions && masterProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).length > 0 && (
+                                                        <div className="absolute z-50 w-full top-[105%] bg-white border rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto shadow-indigo-100">
+                                                            {masterProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 10).map((p, i) => (
+                                                                <div key={i} className="px-5 py-3 hover:bg-indigo-50 cursor-pointer flex items-center gap-4 border-b last:border-0 text-left font-bold text-slate-600 font-bold" onClick={() => { setForm({...form, productName: p.name, imageUrl: p.imgUrl}); setSearchTerm(p.name); setShowSuggestions(false); }}>
+                                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden shrink-0 shadow-inner font-bold"><img src={p.imgUrl} className="w-full h-full object-cover" /></div>
+                                                                    <span className="truncate font-bold">{p.name}</span>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ))}
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -831,9 +871,20 @@
                                             <button onClick={handleAddItem} disabled={!form.productName || isSaving} className="flex-[2] h-14 bg-indigo-600 disabled:bg-slate-200 text-white rounded-2xl font-black text-lg active:scale-95 transition-all shadow-lg font-bold">บันทึกรายการ</button>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex items-center justify-center min-h-[300px] overflow-hidden p-4 text-center">
-                                        {form.imageUrl ? <img src={form.imageUrl} className="max-w-full max-h-80 object-contain rounded-xl shadow-lg cursor-zoom-in" onClick={() => setPreviewImage(form.imageUrl)} /> : <div className="text-slate-300 font-black text-2xl uppercase tracking-widest opacity-20 font-bold">Preview Image</div>}
-                                    </div>
+                                    
+                                    {/* ✅ Hide Image Preview if Custom Product */}
+                                    {!isCustomProduct && (
+                                        <div className="bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex items-center justify-center min-h-[300px] overflow-hidden p-4 text-center">
+                                            {form.imageUrl ? <img src={form.imageUrl} className="max-w-full max-h-80 object-contain rounded-xl shadow-lg cursor-zoom-in" onClick={() => setPreviewImage(form.imageUrl)} /> : <div className="text-slate-300 font-black text-2xl uppercase tracking-widest opacity-20 font-bold">Preview Image</div>}
+                                        </div>
+                                    )}
+                                    {isCustomProduct && (
+                                        <div className="bg-indigo-50/50 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center min-h-[300px] p-8 text-center gap-4">
+                                            <LucideIcon name="package-check" size={64} className="text-indigo-300" />
+                                            <p className="text-indigo-400 font-bold text-lg">โหมดสินค้าสั่งทำพิเศษ</p>
+                                            <p className="text-slate-400 text-sm">กรุณาระบุรายละเอียดให้ครบถ้วนในช่องหมายเหตุ</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -859,6 +910,8 @@
                                         
                                         const isMyWork = item.doingBy === currentUser;
                                         const isLocked = item.isDoing && !isMyWork;
+                                        
+                                        const isCustomItem = !item.imageUrl;
 
                                         return (
                                             <div key={key} className={`group relative p-5 rounded-[2.2rem] border flex items-center gap-5 transition-all duration-700 ${isExiting ? 'opacity-0 scale-95 translate-x-10 pointer-events-none' : 'opacity-100'} ${item.isUrgent && !item.isDone ? 'urgent-card' : 'bg-white border-slate-100 shadow-sm'} ${item.isDone ? 'border-emerald-600 bg-emerald-50/10' : (item.isDoing ? 'border-amber-400 bg-amber-50/10' : '')} ${isLocked ? 'opacity-70 grayscale-[0.5]' : ''}`}>
@@ -867,7 +920,21 @@
                                                         <LucideIcon name={item.isDone || item.isDoing ? "check-circle" : "circle"} size={28} />
                                                     </button>
                                                 </div>
-                                                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 shrink-0 shadow-inner cursor-zoom-in" onClick={() => setPreviewImage(item.imageUrl)}><img src={item.imageUrl || 'https://via.placeholder.com/100'} className="w-full h-full object-cover font-bold" /></div>
+                                                
+                                                {/* ✅ Custom Copy Logic */}
+                                                {!isCustomItem ? (
+                                                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 shrink-0 shadow-inner cursor-zoom-in" onClick={() => setPreviewImage(item.imageUrl)}>
+                                                        <img src={item.imageUrl} className="w-full h-full object-cover font-bold" />
+                                                    </div>
+                                                ) : (
+                                                    <div onClick={() => copyToClipboard(item.productName)} className="group w-20 h-20 rounded-2xl bg-indigo-50 border-2 border-dashed border-indigo-200 shrink-0 flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 active:scale-90 active:translate-y-0">
+                                                        <div className="group-hover:scale-110 transition-transform duration-300">
+                                                            <LucideIcon name="copy" size={24} className="text-indigo-400 mb-1" />
+                                                        </div>
+                                                        <span className="text-[8px] font-black text-indigo-400 uppercase tracking-wider">คัดลอกชื่อ</span>
+                                                    </div>
+                                                )}
+
                                                 <div className="flex-1 min-w-0 pr-4 text-left">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <span className="text-[10px] font-black text-indigo-500 uppercase px-2 py-0.5 bg-indigo-50 rounded-md border border-indigo-100 font-bold leading-none font-bold">{item.type}</span>
@@ -881,7 +948,6 @@
                                                         </div>
                                                     )}
 
-                                                    {/* ✅ Show Done By */}
                                                     {item.isDone && item.doneBy && (
                                                         <div className="text-[10px] font-bold text-emerald-600 bg-emerald-50 inline-block px-2 py-0.5 rounded-md border border-emerald-100 mt-1">
                                                             ✅ เสร็จโดย: {item.doneBy}
@@ -892,10 +958,10 @@
                                                         <span className="text-[10px] uppercase text-slate-400 font-bold font-bold leading-none">จำนวน:</span>
                                                         <span onClick={() => { if(!isGuest && !isLocked) { setEditQuantityItem(item); setEditQuantityValue(item.quantity); } }} className={`text-3xl font-black text-slate-900 leading-none font-mono font-black ${!isGuest && !isLocked ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}>{item.quantity}</span>
                                                     </div>
-                                                    {item.memo && <p className="text-[10px] text-slate-400 italic mt-1 truncate font-bold">บันทึก: {item.memo}</p>}
+                                                    {item.memo && <p className={`text-[10px] italic mt-1 font-bold ${isCustomItem ? 'text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md' : 'text-slate-400 truncate'}`}>{isCustomItem ? '📝 ' : 'บันทึก: '}{item.memo}</p>}
                                                 </div>
                                                 {!isGuest && !isLocked && (
-                                                    <button onClick={() => setItemToDelete(item)} className="absolute top-4 right-4 p-2.5 text-red-600 bg-red-100/50 hover:bg-red-600 hover:text-white transition-all rounded-full border border-red-200 shadow-sm active:scale-90 group-hover:opacity-100 opacity-100 md:opacity-0"><LucideIcon name="trash-2" size={18} /></button>
+                                                    <button onClick={() => setItemToDelete(item)} className="absolute top-2 right-2 p-2 text-slate-300 hover:text-red-600 transition-all active:scale-75 opacity-100 md:opacity-0 group-hover:opacity-100"><LucideIcon name="trash-2" size={20} /></button>
                                                 )}
                                             </div>
                                         );
@@ -942,6 +1008,7 @@
                                             </div>
                                         </div>
                                         
+                                        {/* ✅ User Performance Stats */}
                                         <div>
                                             <h3 className="font-black text-slate-700 mb-6 uppercase text-sm tracking-widest text-left font-bold font-bold font-bold">ผลงานพนักงาน (เสร็จแล้ว)</h3>
                                             <div className="space-y-4 text-left">
@@ -1139,3 +1206,5 @@
     </script>
 </body>
 </html>
+
+
