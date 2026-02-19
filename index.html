@@ -15,7 +15,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root { --roc-blue: #2563eb; --roc-dark: #1e293b; --roc-bg: #f8fafc; }
         body { font-family: 'Kanit', sans-serif; background-color: var(--roc-bg); color: #334155; }
@@ -32,12 +32,13 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        .hub-card:hover {
+        /* Hover effect only for active cards */
+        a.hub-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             border-color: #cbd5e1;
         }
-        .hub-card:active { transform: translateY(-2px); }
+        a.hub-card:active { transform: translateY(-2px); }
 
         .icon-wrapper {
             width: 60px; height: 60px;
@@ -47,7 +48,7 @@
             margin-bottom: 16px;
             transition: transform 0.3s;
         }
-        .hub-card:hover .icon-wrapper { transform: scale(1.1) rotate(5deg); }
+        a.hub-card:hover .icon-wrapper { transform: scale(1.1) rotate(5deg); }
 
         /* Color Themes */
         .theme-blue .icon-wrapper { background: #eff6ff; color: #2563eb; }
@@ -60,6 +61,11 @@
         .theme-emerald:hover { border-color: #a7f3d0; }
         .theme-rose .icon-wrapper { background: #fff1f2; color: #e11d48; }
         .theme-rose:hover { border-color: #fecdd3; }
+
+        /* Locked Theme */
+        .theme-locked { background: #f8fafc; border-color: #e2e8f0; cursor: not-allowed; }
+        .theme-locked .icon-wrapper { background: #f1f5f9; color: #94a3b8; }
+        .theme-locked .btn-link { background: #e2e8f0; color: #94a3b8; }
 
         .btn-link {
             margin-top: 15px;
@@ -74,7 +80,7 @@
             color: #64748b;
             transition: all 0.2s;
         }
-        .hub-card:hover .btn-link { background: #1e293b; color: white; }
+        a.hub-card:hover .btn-link { background: #1e293b; color: white; }
 
         /* Animations */
         .fade-in { animation: fadeIn 0.5s ease-out; }
@@ -148,17 +154,24 @@
                 <div class="btn-link">Verify Merchant</div>
             </a>
 
-            <!-- 4. OGHza Tracker -->
-            <a href="/OGHza/ogh.html" class="hub-card theme-emerald p-6 group">
-                <div>
+            <!-- 4. OGHza Tracker (Coming Soon) -->
+            <div class="hub-card theme-locked p-6 opacity-80 relative">
+                <!-- Overlay Badge -->
+                <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px]">
+                     <div class="bg-slate-800 text-white text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-[0.2em] transform -rotate-6 shadow-xl border border-slate-600">
+                        Coming Soon
+                     </div>
+                </div>
+                
+                <div class="opacity-40 grayscale">
                     <div class="icon-wrapper">
                         <i class="fa-solid fa-skull-crossbones"></i>
                     </div>
-                    <h3 class="font-gaming text-2xl font-bold text-slate-800">OGHza Tracker</h3>
-                    <p class="text-sm text-slate-500 mt-2">ข้อมูลดันเจี้ยน Old Glast Heim บอส และเวลาเกิด (Coming Soon)</p>
+                    <h3 class="font-gaming text-2xl font-bold text-slate-600">OGHza Tracker</h3>
+                    <p class="text-sm text-slate-500 mt-2">ข้อมูลดันเจี้ยน Old Glast Heim บอส และเวลาเกิด</p>
                 </div>
-                <div class="btn-link">View Guide</div>
-            </a>
+                <div class="btn-link">Locked Content</div>
+            </div>
 
             <!-- 5. Official News -->
             <a href="https://roc.gnjoy.in.th/all-news/" target="_blank" class="hub-card theme-rose p-6 group">
