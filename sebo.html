@@ -48,7 +48,6 @@
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
         .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee 20s linear infinite; }
 
-        /* ✅ Sparkle Animation for Top Performer */
         @keyframes sparkle-star {
             0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
             50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
@@ -132,7 +131,7 @@
         const parseThaiDate = (dateStr) => {
             if (!dateStr) return new Date(0); 
             try {
-                const parts = dateStr.match(/(\d+)\/(\d+)\/(\d+)/);
+                const parts = dateStr.split(' ')[0].match(/(\d+)\/(\d+)\/(\d+)/);
                 if (parts) {
                     const d = parseInt(parts[1], 10);
                     const m = parseInt(parts[2], 10) - 1;
@@ -198,17 +197,15 @@
             const [editMasterItem, setEditMasterItem] = useState(null);
             const [masterItemToDelete, setMasterItemToDelete] = useState(null);
             
-            // ✅ เปลี่ยนจากแก้แค่จำนวน เป็นแก้ไขงานแบบเต็มรูปแบบ
             const [editTaskItem, setEditTaskItem] = useState(null);
             const [editTaskForm, setEditTaskForm] = useState({ quantity: '1', memo: '', isUrgent: false });
             
-            // ✅ State สำหรับเลือกวันที่ดูประวัติงาน (ค่าเริ่มต้นคือวันนี้)
             const [completedDateFilter, setCompletedDateFilter] = useState(() => {
                 const tzoffset = (new Date()).getTimezoneOffset() * 60000;
                 return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
             });
 
-            const [analysisRange, setAnalysisRange] = useState('7d');
+            const [analysisRange, setAnalysisRange] = useState('7d'); 
             const [visiblePasswords, setVisiblePasswords] = useState(new Set());
             const [editUserRankModal, setEditUserRankModal] = useState(null);
             const [editUserPassModal, setEditUserPassModal] = useState(null);
@@ -225,6 +222,7 @@
             const [toastMessage, setToastMessage] = useState(null);
             const [showUndo, setShowUndo] = useState(false);
             
+            // ✅ นำ State สำหรับ Custom Announcement Modal กลับมา
             const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
             const [announcementInput, setAnnouncementInput] = useState("");
 
@@ -239,12 +237,10 @@
 
             const searchContainerRef = useRef(null);
 
-            // ✅ PULL TO REFRESH STATE
             const [pullY, setPullY] = useState(0);
             const [isPullRefreshing, setIsPullRefreshing] = useState(false);
-            const PULL_THRESHOLD = 75; // ระยะที่ต้องดึงลงมา (px)
+            const PULL_THRESHOLD = 75;
 
-            // ✅ Pull to Refresh Event Logic
             useEffect(() => {
                 let startY = 0;
                 let currentY = 0;
@@ -264,16 +260,12 @@
                     currentY = e.touches[0].clientY;
                     const deltaY = currentY - startY;
 
-                    // ถ้ารูดลง และอยู่บนสุดของจอ
                     if (deltaY > 0 && window.scrollY <= 0) {
-                        // ใส่ความหนืด (Friction) ให้ดึงยากขึ้นนิดนึงเหมือนแอป
                         let pullDist = deltaY * 0.45;
-                        // ล็อกระยะสูงสุดไม่ให้ลากทะลุจอ
                         if (pullDist > PULL_THRESHOLD + 40) pullDist = PULL_THRESHOLD + 40;
 
                         setPullY(pullDist);
                         
-                        // หยุดการ scroll ปกติของบราวเซอร์เพื่อไม่ให้ตีกัน
                         if (e.cancelable) {
                             e.preventDefault();
                         }
@@ -285,14 +277,12 @@
                     
                     setPullY(prev => {
                         if (prev >= PULL_THRESHOLD) {
-                            // ถ้าดึงถึงระยะแล้วปล่อย -> โหลดหน้าใหม่
                             setIsPullRefreshing(true);
                             setTimeout(() => {
                                 window.location.reload();
                             }, 500);
-                            return PULL_THRESHOLD; // ค้างวงล้อไว้
+                            return PULL_THRESHOLD; 
                         } else {
-                            // ถ้าดึงไม่ถึง -> เด้งกลับ
                             return 0;
                         }
                     });
@@ -301,7 +291,6 @@
                     isAtTop = false;
                 };
 
-                // ใช้ passive: false ใน move เพื่อให้สามารถ e.preventDefault() ได้
                 window.addEventListener('touchstart', handleTouchStart, { passive: true });
                 window.addEventListener('touchmove', handleTouchMove, { passive: false });
                 window.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -440,6 +429,15 @@
                 });
             };
             
+            // ✅ นำฟังก์ชันเปิด Modal ประกาศกลับมา
+            const handleEditAnnouncementClick = () => {
+                if (currentUserRank === 'Admin' || currentUserRank === 'Dev') {
+                    setAnnouncementInput(announcement || "");
+                    setShowAnnouncementModal(true);
+                }
+            };
+
+            // ✅ ฟังก์ชันบันทึกประกาศผ่าน Modal กลับมาเหมือนเดิม
             const handleSaveAnnouncement = async () => {
                 setAnnouncement(announcementInput);
                 setShowAnnouncementModal(false);
@@ -720,23 +718,6 @@
                 }, 400);
             };
 
-            const confirmEditQuantity = async () => {
-                if (currentUserRank === 'Guest') return;
-                if (!editQuantityItem) return;
-                const newQty = editQuantityValue;
-                const target = editQuantityItem;
-                setSavedItems(prev => prev.map(i => (i.timestamp === target.timestamp && i.productName === target.productName) ? { ...i, quantity: newQty } : i));
-                setEditQuantityItem(null); 
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: "POST", mode: "no-cors",
-                        body: JSON.stringify({ action: 'update_quantity', productName: target.productName, timestamp: target.timestamp, uuid: target.uuid, quantity: newQty }),
-                    });
-                    fetchSavedRecords();
-                } catch (e) { }
-            };
-
-            // ✅ ฟังก์ชันบันทึกการแก้ไขงานทั้งหมด (จำนวน, หมายเหตุ, ความด่วน)
             const confirmEditTask = async () => {
                 if (currentUserRank === 'Guest') return;
                 if (!editTaskItem) return;
@@ -856,11 +837,10 @@
                 return savedItems.filter(i => {
                     if (workTypeFilter === 'all') return true;
                     if (workTypeFilter === 'stock') return i.isStock === true;
-                    return !i.isStock; // daily
+                    return !i.isStock; 
                 });
             }, [savedItems, workTypeFilter]);
 
-            // ✅ อัปเดตการนับจำนวน ให้รองรับการเลือกวันที่ของแท็บ "เสร็จแล้ว"
             const viewCounts = useMemo(() => {
                 const targetDate = new Date(completedDateFilter);
                 targetDate.setHours(0,0,0,0);
@@ -876,7 +856,6 @@
                 };
             }, [filteredByType, completedDateFilter]);
 
-            // ✅ อัปเดตตัวกรองรายการที่แสดง ให้ตรงกับวันที่ที่เลือก
             const filteredItemsRender = useMemo(() => {
                 const targetDate = new Date(completedDateFilter);
                 targetDate.setHours(0,0,0,0);
@@ -899,30 +878,63 @@
                 const agg = {};
                 const userPerformance = {};
 
-                savedItems.forEach(i => {
-                    if (!agg[i.productName]) agg[i.productName] = { name: i.productName, qty: 0, image: i.imageUrl };
-                    agg[i.productName].qty += parseInt(i.quantity) || 0;
+                const now = new Date();
+                const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                const yesterdayStart = new Date(todayStart);
+                yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
-                    if (i.isDone && i.doneBy) {
-                        if (!userPerformance[i.doneBy]) userPerformance[i.doneBy] = 0;
-                        userPerformance[i.doneBy] += parseInt(i.quantity) || 0;
+                let startDate = new Date(0); 
+                let endDate = new Date(9999, 11, 31);
+
+                if (analysisRange === 'today') {
+                    startDate = todayStart;
+                } else if (analysisRange === 'yesterday') {
+                    startDate = yesterdayStart;
+                    endDate = todayStart; 
+                } else if (analysisRange === '7d') {
+                    startDate = new Date(todayStart);
+                    startDate.setDate(startDate.getDate() - 6);
+                } else if (analysisRange === '30d') {
+                    startDate = new Date(todayStart);
+                    startDate.setDate(startDate.getDate() - 29);
+                }
+
+                let totalQtyFiltered = 0;
+                let totalRecordsFiltered = 0;
+
+                savedItems.forEach(i => {
+                    const itemDate = parseThaiDate(i.timestamp);
+                    if (itemDate >= startDate && itemDate < endDate) {
+                        totalRecordsFiltered++;
+                        
+                        const qty = parseInt(i.quantity) || 0;
+                        totalQtyFiltered += qty;
+
+                        if (!agg[i.productName]) agg[i.productName] = { name: i.productName, qty: 0, image: i.imageUrl };
+                        agg[i.productName].qty += qty;
+
+                        if (i.isDone && i.doneBy) {
+                            if (!userPerformance[i.doneBy]) userPerformance[i.doneBy] = 0;
+                            userPerformance[i.doneBy] += qty;
+                        }
                     }
                 });
 
                 return {
-                    totalQty: savedItems.reduce((acc, curr) => acc + (parseInt(curr.quantity) || 0), 0),
-                    totalRecords: savedItems.length,
+                    totalQty: totalQtyFiltered,
+                    totalRecords: totalRecordsFiltered,
                     topProducts: Object.values(agg).sort((a, b) => b.qty - a.qty).slice(0, 5),
                     topUsers: Object.entries(userPerformance).sort(([,a], [,b]) => b - a)
                 };
-            }, [savedItems]);
+            }, [savedItems, analysisRange]);
 
             const renderMenuTabs = () => {
                 const tabs = [
                     { id: 'record', label: 'บันทึก', icon: 'edit-3', show: currentUserRank !== 'Guest' },
                     { id: 'view', label: 'งาน', icon: 'list', show: true, badge: totalPendingCount > 0 ? totalPendingCount : null },
                     { id: 'manage', label: 'สินค้า', icon: 'package', show: true },
-                    { id: 'analysis', label: 'สถิติ', icon: 'bar-chart-2', show: currentUserRank !== 'Guest' },
+                    { id: 'analysis', label: 'สถิติ', icon: 'bar-chart-2', show: true }, 
                     { id: 'dev', label: 'ระบบ', icon: 'terminal', show: currentUserRank === 'Dev' }
                 ];
 
@@ -953,7 +965,6 @@
             return (
                 <div className="min-h-screen flex flex-col pb-24 md:pb-6 relative">
                     
-                    {/* ✅ Pull to Refresh Indicator */}
                     <div 
                         className="fixed left-0 right-0 flex justify-center z-[9999] pointer-events-none"
                         style={{ 
@@ -976,7 +987,6 @@
                         </div>
                     </div>
 
-                    {/* ✅ Toast Notification */}
                     {toastMessage && (
                         <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 pt-safe top-safe-toast pointer-events-none">
                             <div className="bg-slate-900/90 text-white backdrop-blur-md px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 animate-slide-down border border-slate-700/50 pointer-events-auto">
@@ -993,7 +1003,6 @@
                         </div>
                     )}
 
-                    {/* User Selection Modal */}
                     {showUserModal && (
                         <div className="fixed inset-0 z-[200] bg-[#141414] flex flex-col items-center justify-center p-6 animate-modal text-center">
                             <div className="max-w-6xl w-full">
@@ -1087,7 +1096,6 @@
                         </div>
                     )}
 
-                    {/* ✅ Navbar: ใช้คลาส navbar-ios เพื่อเว้นระยะ Notch */}
                     <nav className="bg-white border-b sticky top-0 z-50 px-6 navbar-ios flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-100"><img src="sebo.png" className="w-full h-full object-cover" /></div>
@@ -1108,9 +1116,12 @@
                         </div>
                     </nav>
 
-                    {/* ✅ Announcement Bar */}
+                    {/* ✅ Announcement Bar - กลับไปใช้ Custom Modal แบบเดิมที่สวยงามกว่า */}
                     {(announcement || currentUserRank === 'Admin' || currentUserRank === 'Dev') && (
-                        <div className={`bg-indigo-600 text-white text-xs font-bold py-2 overflow-hidden relative shadow-sm ${!announcement ? 'cursor-pointer hover:bg-indigo-700' : ''}`} onClick={() => { if(!announcement && (currentUserRank === 'Admin' || currentUserRank === 'Dev')) { setAnnouncementInput(""); setShowAnnouncementModal(true); } }}>
+                        <div 
+                            className={`bg-indigo-600 text-white text-xs font-bold py-2 overflow-hidden relative shadow-sm ${(currentUserRank === 'Admin' || currentUserRank === 'Dev') ? 'cursor-pointer hover:bg-indigo-700' : ''}`} 
+                            onClick={handleEditAnnouncementClick}
+                        >
                              {announcement ? (
                                 <div className="animate-marquee whitespace-nowrap px-4">{announcement}</div>
                              ) : (
@@ -1118,7 +1129,9 @@
                              )}
                              
                              {(currentUserRank === 'Admin' || currentUserRank === 'Dev') && announcement && (
-                                 <button onClick={(e) => { e.stopPropagation(); setAnnouncementInput(announcement); setShowAnnouncementModal(true); }} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-white/20 rounded-full hover:bg-white/40 backdrop-blur-sm z-10"><LucideIcon name="pencil" size={10} /></button>
+                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-indigo-800/50 rounded-full backdrop-blur-sm z-10 text-white shadow-sm">
+                                     <LucideIcon name="pencil" size={12} />
+                                 </div>
                              )}
                         </div>
                     )}
@@ -1128,7 +1141,6 @@
                             {renderMenuTabs()}
                         </div>
 
-                        {/* Record Tab */}
                         {activeTab === 'record' && currentUserRank !== 'Guest' && (
                             <div className="bg-white rounded-[2.5rem] p-6 md:p-10 border custom-shadow animate-modal relative overflow-hidden">
                                 {isSaving && <div className="absolute inset-0 bg-white/80 z-20 flex items-center justify-center flex-col gap-3 backdrop-blur-sm"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div><span className="font-bold text-indigo-600 animate-pulse font-bold">กำลังบันทึก...</span></div>}
@@ -1220,7 +1232,6 @@
                             </div>
                         )}
 
-                        {/* View Tab */}
                         {activeTab === 'view' && (
                             <div className="space-y-6 pb-10 animate-modal">
                                 
@@ -1264,7 +1275,6 @@
                                     </div>
                                 </div>
 
-                                {/* ✅ Date Picker สำหรับดูประวัติงานย้อนหลัง */}
                                 {viewSubTab === 'completed' && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm custom-shadow">
                                         <span className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-widest"><LucideIcon name="calendar-days" size={16} className="text-emerald-500" /> ประวัติงาน</span>
@@ -1328,7 +1338,6 @@
                                                         </div>
                                                     )}
                                                     
-                                                    {/* ✅ อัปเดตเวลากดตรงจำนวนให้แสดง Modal ใหม่ */}
                                                     <div className="flex items-baseline gap-2 mt-2 leading-none">
                                                         <span className="text-[10px] uppercase text-slate-400 font-bold font-bold leading-none">จำนวน:</span>
                                                         <span onClick={() => { if(!isGuest && !isLocked) { setEditTaskItem(item); setEditTaskForm({ quantity: item.quantity, memo: item.memo || '', isUrgent: item.isUrgent || false }); } }} className={`text-3xl font-black text-slate-900 leading-none font-mono font-black ${!isGuest && !isLocked ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}>{item.quantity}</span>
@@ -1336,11 +1345,10 @@
                                                     {item.memo && <p className={`text-[10px] italic mt-1 font-bold ${isCustomItem ? 'text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md' : 'text-slate-400 truncate'}`}>{isCustomItem ? '📝 ' : 'บันทึก: '}{item.memo}</p>}
                                                 </div>
                                                 
-                                                {/* ✅ เพิ่มปุ่มแก้ไข (ดินสอ) ข้างๆ ปุ่มลบ */}
                                                 {!isGuest && !isLocked && (
-                                                    <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all">
-                                                        <button onClick={() => { setEditTaskItem(item); setEditTaskForm({ quantity: item.quantity, memo: item.memo || '', isUrgent: item.isUrgent || false }); }} className="p-2 text-slate-300 hover:text-amber-500 active:scale-75 transition-all"><LucideIcon name="pencil" size={18} /></button>
-                                                        <button onClick={() => setItemToDelete(item)} className="p-2 text-slate-300 hover:text-red-600 active:scale-75 transition-all"><LucideIcon name="trash-2" size={18} /></button>
+                                                    <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all z-20">
+                                                        <button onClick={() => { setEditTaskItem(item); setEditTaskForm({ quantity: item.quantity, memo: item.memo || '', isUrgent: item.isUrgent || false }); }} className="p-2 text-slate-300 hover:text-amber-500 active:scale-75 transition-all bg-white/50 rounded-full shadow-sm md:shadow-none md:bg-transparent"><LucideIcon name="pencil" size={18} /></button>
+                                                        <button onClick={() => setItemToDelete(item)} className="p-2 text-slate-300 hover:text-red-600 active:scale-75 transition-all bg-white/50 rounded-full shadow-sm md:shadow-none md:bg-transparent"><LucideIcon name="trash-2" size={18} /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -1351,16 +1359,18 @@
                             </div>
                         )}
 
-                        {/* Analysis Tab */}
                         {activeTab === 'analysis' && (
                             <div className="space-y-6 pb-10 animate-modal text-center md:text-left">
                                 <div className="bg-white rounded-[2.5rem] p-8 border custom-shadow">
                                     <div className="flex items-center justify-between mb-10">
                                         <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3 font-bold font-black leading-none font-black font-black"><LucideIcon name="bar-chart-2" size={28} className="text-indigo-600"/> สรุปสถิติงาน</h2>
-                                        <select className="bg-slate-100 border-none rounded-xl px-4 py-2 text-sm font-bold outline-none font-bold font-bold font-bold" value={analysisRange} onChange={(e) => setAnalysisRange(e.target.value)}>
-                                            <option value="1d">วันนี้</option>
-                                            <option value="7d">7 วันล่าสุด</option>
-                                            <option value="30d">30 วันล่าสุด</option>
+                                        
+                                        <select className="bg-slate-100 border-none rounded-xl px-4 py-2 text-sm font-bold outline-none font-bold font-bold font-bold text-slate-700" value={analysisRange} onChange={(e) => setAnalysisRange(e.target.value)}>
+                                            <option value="today">วันนี้</option>
+                                            <option value="yesterday">เมื่อวาน</option>
+                                            <option value="7d">7 วันที่ผ่านมา</option>
+                                            <option value="30d">30 วันที่ผ่านมา</option>
+                                            <option value="all">ทั้งหมด</option>
                                         </select>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
@@ -1415,7 +1425,6 @@
 
                                                     return (
                                                         <div key={i} className={`flex items-center gap-4 p-4 rounded-2xl border text-left font-bold transition-all ${bgClass}`}>
-                                                            {/* ✨ เอฟเฟกต์ดาวระยิบระยับ (เฉพาะที่ 1) */}
                                                             {isTop && (
                                                                 <>
                                                                     <svg viewBox="0 0 24 24" className="absolute top-2 left-10 w-3 h-3 text-yellow-400 animate-sparkle-star delay-150 opacity-80 z-0" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
@@ -1458,7 +1467,6 @@
                                                     let textClass = "text-slate-600";
 
                                                     if (isTop) {
-                                                        // 🥇 ที่ 1: ธีมสีทอง มงกุฎ และเอฟเฟกต์
                                                         bgClass = "bg-gradient-to-r from-yellow-50 via-amber-100 to-yellow-50 border-yellow-300 shadow-md shadow-yellow-200/50 transform scale-[1.02] z-10 relative overflow-hidden";
                                                         rankElement = (
                                                             <div className="w-14 h-14 shrink-0 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-white flex items-center justify-center shadow-lg relative z-10">
@@ -1471,12 +1479,10 @@
                                                         );
                                                         textClass = "text-amber-700";
                                                     } else if (isSecond) {
-                                                        // 🥈 ที่ 2: ธีมสีเงิน
                                                         bgClass = "bg-gradient-to-r from-slate-50 to-slate-200 border-slate-300 shadow-sm";
                                                         rankElement = <div className="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-slate-300 to-slate-400 border border-white flex items-center justify-center font-black text-xl shadow-sm text-white">2</div>;
                                                         textClass = "text-slate-700";
                                                     } else if (isThird) {
-                                                        // 🥉 ที่ 3: ธีมสีทองแดง
                                                         bgClass = "bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200 shadow-sm";
                                                         rankElement = <div className="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-orange-300 to-orange-400 border border-white flex items-center justify-center font-black text-xl shadow-sm text-white">3</div>;
                                                         textClass = "text-orange-800";
@@ -1484,7 +1490,6 @@
 
                                                     return (
                                                         <div key={i} className={`flex items-center gap-4 p-4 rounded-2xl border text-left font-bold transition-all ${bgClass}`}>
-                                                            {/* ✨ เอฟเฟกต์ดาวระยิบระยับ (เฉพาะที่ 1) */}
                                                             {isTop && (
                                                                 <>
                                                                     <svg viewBox="0 0 24 24" className="absolute top-2 left-2 w-4 h-4 text-yellow-400 animate-sparkle-star delay-150 opacity-80" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
@@ -1697,9 +1702,7 @@
                     
                     {editUserRankModal && ( <div className="fixed inset-0 z-[310] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal"> <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-indigo-600"> <LucideIcon name="shield-check" size={64} className="text-indigo-600 mx-auto mb-6" /> <h3 className="font-black text-2xl text-slate-800 mb-6 uppercase tracking-tighter leading-none font-black">Assign Position</h3> <div className="space-y-3"> {['Dev', 'Admin', 'User', 'Guest'].map(r => (<button key={r} onClick={() => handleUpdateUserSetting(editUserRankModal.name, r, editUserRankModal.pass)} className={`w-full py-5 rounded-2xl border-2 font-black transition-all active:scale-95 shadow-sm leading-none ${editUserRankModal.rank === r ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl' : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{r}</button>))} <button onClick={() => setEditUserRankModal(null)} className="w-full py-3 mt-4 text-slate-400 font-bold hover:text-red-500 transition-colors uppercase text-[10px] tracking-[0.2em] leading-none font-black">Close Window</button> </div> </div> </div> )}
                     {editUserPassModal && ( <div className="fixed inset-0 z-[310] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal"> <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-amber-500"> <LucideIcon name="key" size={64} className="text-amber-500 mx-auto mb-6" /> <h3 className="font-black text-2xl text-slate-800 mb-6 uppercase tracking-tighter font-black leading-none font-black text-2xl">Login Password</h3> <div className="space-y-6"> <input autoFocus type="number" inputMode="numeric" placeholder="0000" className="w-full py-6 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 text-center font-black text-5xl text-amber-600 outline-none shadow-inner leading-none" value={newPassValue} onChange={(e) => setNewPassValue(e.target.value.slice(0, 4))} /> <div className="grid grid-cols-2 gap-4 font-bold"> <button onClick={() => setEditUserPassModal(null)} className="h-14 rounded-2xl text-slate-400 bg-slate-50 active:scale-95 shadow-sm border border-transparent font-black leading-none uppercase font-black">ยกเลิก</button> <button onClick={() => handleUpdateUserSetting(editUserPassModal.name, editUserPassModal.rank, newPassValue)} className="h-14 rounded-2xl bg-amber-500 text-white shadow-lg active:scale-95 shadow-amber-100 font-black leading-none uppercase font-black">บันทึกรหัส</button> </div> </div> </div> </div> )}
-                    {itemToDelete && ( <div className="fixed inset-0 z-[250] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md animate-modal text-center text-white font-bold"> <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-red-600"> <LucideIcon name="trash-2" size={64} className="text-red-600 mx-auto mb-6 animate-bounce" /> <h3 className="font-black text-2xl text-slate-800 mb-2 font-bold font-bold font-bold">ลบรายการงาน?</h3> <p className="text-slate-400 text-sm mb-10 font-bold uppercase truncate font-bold font-bold">{itemToDelete.productName}</p> <div className="grid grid-cols-2 gap-4"> <button onClick={() => setItemToDelete(null)} className="h-14 rounded-2xl font-bold text-slate-400 bg-slate-50 border-2 border-transparent active:scale-95 transition-all uppercase leading-none font-bold font-bold">ยกเลิก</button> <button onClick={confirmDelete} className="h-14 rounded-2xl font-black bg-red-600 text-white shadow-lg active:scale-95 transition-all uppercase font-bold leading-none font-bold font-black text-white">ยืนยัน</button> </div> </div> </div> )}
                     
-                    {/* ✅ Modal หน้าต่างแก้ไขงานแบบเต็มรูปแบบ (แทนที่อันเดิม) */}
                     {editTaskItem && ( 
                         <div className="fixed inset-0 z-[250] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md animate-modal text-center font-bold"> 
                             <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-amber-500"> 
@@ -1733,10 +1736,33 @@
                         </div> 
                     )}
                     
+                    {itemToDelete && ( <div className="fixed inset-0 z-[250] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md animate-modal text-center text-white font-bold"> <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-red-600"> <LucideIcon name="trash-2" size={64} className="text-red-600 mx-auto mb-6 animate-bounce" /> <h3 className="font-black text-2xl text-slate-800 mb-2 font-bold font-bold font-bold">ลบรายการงาน?</h3> <p className="text-slate-400 text-sm mb-10 font-bold uppercase truncate font-bold font-bold">{itemToDelete.productName}</p> <div className="grid grid-cols-2 gap-4"> <button onClick={() => setItemToDelete(null)} className="h-14 rounded-2xl font-bold text-slate-400 bg-slate-50 border-2 border-transparent active:scale-95 transition-all uppercase leading-none font-bold font-bold">ยกเลิก</button> <button onClick={confirmDelete} className="h-14 rounded-2xl font-black bg-red-600 text-white shadow-lg active:scale-95 transition-all uppercase font-bold leading-none font-bold font-black text-white">ยืนยัน</button> </div> </div> </div> )}
                     {masterItemToDelete && ( <div className="fixed inset-0 z-[250] bg-black/60 flex items-center justify-center p-4 animate-modal text-center text-white font-bold font-black font-black"> <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-red-600 text-center font-bold font-black font-black"> <LucideIcon name="alert-triangle" size={64} className="text-red-600 mx-auto mb-6 font-bold" /> <h3 className="font-black text-2xl mb-8 text-slate-800 font-bold font-black font-black font-black">ลบสินค้าออกจากคลัง?</h3> <div className="grid grid-cols-2 gap-4 text-white font-bold font-black font-black"> <button onClick={() => setMasterItemToDelete(null)} className="h-14 rounded-2xl bg-slate-100 font-bold text-slate-400 uppercase active:scale-95 transition-all leading-none font-bold font-bold font-black font-black">ยกเลิก</button> <button onClick={() => confirmDeleteMaster(masterItemToDelete)} className="h-14 rounded-2xl bg-red-600 text-white font-black shadow-lg uppercase font-bold active:scale-95 transition-all leading-none font-bold font-bold font-black font-black text-white">ลบทันที</button> </div> </div> </div> )}
                     {editMasterItem && ( <div className="fixed inset-0 z-[210] bg-black/60 flex items-center justify-center p-4 backdrop-blur-md animate-modal"> <div className="bg-white p-8 md:p-10 rounded-[3.5rem] shadow-2xl max-w-md w-full relative border-t-8 border-indigo-600 shadow-indigo-100/50"> <button onClick={() => setEditMasterItem(null)} className="absolute top-8 right-8 bg-slate-100 p-2.5 rounded-full hover:bg-red-50 transition-all active:scale-90"><LucideIcon name="x" size={20} /></button> <h3 className="font-black text-2xl text-slate-800 mb-10 text-center uppercase tracking-tighter font-black leading-none font-black">Modify Product</h3> <div className="space-y-7 font-bold"> <div className="space-y-2"> <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 leading-none font-black">ชื่อสินค้าหลัก</label> <input type="text" className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 font-bold outline-none transition-all shadow-inner leading-none" value={editMasterItem.name} onChange={(e) => setEditMasterItem({...editMasterItem, name: e.target.value})} /> </div> <div className="space-y-2"> <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 leading-none font-black">รูปภาพสินค้า</label> <div className="relative group h-44 w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all hover:bg-indigo-50/50 hover:border-indigo-200 shadow-inner"> <input type="file" accept="image/*" className="absolute inset-0 opacity-0 z-10 cursor-pointer" onChange={(e) => handleFileChangeInternal(e, setEditMasterItem)} /> {editMasterItem.preview || editMasterItem.imgUrl ? <img src={editMasterItem.preview || editMasterItem.imgUrl} className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" /> : <div className="text-center opacity-30 font-bold uppercase leading-none"><LucideIcon name="image-plus" size={32} className="mx-auto mb-2" />New Image</div>} </div> </div> <button onClick={handleUpdateMaster} disabled={isEditingMaster} className="w-full h-16 bg-indigo-600 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-3 leading-none uppercase font-black">{isEditingMaster ? <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div> : <><LucideIcon name="check-circle" /> บันทึกการแก้ไข</>}</button> </div> </div> </div> )}
                     {previewImage && ( <div className="fixed inset-0 z-[400] bg-black/95 flex items-center justify-center p-4 shadow-2xl font-bold font-black" onClick={() => setPreviewImage(null)}> <div className="bg-white p-3 rounded-[3rem] max-w-2xl max-h-[90vh] overflow-hidden relative shadow-2xl border-4 border-white animate-modal font-bold font-black font-black"> <button className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full active:scale-90 shadow-lg font-bold font-black"><LucideIcon name="x" size={20}/></button> <img src={previewImage} className="w-full h-full object-contain rounded-[2.5rem] font-bold" /> </div> </div> )}
 
+                    {/* ✅ Announcement Modal Custom กลับมาแล้ว */}
+                    {showAnnouncementModal && (
+                        <div className="fixed inset-0 z-[500] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal">
+                             <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl max-w-sm w-full border-t-8 border-indigo-600 text-center md:text-left">
+                                <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
+                                    <div className="p-3 bg-indigo-100 text-indigo-600 rounded-2xl"><LucideIcon name="megaphone" size={24} /></div>
+                                    <h3 className="font-black text-2xl text-slate-800">ประกาศข้อความ</h3>
+                                </div>
+                                <textarea 
+                                    className="w-full h-32 p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 outline-none focus:border-indigo-500 font-bold text-slate-700 resize-none shadow-inner transition-all" 
+                                    placeholder="ใส่ข้อความประกาศที่นี่... (เว้นว่างเพื่อยกเลิก)" 
+                                    value={announcementInput} 
+                                    onChange={(e) => setAnnouncementInput(e.target.value)}
+                                ></textarea>
+                                <div className="grid grid-cols-2 gap-4 mt-6">
+                                    <button onClick={() => setShowAnnouncementModal(false)} className="py-4 rounded-2xl bg-slate-100 text-slate-500 font-black uppercase text-sm active:scale-95 transition-all">ยกเลิก</button>
+                                    <button onClick={handleSaveAnnouncement} className="py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase text-sm shadow-lg active:scale-95 transition-all shadow-indigo-200">บันทึกประกาศ</button>
+                                </div>
+                             </div>
+                        </div>
+                    )}
+                    
                     {editCategoriesMode && (
                         <div className="fixed inset-0 z-[500] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-modal">
                              <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full border-t-8 border-amber-500 h-[80vh] flex flex-col">
@@ -1786,3 +1812,5 @@
     </script>
 </body>
 </html>
+
+
