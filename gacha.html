@@ -98,8 +98,8 @@
             <div id="egg-container" class="relative flex items-center justify-center mb-8 transition-all duration-300 hover:scale-105">
                 <!-- ออร่าแสงข้างหลังไข่ -->
                 <div id="egg-glow" class="absolute w-64 h-64 bg-blue-500 rounded-full blur-[80px] opacity-40"></div>
-                <!-- รูปไข่ ใช้ไฟล์ /images/egg.png -->
-                <img id="egg-img" src="/images/egg.png" alt="Aquarius Diadem Egg" class="relative z-10 w-64 md:w-80 drop-shadow-[0_0_50px_rgba(59,130,246,0.6)] object-contain transition-transform duration-300" />
+                <!-- รูปไข่ ใช้ไฟล์ /OGHza/images/egg.png -->
+                <img id="egg-img" src="/OGHza/images/egg.png" alt="Aquarius Diadem Egg" class="relative z-10 w-64 md:w-80 drop-shadow-[0_0_50px_rgba(59,130,246,0.6)] object-contain transition-transform duration-300" />
             </div>
 
             <h1 class="text-4xl md:text-6xl font-black text-center mb-2 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] georgia-font">
@@ -191,43 +191,43 @@
     </div>
 
     <script>
-        // กำหนดไฟล์รูปแยกแต่ละชิ้น /images/1.png - /images/26.png เรียงจากซ้ายไปขวา บนลงล่าง 
+        // กำหนดไฟล์รูปแยกแต่ละชิ้น /OGHza/images/1.png - /OGHza/images/26.png เรียงจากซ้ายไปขวา บนลงล่าง 
         const ITEMS = [
             // Row 1: SSR (1-5)
-            { id: 'ssr1', name: 'Sealed Card Album II', rank: 'SSR', qty: 1, imgSrc: '/images/1.png' },
-            { id: 'ssr2', name: 'Sealed Card Album', rank: 'SSR', qty: 1, imgSrc: '/images/2.png' },
-            { id: 'ssr3', name: 'Costume Arabian Veil', rank: 'SSR', qty: 1, imgSrc: '/images/3.png' },
-            { id: 'ssr4', name: "Rasen Huuma's Orb [1]", rank: 'SSR', qty: 1, imgSrc: '/images/4.png' },
-            { id: 'ssr5', name: 'Aquarius Diadem [1]', rank: 'SSR', qty: 1, imgSrc: '/images/5.png' },
+            { id: 'ssr1', name: 'Sealed Card Album II', rank: 'SSR', qty: 1, imgSrc: '/OGHza/images/1.png' },
+            { id: 'ssr2', name: 'Sealed Card Album', rank: 'SSR', qty: 1, imgSrc: '/OGHza/images/2.png' },
+            { id: 'ssr3', name: 'Costume Arabian Veil', rank: 'SSR', qty: 1, imgSrc: '/OGHza/images/3.png' },
+            { id: 'ssr4', name: "Rasen Huuma's Orb [1]", rank: 'SSR', qty: 1, imgSrc: '/OGHza/images/4.png' },
+            { id: 'ssr5', name: 'Aquarius Diadem [1]', rank: 'SSR', qty: 1, imgSrc: '/OGHza/images/5.png' },
 
             // Row 2: SR, R (6-10)
-            { id: 'sr1', name: 'Aquarius Staff [2]', rank: 'SR', qty: 1, imgSrc: '/images/6.png' },
-            { id: 'sr2', name: 'Aquarius Ring [1]', rank: 'SR', qty: 1, imgSrc: '/images/7.png' },
-            { id: 'sr3', name: 'Huuma Shuriken Clearness [2]', rank: 'SR', qty: 1, imgSrc: '/images/8.png' },
-            { id: 'r1', name: 'Cross Shuriken Shadow Earring', rank: 'R', qty: 1, imgSrc: '/images/9.png' },
-            { id: 'r2', name: 'Magic Compose Shadow Armor', rank: 'R', qty: 1, imgSrc: '/images/10.png' },
+            { id: 'sr1', name: 'Aquarius Staff [2]', rank: 'SR', qty: 1, imgSrc: '/OGHza/images/6.png' },
+            { id: 'sr2', name: 'Aquarius Ring [1]', rank: 'SR', qty: 1, imgSrc: '/OGHza/images/7.png' },
+            { id: 'sr3', name: 'Huuma Shuriken Clearness [2]', rank: 'SR', qty: 1, imgSrc: '/OGHza/images/8.png' },
+            { id: 'r1', name: 'Cross Shuriken Shadow Earring', rank: 'R', qty: 1, imgSrc: '/OGHza/images/9.png' },
+            { id: 'r2', name: 'Magic Compose Shadow Armor', rank: 'R', qty: 1, imgSrc: '/OGHza/images/10.png' },
 
             // Row 3: R, A, B (11-16)
-            { id: 'r3', name: 'Blitz Shadow Pendant', rank: 'R', qty: 1, imgSrc: '/images/11.png' },
-            { id: 'r4', name: 'Blitz Shadow Earring', rank: 'R', qty: 1, imgSrc: '/images/12.png' },
-            { id: 'r5', name: 'Status Shadow Item Combiner', rank: 'R', qty: 1, imgSrc: '/images/13.png' },
-            { id: 'a1', name: 'Blood Twig', rank: 'A', qty: 1, imgSrc: '/images/14.png' },
-            { id: 'b1', name: 'Class Shadow Cube', rank: 'B', qty: 1, imgSrc: '/images/15.png' },
-            { id: 'b2', name: 'Poison Bottle Box', rank: 'B', qty: 1, imgSrc: '/images/16.png' },
+            { id: 'r3', name: 'Blitz Shadow Pendant', rank: 'R', qty: 1, imgSrc: '/OGHza/images/11.png' },
+            { id: 'r4', name: 'Blitz Shadow Earring', rank: 'R', qty: 1, imgSrc: '/OGHza/images/12.png' },
+            { id: 'r5', name: 'Status Shadow Item Combiner', rank: 'R', qty: 1, imgSrc: '/OGHza/images/13.png' },
+            { id: 'a1', name: 'Blood Twig', rank: 'A', qty: 1, imgSrc: '/OGHza/images/14.png' },
+            { id: 'b1', name: 'Class Shadow Cube', rank: 'B', qty: 1, imgSrc: '/OGHza/images/15.png' },
+            { id: 'b2', name: 'Poison Bottle Box', rank: 'B', qty: 1, imgSrc: '/OGHza/images/16.png' },
 
             // Row 4: Biscuit Sticks (17-22) เพิ่มคำว่า [Scroll]
-            { id: 'b3', name: '[Scroll] STR Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/images/17.png' },
-            { id: 'b4', name: '[Scroll] AGI Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/images/18.png' },
-            { id: 'b5', name: '[Scroll] INT Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/images/19.png' },
-            { id: 'b6', name: '[Scroll] VIT Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/images/20.png' },
-            { id: 'b7', name: '[Scroll] DEX Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/images/21.png' },
-            { id: 'b8', name: '[Scroll] LUK Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/images/22.png' },
+            { id: 'b3', name: '[Scroll] STR Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/OGHza/images/17.png' },
+            { id: 'b4', name: '[Scroll] AGI Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/OGHza/images/18.png' },
+            { id: 'b5', name: '[Scroll] INT Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/OGHza/images/19.png' },
+            { id: 'b6', name: '[Scroll] VIT Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/OGHza/images/20.png' },
+            { id: 'b7', name: '[Scroll] DEX Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/OGHza/images/21.png' },
+            { id: 'b8', name: '[Scroll] LUK Biscuit Stick', rank: 'B', qty: 2, imgSrc: '/OGHza/images/22.png' },
 
             // Row 5: C, E (23-26) เพิ่มคำว่า [Scroll]
-            { id: 'c1', name: '[Scroll] Blessing Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: '/images/23.png' },
-            { id: 'c2', name: '[Scroll] Increase Agility Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: '/images/24.png' },
-            { id: 'e1', name: '[Scroll] Ex Def Potion', rank: 'E', qty: 5, imgSrc: '/images/25.png' },
-            { id: 'e2', name: '[Scroll] Kafra Card', rank: 'E', qty: 5, imgSrc: '/images/26.png' },
+            { id: 'c1', name: '[Scroll] Blessing Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: '/OGHza/images/23.png' },
+            { id: 'c2', name: '[Scroll] Increase Agility Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: '/OGHza/images/24.png' },
+            { id: 'e1', name: '[Scroll] Ex Def Potion', rank: 'E', qty: 5, imgSrc: '/OGHza/images/25.png' },
+            { id: 'e2', name: '[Scroll] Kafra Card', rank: 'E', qty: 5, imgSrc: '/OGHza/images/26.png' },
         ];
 
         // ปรับ Drop Rates กลับเป็นเรทออริจินัล
