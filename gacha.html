@@ -5,31 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Aquarius Diadem Gacha Simulator</title>
     
-    <!-- แก้ไขแถบสีขาวด้านบนบน iPhone -->
+    <!-- แก้ไขแถบสีขาวด้านบนบน iPhone และทำให้เหมือน App จริง -->
     <meta name="theme-color" content="#05020a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-touch-fullscreen" content="yes">
 
     <!-- โหลด Tailwind CSS ผ่าน CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* จัดการเรื่องฟอนต์และ Custom CSS */
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700;800&display=swap');
+        
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
         body {
             font-family: 'Sarabun', sans-serif;
             background-color: #05020a;
             color: #e2e8f0;
-            /* ป้องกันการกวนพื้นที่ Safe Area ด้านบน (รอยบาก iPhone) */
-            padding-top: env(safe-area-inset-top);
+            margin: 0;
+            padding: 0;
+            /* ป้องกันการกระตุกเวลาดึงหน้าจอลงบน Safari */
+            overscroll-behavior-y: none;
         }
-        .georgia-font {
-            font-family: 'Georgia', serif;
-        }
-        /* Custom Scrollbar สไตล์เกม Sci-fi */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+        .georgia-font { font-family: 'Georgia', serif; }
         
         /* Glassmorphism Panels */
         .glass-panel {
@@ -40,23 +42,19 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* อนิเมชันวงเวท (Magic Circle) */
+        /* Magic Circle Animations */
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
         @keyframes spin-slow-reverse { 100% { transform: rotate(-360deg); } }
         .magic-circle { animation: spin-slow 20s linear infinite; }
         .magic-circle-reverse { animation: spin-slow-reverse 15s linear infinite; }
 
-        /* อนิเมชัน Pop-up ไอเทม */
         @keyframes popUp {
             0% { transform: scale(0.5) translateY(20px); opacity: 0; }
             70% { transform: scale(1.1) translateY(-5px); opacity: 1; }
             100% { transform: scale(1) translateY(0); opacity: 1; }
         }
-        .animate-pop-up {
-            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
+        .animate-pop-up { animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         
-        /* เอฟเฟกต์การ์ด SSR ระดับ Premium */
         .shimmer {
             background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0.8) 60%, transparent 80%);
             background-size: 200% 100%;
@@ -64,190 +62,121 @@
         }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         
-        .ssr-glow {
-            box-shadow: 0 0 25px rgba(250, 204, 21, 0.6), inset 0 0 15px rgba(250, 204, 21, 0.4);
-        }
-        .text-glow {
-            text-shadow: 0 0 10px currentColor;
-        }
+        .ssr-glow { box-shadow: 0 0 25px rgba(250, 204, 21, 0.6), inset 0 0 15px rgba(250, 204, 21, 0.4); }
 
-        /* ปรับแต่งตำแหน่ง HUD ให้หลบรอยบาก */
-        .safe-top {
-            top: max(1rem, env(safe-area-inset-top));
+        /* จัดการ Safe Area สำหรับ iPhone */
+        .hud-top {
+            padding-top: calc(1rem + var(--safe-top));
+        }
+        .main-content {
+            padding-top: calc(4rem + var(--safe-top));
+            padding-bottom: calc(2rem + var(--safe-bottom));
+        }
+        .overlay-top {
+            padding-top: calc(5rem + var(--safe-top));
         }
     </style>
 </head>
 <body class="relative min-h-screen overflow-x-hidden selection:bg-indigo-500/30">
 
-    <!-- ธีมพื้นหลังอวกาศ (Nebula Background) -->
-    <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+    <!-- Nebula Background (ขยายเต็มหน้าจอถึงใต้ Status Bar) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/40 rounded-full mix-blend-screen filter blur-[120px]"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-900/30 rounded-full mix-blend-screen filter blur-[150px]"></div>
-        <div class="absolute top-[20%] left-[40%] w-[30%] h-[30%] bg-indigo-600/20 rounded-full mix-blend-screen filter blur-[100px]"></div>
         <svg class="absolute inset-0 w-full h-full opacity-40" id="stars-container"></svg>
     </div>
 
-    <!-- เอฟเฟกต์แสงระยิบระยับ (SSR Sparkle) -->
     <div id="sparkle-overlay" class="fixed inset-0 pointer-events-none z-[999] hidden items-center justify-center">
         <div class="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
-        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
     </div>
 
-    <!-- Top HUD (แถบสถานะด้านบน - ปรับให้หลบรอยบาก iPhone) -->
-    <div class="fixed safe-top left-0 w-full px-4 md:px-8 flex justify-between items-center z-50 pointer-events-none">
+    <!-- Top HUD (ปรับระยะให้หลบรอยบาก iPhone) -->
+    <div class="fixed top-0 left-0 w-full hud-top px-4 md:px-8 flex justify-between items-center z-50 pointer-events-none">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-lg">
-                <svg class="w-5 h-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg class="w-5 h-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
             <div class="hidden md:block text-slate-300 font-bold tracking-wider">GACHA SYSTEM</div>
         </div>
-        <!-- Currency Bar (จำนวนที่เปิด) -->
         <div class="pointer-events-auto flex items-center gap-2 bg-slate-900/80 border border-slate-700 rounded-full pl-4 pr-2 py-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Pulls</span>
+            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Total Pulls</span>
             <span id="total-pulls-text" class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 w-12 text-right">0</span>
             <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-400/50 flex items-center justify-center ml-2">
-                <svg class="w-4 h-4 text-indigo-300" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg class="w-4 h-4 text-indigo-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
         </div>
     </div>
 
-    <!-- Overlay สุ่มกาชาสีดำโปร่งแสง -->
-    <div id="pull-overlay" class="fixed inset-0 bg-black/85 z-[100] hidden flex-col items-center justify-start md:justify-center pt-32 pb-10 px-4 md:p-12 backdrop-blur-md transition-opacity duration-300 overflow-y-auto" onclick="handleOverlayClick(event)">
-        
-        <h2 id="overlay-skip-text" class="text-slate-400 font-medium text-sm animate-pulse tracking-widest uppercase select-none cursor-pointer mb-2 text-center">Tap anywhere to skip</h2>
-        
-        <!-- ข้อความบอกจำนวนการหมุน -->
-        <h3 id="overlay-pull-count-text" class="text-fuchsia-400 font-black text-xl md:text-2xl mb-6 hidden text-center drop-shadow-[0_0_10px_rgba(192,38,211,0.6)] transition-all"></h3>
-        
-        <!-- พื้นที่แสดงไอเทม -->
-        <div id="overlay-items-container" class="grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-5 max-w-5xl w-full justify-center content-center pb-8">
-            <!-- Items จะถูกยิงเข้ามาที่นี่ -->
-        </div>
-
-        <!-- ปุ่ม Action (โชว์เมื่อจบ) -->
-        <div id="overlay-actions" class="hidden flex-col items-center gap-6 mt-10 pb-10">
-            <div class="flex flex-wrap justify-center gap-3 md:gap-4">
-                <button onclick="pull(1, true)" class="group relative overflow-hidden rounded-full bg-slate-800/80 border border-slate-500 text-white px-6 py-3 md:py-3.5 font-bold shadow-[0_0_20px_rgba(0,0,0,0.5)] transform active:scale-95 transition-all flex items-center gap-2">
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span class="relative z-10 text-xs md:text-sm">PULL x1</span>
-                </button>
-                <button onclick="pull(10, true)" class="group relative overflow-hidden rounded-full bg-gradient-to-b from-yellow-500 to-amber-700 border border-yellow-300 text-amber-950 px-6 py-3 md:py-3.5 font-black shadow-[0_0_30px_rgba(245,158,11,0.4)] transform active:scale-95 transition-all flex items-center gap-2">
-                    <div class="absolute inset-0 bg-gradient-to-r from-yellow-300/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span class="relative z-10 drop-shadow-sm text-xs md:text-sm">PULL x10</span>
-                </button>
-                <button onclick="pullUntilSSR(true)" class="group relative overflow-hidden rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-700 border border-fuchsia-400 text-white px-6 py-3 md:py-3.5 font-black shadow-[0_0_20px_rgba(192,38,211,0.4)] transform active:scale-95 transition-all flex items-center gap-2">
-                    <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span class="relative z-10 drop-shadow-sm text-xs md:text-sm tracking-wider">UNTIL SSR</span>
-                </button>
+    <!-- Overlay Pull (จัดการ Scroll และที่ว่างบน iPhone) -->
+    <div id="pull-overlay" class="fixed inset-0 bg-black/90 z-[100] hidden flex-col items-center justify-start overlay-top pb-10 px-4 md:p-12 backdrop-blur-md transition-opacity duration-300 overflow-y-auto" onclick="handleOverlayClick(event)">
+        <h2 id="overlay-skip-text" class="text-slate-400 font-medium text-xs animate-pulse tracking-widest uppercase mb-4 text-center">Tap anywhere to skip</h2>
+        <h3 id="overlay-pull-count-text" class="text-fuchsia-400 font-black text-xl mb-6 hidden text-center drop-shadow-[0_0_10px_rgba(192,38,211,0.6)]"></h3>
+        <div id="overlay-items-container" class="grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-5 max-w-5xl w-full justify-center"></div>
+        <div id="overlay-actions" class="hidden flex-col items-center gap-6 mt-10 pb-12">
+            <div class="flex flex-wrap justify-center gap-3">
+                <button onclick="pull(1, true)" class="rounded-full bg-slate-800/80 border border-slate-500 text-white px-6 py-3 font-bold shadow-lg flex items-center gap-2 text-sm">PULL x1</button>
+                <button onclick="pull(10, true)" class="rounded-full bg-gradient-to-b from-yellow-500 to-amber-700 border border-yellow-300 text-amber-950 px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm">PULL x10</button>
+                <button onclick="pullUntilSSR(true)" class="rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-700 border border-fuchsia-400 text-white px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm">UNTIL SSR</button>
             </div>
-            <div class="text-slate-400 font-medium text-sm select-none cursor-pointer hover:text-white transition-colors bg-white/10 px-6 py-2 rounded-full border border-white/20 backdrop-blur-md">แตะพื้นที่ว่างเพื่อกลับหน้าหลัก</div>
+            <div class="text-slate-400 text-xs bg-white/10 px-6 py-2 rounded-full border border-white/10">แตะพื้นที่ว่างเพื่อกลับหน้าหลัก</div>
         </div>
     </div>
 
-    <!-- Main Layout (Split Desktop / Stacked Mobile) -->
-    <div class="relative z-10 max-w-[1400px] mx-auto min-h-screen flex flex-col lg:flex-row pt-24 pb-10 lg:pt-0 lg:pb-0">
-        
-        <!-- ฝั่งซ้าย: แท่นกาชา (Gacha Stage) -->
-        <div class="w-full lg:w-5/12 lg:h-screen flex flex-col items-center justify-center p-6 relative">
-            <div class="text-center mb-8 relative z-20">
+    <!-- Main Layout -->
+    <div class="relative z-10 max-w-[1400px] mx-auto min-h-screen flex flex-col lg:flex-row main-content">
+        <div class="w-full lg:w-5/12 flex flex-col items-center justify-center p-6">
+            <div class="text-center mb-8">
                 <h1 class="text-5xl md:text-7xl font-black mb-2 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] georgia-font leading-tight text-white">
                     <span class="bg-gradient-to-b from-yellow-100 via-yellow-400 to-amber-600 bg-clip-text text-transparent block uppercase">Aquarius</span>
                     <span class="bg-gradient-to-b from-blue-100 via-blue-400 to-indigo-600 bg-clip-text text-transparent block uppercase">Diadem</span>
                 </h1>
-                <p class="text-indigo-200/80 font-bold tracking-[0.3em] uppercase text-xs md:text-sm drop-shadow-md">Scroll Simulator</p>
+                <p class="text-indigo-200/80 font-bold tracking-[0.3em] uppercase text-[10px] md:text-xs">Scroll Simulator</p>
             </div>
-
-            <div id="egg-container" class="relative flex items-center justify-center w-full max-w-[320px] aspect-square transition-all duration-300 group">
-                <div class="absolute inset-0 flex items-center justify-center opacity-40 mix-blend-screen pointer-events-none">
-                    <svg class="w-full h-full magic-circle text-blue-500" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.5">
-                        <circle cx="50" cy="50" r="48" stroke-dasharray="4 4"/>
-                        <circle cx="50" cy="50" r="40"/>
-                        <polygon points="50,10 85,75 15,75" />
-                        <polygon points="50,90 15,25 85,25" />
-                    </svg>
+            <div id="egg-container" class="relative flex items-center justify-center w-full max-w-[280px] aspect-square transition-all duration-300">
+                <div class="absolute inset-0 flex items-center justify-center opacity-40 magic-circle text-blue-500">
+                    <svg class="w-full h-full" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.5"><circle cx="50" cy="50" r="48" stroke-dasharray="4 4"/><circle cx="50" cy="50" r="40"/><polygon points="50,10 85,75 15,75" /><polygon points="50,90 15,25 85,25" /></svg>
                 </div>
-                <div id="egg-glow" class="absolute w-48 h-48 bg-blue-500 rounded-full blur-[60px] opacity-30"></div>
-                <img id="egg-img" src="images/egg.png" alt="Aquarius Egg" class="relative z-10 w-[70%] object-contain drop-shadow-[0_0_30px_rgba(59,130,246,0.4)] transition-transform duration-500" />
+                <div id="egg-glow" class="absolute w-40 h-40 bg-blue-500 rounded-full blur-[60px] opacity-30"></div>
+                <img id="egg-img" src="images/egg.png" alt="Egg" class="relative z-10 w-[70%] object-contain drop-shadow-[0_0_30px_rgba(59,130,246,0.4)]" />
             </div>
-
-            <!-- ปุ่มกดสุ่มหลัก -->
-            <div class="flex flex-col gap-3 mt-10 relative z-20 w-full max-w-sm px-4">
+            <div class="flex flex-col gap-3 mt-10 w-full max-w-xs px-4">
                 <div class="flex gap-3">
-                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 relative overflow-hidden rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-4 font-bold shadow-[0_4px_20px_rgba(0,0,0,0.4)] transform active:scale-95 transition-all disabled:opacity-50 group backdrop-blur-sm">
-                        <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <span class="relative z-10 flex flex-col items-center">
-                            <span class="text-xs text-slate-400 font-normal uppercase tracking-wider mb-1">Summon</span>
-                            <span class="text-lg">x1</span>
-                        </span>
-                    </button>
-                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 relative overflow-hidden rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 border border-yellow-400/80 text-amber-950 py-4 font-black shadow-[0_4px_30px_rgba(217,119,6,0.3)] transform active:scale-95 transition-all disabled:opacity-50 group">
-                        <div class="absolute inset-0 bg-gradient-to-b from-yellow-300/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <span class="relative z-10 flex flex-col items-center">
-                            <span class="text-xs text-amber-900/70 font-bold uppercase tracking-wider mb-1">Summon</span>
-                            <span class="text-lg drop-shadow-sm">x10</span>
-                        </span>
-                    </button>
+                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-4 font-bold">Summon x1</button>
+                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 text-amber-950 py-4 font-black">Summon x10</button>
                 </div>
-                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 border border-fuchsia-400/80 text-white py-3 font-black shadow-[0_4px_20px_rgba(192,38,211,0.4)] transform active:scale-95 transition-all disabled:opacity-50 group">
-                    <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span class="relative z-10 flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m17 7-5-5-5 5"/><path d="m17 17-5 5-5-5"/></svg>
-                        <span class="text-sm md:text-base drop-shadow-sm uppercase tracking-wider">สุ่มจนกว่าจะได้ SSR</span>
-                    </span>
-                </button>
+                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 text-white py-3 font-black text-sm uppercase">สุ่มจนกว่าจะได้ SSR</button>
             </div>
         </div>
 
-        <!-- ฝั่งขวา: แผงควบคุม (Inventory & Stats) -->
-        <div class="w-full lg:w-7/12 lg:h-screen lg:overflow-y-auto p-4 md:p-8 flex flex-col gap-6">
+        <div class="w-full lg:w-7/12 flex flex-col gap-6 p-4 md:p-8 lg:overflow-y-auto">
             <div class="glass-panel rounded-3xl p-6 relative overflow-hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                    <h3 class="text-lg md:text-xl font-bold flex items-center gap-2 text-white">
-                        <svg class="text-indigo-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-                        INVENTORY <span class="text-xs font-normal text-slate-400 ml-2 tracking-widest hidden md:inline">กระเป๋าไอเทม</span>
-                    </h3>
-                    <button onclick="resetData()" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300 bg-red-950/30 hover:bg-red-900/40 border border-red-900/50 rounded-lg flex items-center gap-2 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        Clear
-                    </button>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase">Inventory</h3>
+                    <button onclick="resetData()" class="px-4 py-2 text-[10px] font-bold uppercase text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg">Clear</button>
                 </div>
-                <div id="empty-inventory-state" class="h-40 flex flex-col items-center justify-center text-slate-500 font-medium bg-slate-900/30 rounded-2xl border border-dashed border-slate-700/50">
-                    <svg class="mb-3 text-slate-600 w-8 h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-                    <span>Tap Summon to start</span>
-                </div>
+                <div id="empty-inventory-state" class="h-40 flex flex-col items-center justify-center text-slate-500 text-sm italic">Tap Summon to start</div>
                 <div id="inventory-section" class="hidden">
-                    <div id="inventory-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 max-h-[400px] lg:max-h-none overflow-y-auto pr-2"></div>
+                    <div id="inventory-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"></div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
                 <div id="luck-meter-container" class="glass-panel rounded-3xl p-6 hidden">
-                    <h3 class="text-sm font-bold tracking-widest uppercase mb-4 text-slate-300 flex items-center gap-2">
-                        <svg class="text-purple-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                        Luck Meter
-                    </h3>
+                    <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Luck Meter</h3>
                     <div class="text-center bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-4">
                         <div id="luck-tier-name" class="text-xl font-black mb-1">👑 ลูกรัก GM</div>
-                        <div id="luck-tier-desc" class="text-xs font-medium text-slate-400">เปิดรับเปิดกาชาได้เลย!</div>
+                        <div id="luck-tier-desc" class="text-[10px] font-medium text-slate-400 uppercase tracking-tighter">Lucky! Let's pull more!</div>
                     </div>
-                    <div class="space-y-3 text-xs font-medium text-slate-300">
-                        <div class="flex justify-between items-center bg-slate-800/40 p-2 rounded-lg">
-                            <span>Luck Score:</span> <span id="luck-score-text" class="font-black text-white">120%</span>
-                        </div>
-                        <div class="flex justify-between px-2">
-                            <span>SSR Acquired:</span> <span id="luck-ssr-actual" class="font-bold text-yellow-400">2</span>
-                        </div>
-                        <div class="flex justify-between px-2 text-slate-500">
-                            <span>Expected SSR:</span> <span id="luck-ssr-expected">0.50</span>
-                        </div>
+                    <div class="space-y-3 text-[10px] font-medium text-slate-300">
+                        <div class="flex justify-between items-center bg-slate-800/40 p-2 rounded-lg"><span>Luck Score:</span> <span id="luck-score-text" class="font-black text-white">120%</span></div>
+                        <div class="flex justify-between px-2"><span>SSR Acquired:</span> <span id="luck-ssr-actual" class="font-bold text-yellow-400">2</span></div>
+                        <div class="flex justify-between px-2 text-slate-500"><span>Expected:</span> <span id="luck-ssr-expected">0.50</span></div>
                     </div>
                 </div>
                 <div class="glass-panel rounded-3xl p-6">
-                    <h3 class="text-sm font-bold tracking-widest uppercase mb-4 text-slate-300 flex items-center gap-2">
-                        <svg class="text-blue-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                        Drop Rates
-                    </h3>
-                    <div id="rates-container" class="space-y-3 pr-2"></div>
+                    <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Rates</h3>
+                    <div id="rates-container" class="space-y-2"></div>
                 </div>
             </div>
         </div>
@@ -286,7 +215,7 @@
         const RATES = { SSR: 0.5, SR: 2.5, R: 12.0, A: 15.0, B: 30.0, C: 20.0, E: 20.0 };
 
         const RANK_STYLES = {
-            'SSR': { bg: 'bg-gradient-to-br from-yellow-100 via-yellow-200 to-amber-200 ssr-glow', border: 'border-yellow-400', text: 'text-amber-900 font-extrabold', grad: 'from-amber-400 to-yellow-600' },
+            'SSR': { bg: 'bg-gradient-to-br from-yellow-100 to-amber-200 ssr-glow', border: 'border-yellow-400', text: 'text-amber-900 font-extrabold', grad: 'from-amber-400 to-yellow-600' },
             'SR': { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-900 font-bold', grad: 'from-purple-400 to-purple-600' },
             'R': { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-900 font-bold', grad: 'from-blue-400 to-blue-600' },
             'A': { bg: 'bg-emerald-100', border: 'border-emerald-300', text: 'text-emerald-900 font-bold', grad: 'from-emerald-400 to-emerald-600' },
@@ -298,29 +227,17 @@
         const RANK_POINTS = { 'SSR': 500, 'SR': 100, 'R': 20, 'A': 15, 'B': 5, 'C': 2, 'E': 1 };
         const EXPECTED_SCORE_PER_PULL = 11.75;
 
-        let history = [];
-        let totalPulls = 0;
-        let isSpinning = false;
-        let currentAnimationInterval = null;
-        let currentPullsToAnimate = [];
-        let isOverlayAnimating = false;
-        let isAutoPulling = false;
-        let autoPullCount = 0;
+        let history = [], totalPulls = 0, isSpinning = false, currentAnimationInterval = null, currentPullsToAnimate = [], isOverlayAnimating = false, isAutoPulling = false, autoPullCount = 0;
 
         function preloadImages() {
             const allImages = ['images/egg.png', ...ITEMS.map(i => i.imgSrc)];
-            allImages.forEach(src => {
-                const img = new Image();
-                img.src = src;
-            });
+            allImages.forEach(src => { const img = new Image(); img.src = src; });
         }
 
         function renderStars() {
             const container = document.getElementById('stars-container');
             let starsHTML = '';
-            for(let i=0; i<60; i++) {
-                starsHTML += `<circle cx="${Math.random() * 100}%" cy="${Math.random() * 100}%" r="${Math.random() * 1.5 + 0.5}" fill="#cbd5e1" opacity="${Math.random() * 0.8 + 0.2}" />`;
-            }
+            for(let i=0; i<60; i++) starsHTML += `<circle cx="${Math.random() * 100}%" cy="${Math.random() * 100}%" r="${Math.random() * 1.5 + 0.5}" fill="#cbd5e1" opacity="${Math.random() * 0.8 + 0.2}" />`;
             container.innerHTML = starsHTML;
         }
 
@@ -329,89 +246,45 @@
             let html = '';
             for (const [rank, rate] of Object.entries(RATES)) {
                 const style = RANK_STYLES[rank];
-                html += `
-                    <div class="flex justify-between items-center text-xs font-medium">
-                        <span class="w-8 font-black text-transparent bg-clip-text bg-gradient-to-b ${style.grad}">${rank}</span>
-                        <div class="flex-1 mx-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-r ${style.grad}" style="width: ${rate}%"></div>
-                        </div>
-                        <span class="text-slate-400 w-10 text-right">${rate}%</span>
-                    </div>
-                `;
+                html += `<div class="flex justify-between items-center text-[10px] font-medium"><span class="w-8 font-black text-transparent bg-clip-text bg-gradient-to-b ${style.grad}">${rank}</span><div class="flex-1 mx-3 h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r ${style.grad}" style="width: ${rate}%"></div></div><span class="text-slate-400 w-10 text-right">${rate}%</span></div>`;
             }
             container.innerHTML = html;
         }
 
         function renderInventory() {
-            const section = document.getElementById('inventory-section');
-            const container = document.getElementById('inventory-container');
-            const emptyState = document.getElementById('empty-inventory-state');
-            if (history.length === 0) {
-                section.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                emptyState.classList.add('flex');
-                return;
-            }
-            section.classList.remove('hidden');
-            emptyState.classList.add('hidden');
-            emptyState.classList.remove('flex');
-
+            const section = document.getElementById('inventory-section'), container = document.getElementById('inventory-container'), emptyState = document.getElementById('empty-inventory-state');
+            if (history.length === 0) { section.classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); return; }
+            section.classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
             const inventory = {};
-            history.forEach(item => {
-                if (inventory[item.id]) inventory[item.id].totalCount += item.qty;
-                else inventory[item.id] = { ...item, totalCount: item.qty };
-            });
-
+            history.forEach(item => { if (inventory[item.id]) inventory[item.id].totalCount += item.qty; else inventory[item.id] = { ...item, totalCount: item.qty }; });
             const rankOrder = { 'SSR': 1, 'SR': 2, 'R': 3, 'A': 4, 'B': 5, 'C': 6, 'E': 7 };
             const sortedItems = Object.values(inventory).sort((a, b) => rankOrder[a.rank] - rankOrder[b.rank]);
-
             let html = '';
             sortedItems.forEach(item => {
                 const style = RANK_STYLES[item.rank];
-                let bgEffect = item.rank === 'SSR' ? `
-                    <div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none rounded-xl"></div>
-                    <div class="absolute top-1 left-2 text-[10px] animate-ping pointer-events-none">✨</div>
-                    <div class="absolute bottom-6 right-2 text-[10px] animate-pulse pointer-events-none">✨</div>
-                ` : '';
-                html += `
-                    <div class="${style.bg} border-2 ${style.border} p-1.5 md:p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] md:min-h-[120px] relative overflow-hidden shadow-sm">
-                        ${bgEffect}
-                        <div class="absolute top-1 right-1 text-[9px] font-black px-1.5 py-0.5 rounded-md text-white bg-slate-900/80 shadow border border-slate-600 z-20">
-                            x${item.totalCount.toLocaleString()}
-                        </div>
-                        <img src="${item.imgSrc}" alt="${item.name}" class="w-10 h-10 md:w-14 md:h-14 mt-4 z-10 object-contain drop-shadow-sm mix-blend-multiply" />
-                        <div class="z-10 w-full mt-1 md:mt-2 pb-1 relative">
-                            <p class="text-[9px] md:text-[10px] leading-tight line-clamp-2 ${style.text}">${item.name}</p>
-                        </div>
-                    </div>
-                `;
+                let bgEffect = item.rank === 'SSR' ? `<div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none"></div>` : '';
+                html += `<div class="${style.bg} border ${style.border} p-1.5 rounded-xl text-center flex flex-col items-center justify-between min-h-[90px] relative overflow-hidden shadow-sm">${bgEffect}<div class="absolute top-0.5 right-0.5 text-[8px] font-black px-1 py-0.5 rounded-md text-white bg-slate-900/80 shadow border border-slate-600 z-20">x${item.totalCount.toLocaleString()}</div><img src="${item.imgSrc}" alt="${item.name}" class="w-10 h-10 mt-3 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full pb-0.5 relative"><p class="text-[8px] leading-tight line-clamp-2 ${style.text}">${item.name}</p></div></div>`;
             });
             container.innerHTML = html;
         }
 
         function updateLuckMeter() {
             const container = document.getElementById('luck-meter-container');
-            if (totalPulls === 0) {
-                container.classList.add('hidden');
-                return;
-            }
+            if (totalPulls === 0) { container.classList.add('hidden'); return; }
             container.classList.remove('hidden');
             let totalPoints = 0, ssrCount = 0;
-            history.forEach(item => {
-                totalPoints += RANK_POINTS[item.rank] || 0;
-                if (item.rank === 'SSR') ssrCount++;
-            });
+            history.forEach(item => { totalPoints += RANK_POINTS[item.rank] || 0; if (item.rank === 'SSR') ssrCount++; });
             const luckRatio = (totalPoints / totalPulls) / EXPECTED_SCORE_PER_PULL;
             const luckPercent = (luckRatio * 100).toFixed(0);
-            let tierName, tierDesc, tierColor;
-            if (luckRatio >= 2.0) { tierName = '👑 ลูกรัก GM'; tierDesc = 'ดวงเทพทรู รับจ้างเปิดกาชาได้เลย!'; tierColor = 'text-purple-400 text-glow'; } 
-            else if (luckRatio >= 1.2) { tierName = '✨ ดวงดี'; tierDesc = 'กำไรเห็นๆ วันนี้ดวงมา!'; tierColor = 'text-blue-400 text-glow'; } 
-            else if (luckRatio >= 0.8) { tierName = '😐 ปกติ'; tierDesc = 'เรทเฉลี่ยทั่วไป ไม่เกลือ ไม่เจ็บ'; tierColor = 'text-green-400'; } 
-            else if (luckRatio >= 0.5) { tierName = '🧂 เกลือ'; tierDesc = 'เริ่มเค็มแล้วนะ ระวังไตพัง'; tierColor = 'text-orange-400'; } 
-            else { tierName = '💀 ทะเลเดดซี'; tierDesc = 'เค็มปี๋! พักก่อนไหมเพื่อน...'; tierColor = 'text-red-500 text-glow'; }
-            document.getElementById('luck-tier-name').innerText = tierName;
-            document.getElementById('luck-tier-name').className = `text-xl font-black mb-1 ${tierColor}`;
-            document.getElementById('luck-tier-desc').innerText = tierDesc;
+            let tN, tD, tC;
+            if (luckRatio >= 2.0) { tN = '👑 ลูกรัก GM'; tD = 'GOD LUCK!'; tC = 'text-purple-400'; } 
+            else if (luckRatio >= 1.2) { tN = '✨ ดวงดี'; tD = 'WINNING!'; tC = 'text-blue-400'; } 
+            else if (luckRatio >= 0.8) { tN = '😐 ปกติ'; tD = 'AVERAGE'; tC = 'text-green-400'; } 
+            else if (luckRatio >= 0.5) { tN = '🧂 เกลือ'; tD = 'SALTY'; tC = 'text-orange-400'; } 
+            else { tN = '💀 ทะเลเดดซี'; tD = 'EXTREME SALT'; tC = 'text-red-500'; }
+            document.getElementById('luck-tier-name').innerText = tN;
+            document.getElementById('luck-tier-name').className = `text-xl font-black mb-1 ${tC}`;
+            document.getElementById('luck-tier-desc').innerText = tD;
             document.getElementById('luck-score-text').innerText = `${luckPercent}%`;
             document.getElementById('luck-ssr-actual').innerText = ssrCount.toLocaleString();
             document.getElementById('luck-ssr-expected').innerText = (totalPulls * 0.005).toFixed(2);
@@ -419,224 +292,99 @@
 
         function createOverlayItemHTML(item) {
             const style = RANK_STYLES[item.rank];
-            let bgEffect = item.rank === 'SSR' ? `
-                <div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none rounded-xl"></div>
-                <div class="absolute top-2 left-3 text-lg animate-ping pointer-events-none drop-shadow-[0_0_5px_yellow]">✨</div>
-                <div class="absolute bottom-10 right-3 text-lg animate-pulse pointer-events-none drop-shadow-[0_0_5px_yellow]">✨</div>
-            ` : '';
-            const qtyText = item.qty > 1 ? `<p class="text-[9px] md:text-[10px] text-white font-bold bg-slate-900/60 border border-slate-600 px-2 py-0.5 rounded-full inline-block mt-1 z-20 relative">${item.qty} ea</p>` : '';
-            return `
-                <div class="${style.bg} border-2 ${style.border} p-2 md:p-3 rounded-xl md:rounded-2xl text-center flex flex-col items-center justify-between min-h-[110px] md:min-h-[160px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md">
-                    ${bgEffect}
-                    <img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 md:w-20 md:h-20 mt-2 md:mt-4 z-10 object-contain drop-shadow-sm mix-blend-multiply" />
-                    <div class="z-10 w-full mt-2 pb-1 relative">
-                        <p class="text-[9px] md:text-sm leading-tight line-clamp-2 ${style.text}">${item.name}</p>
-                        ${qtyText}
-                    </div>
-                </div>
-            `;
+            let bgEffect = item.rank === 'SSR' ? `<div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none rounded-xl"></div>` : '';
+            const q = item.qty > 1 ? `<p class="text-[8px] text-white font-bold bg-slate-900/60 border border-slate-600 px-2 py-0.5 rounded-full mt-1 z-20 relative">${item.qty} ea</p>` : '';
+            return `<div class="${style.bg} border ${style.border} p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md">${bgEffect}<img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 mt-2 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full mt-1 pb-1 relative"><p class="text-[9px] leading-tight line-clamp-2 ${style.text}">${item.name}</p>${q}</div></div>`;
         }
 
         function generateRandomItem() {
             const rand = Math.random() * 100;
-            let cumulative = 0;
+            let cum = 0;
             for (const [rank, rate] of Object.entries(RATES)) {
-                cumulative += rate;
-                if (rand <= cumulative) {
-                    const possibleItems = ITEMS.filter(item => item.rank === rank);
-                    return possibleItems[Math.floor(Math.random() * possibleItems.length)];
+                cum += rate;
+                if (rand <= cum) {
+                    const pos = ITEMS.filter(item => item.rank === rank);
+                    return pos[Math.floor(Math.random() * pos.length)];
                 }
             }
             return ITEMS[ITEMS.length - 1];
         }
 
         function startPullAnimation(pulls) {
-            currentPullsToAnimate = pulls;
-            isOverlayAnimating = true;
-            const overlay = document.getElementById('pull-overlay');
-            const container = document.getElementById('overlay-items-container');
-            const actions = document.getElementById('overlay-actions');
-            const skipText = document.getElementById('overlay-skip-text');
-            container.innerHTML = '';
-            actions.classList.add('hidden');
-            skipText.classList.remove('hidden');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-            let index = 0;
-            if (currentAnimationInterval) clearInterval(currentAnimationInterval);
-            container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[index]));
-            index++;
-            if (index >= pulls.length) setTimeout(endAnimation, 300);
-            else {
-                currentAnimationInterval = setInterval(() => {
-                    if (index >= pulls.length) { endAnimation(); return; }
-                    container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[index]));
-                    overlay.scrollTo({ top: overlay.scrollHeight, behavior: 'smooth' });
-                    index++;
-                }, 200);
-            }
+            currentPullsToAnimate = pulls; isOverlayAnimating = true;
+            const overlay = document.getElementById('pull-overlay'), container = document.getElementById('overlay-items-container'), actions = document.getElementById('overlay-actions'), skip = document.getElementById('overlay-skip-text');
+            container.innerHTML = ''; actions.classList.add('hidden'); skip.classList.remove('hidden'); overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            let idx = 0; if (currentAnimationInterval) clearInterval(currentAnimationInterval);
+            container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); idx++;
+            if (idx >= pulls.length) setTimeout(endAnimation, 300);
+            else { currentAnimationInterval = setInterval(() => { if (idx >= pulls.length) { endAnimation(); return; } container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); overlay.scrollTo({ top: overlay.scrollHeight, behavior: 'smooth' }); idx++; }, 200); }
         }
 
         function endAnimation() {
-            isOverlayAnimating = false;
-            clearInterval(currentAnimationInterval);
-            document.getElementById('overlay-actions').classList.remove('hidden');
-            document.getElementById('overlay-actions').classList.add('flex');
-            document.getElementById('overlay-skip-text').classList.add('hidden');
+            isOverlayAnimating = false; clearInterval(currentAnimationInterval);
+            document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-actions').classList.add('flex'); document.getElementById('overlay-skip-text').classList.add('hidden');
             if (isAutoPulling || currentPullsToAnimate.some(p => p.rank === 'SSR')) {
-                const sparkle = document.getElementById('sparkle-overlay');
-                sparkle.classList.remove('hidden');
-                sparkle.classList.add('flex');
-                setTimeout(() => { sparkle.classList.add('hidden'); sparkle.classList.remove('flex'); }, 1500);
+                const spk = document.getElementById('sparkle-overlay'); spk.classList.remove('hidden'); spk.classList.add('flex');
+                setTimeout(() => { spk.classList.add('hidden'); spk.classList.remove('flex'); }, 1500);
             }
         }
 
-        function finishAutoPull(gotSSR) {
-            clearInterval(currentAnimationInterval);
-            isSpinning = false;
-            isOverlayAnimating = false;
-            isAutoPulling = false;
+        function finishAutoPull(gS) {
+            clearInterval(currentAnimationInterval); isSpinning = false; isOverlayAnimating = false; isAutoPulling = false;
             document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
-            renderInventory();
-            updateLuckMeter();
-            const countTextObj = document.getElementById('overlay-pull-count-text');
-            countTextObj.innerHTML = `🎉 ออก SSR ในการสุ่มครั้งที่ <span class="text-white text-3xl ml-1 mr-1">${autoPullCount}</span>`;
-            document.getElementById('overlay-actions').classList.remove('hidden');
-            document.getElementById('overlay-actions').classList.add('flex');
-            document.getElementById('overlay-skip-text').classList.add('hidden');
-            if (gotSSR) {
-                const sparkle = document.getElementById('sparkle-overlay');
-                sparkle.classList.remove('hidden');
-                sparkle.classList.add('flex');
-                setTimeout(() => { sparkle.classList.add('hidden'); sparkle.classList.remove('flex'); }, 1500);
-            }
+            renderInventory(); updateLuckMeter();
+            const ct = document.getElementById('overlay-pull-count-text'); ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-3xl ml-1 mr-1">${autoPullCount}</span>`;
+            document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-actions').classList.add('flex'); document.getElementById('overlay-skip-text').classList.add('hidden');
+            if (gS) { const spk = document.getElementById('sparkle-overlay'); spk.classList.remove('hidden'); spk.classList.add('flex'); setTimeout(() => { spk.classList.add('hidden'); spk.classList.remove('flex'); }, 1500); }
         }
 
         function handleOverlayClick(e) {
             if (e.target.closest('button')) return;
-            const overlay = document.getElementById('pull-overlay');
-            const container = document.getElementById('overlay-items-container');
+            const ov = document.getElementById('pull-overlay'), cn = document.getElementById('overlay-items-container');
             if (isAutoPulling) {
-                clearInterval(currentAnimationInterval);
-                let gotSSR = false;
-                while (!gotSSR && autoPullCount < 5000) {
-                    autoPullCount++;
-                    const selectedItem = generateRandomItem();
-                    const newItem = { ...selectedItem, timestamp: Date.now() + autoPullCount };
-                    history.push(newItem);
-                    totalPulls++;
-                    if (newItem.rank === 'SSR') {
-                        gotSSR = true;
-                        container.insertAdjacentHTML('beforeend', createOverlayItemHTML(newItem));
-                        if (container.children.length > 20) container.removeChild(container.firstChild);
-                        overlay.scrollTo({ top: overlay.scrollHeight, behavior: 'smooth' });
-                    }
+                clearInterval(currentAnimationInterval); let gS = false;
+                while (!gS && autoPullCount < 5000) {
+                    autoPullCount++; const sI = generateRandomItem(); const nI = { ...sI, timestamp: Date.now() + autoPullCount };
+                    history.push(nI); totalPulls++;
+                    if (nI.rank === 'SSR') { gS = true; cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(nI)); if (cn.children.length > 20) cn.removeChild(cn.firstChild); ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); }
                 }
-                finishAutoPull(gotSSR);
+                finishAutoPull(gS);
             } else if (isOverlayAnimating) {
-                clearInterval(currentAnimationInterval);
-                for (let i = container.children.length; i < currentPullsToAnimate.length; i++) {
-                    container.insertAdjacentHTML('beforeend', createOverlayItemHTML(currentPullsToAnimate[i]));
-                }
-                overlay.scrollTo({ top: overlay.scrollHeight, behavior: 'smooth' });
-                endAnimation();
+                clearInterval(currentAnimationInterval); for (let i = cn.children.length; i < currentPullsToAnimate.length; i++) cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(currentPullsToAnimate[i]));
+                ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); endAnimation();
             } else closeOverlay();
         }
 
-        function closeOverlay() {
-            const overlay = document.getElementById('pull-overlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
-        }
+        function closeOverlay() { const overlay = document.getElementById('pull-overlay'); overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
 
-        function pull(count, fromOverlay = false) {
-            if (isSpinning) return;
-            isSpinning = true;
+        function pull(c, fO = false) {
+            if (isSpinning) return; isSpinning = true;
             document.getElementById('overlay-pull-count-text').classList.add('hidden');
-            if (!fromOverlay) {
-                ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true);
-                document.getElementById('egg-container').classList.add('scale-105');
-                document.getElementById('egg-img').classList.add('animate-bounce');
-            } else {
-                document.getElementById('overlay-actions').classList.add('hidden');
-                document.getElementById('overlay-actions').classList.remove('flex');
-                document.getElementById('overlay-skip-text').classList.remove('hidden');
-                document.getElementById('overlay-items-container').innerHTML = '';
-            }
-            const newPulls = [];
-            for (let i = 0; i < count; i++) newPulls.push({ ...generateRandomItem(), timestamp: Date.now() + i });
+            if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('egg-img').classList.add('animate-bounce'); }
+            else { document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); document.getElementById('overlay-items-container').innerHTML = ''; }
+            const nP = []; for (let i = 0; i < c; i++) nP.push({ ...generateRandomItem(), timestamp: Date.now() + i });
             setTimeout(() => {
-                history = [...newPulls, ...history];
-                totalPulls += count;
-                isSpinning = false;
-                if (!fromOverlay) {
-                    ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false);
-                    document.getElementById('egg-container').classList.remove('scale-105');
-                    document.getElementById('egg-img').classList.remove('animate-bounce');
-                }
+                history = [...nP, ...history]; totalPulls += c; isSpinning = false;
+                if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
                 document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
-                renderInventory();
-                updateLuckMeter();
-                startPullAnimation(newPulls);
-            }, fromOverlay ? 50 : 600);
+                renderInventory(); updateLuckMeter(); startPullAnimation(nP);
+            }, fO ? 50 : 600);
         }
 
-        function pullUntilSSR(fromOverlay = false) {
-            if (isSpinning) return;
-            isSpinning = true;
-            isOverlayAnimating = true;
-            isAutoPulling = true;
-            autoPullCount = 0;
-            const overlay = document.getElementById('pull-overlay');
-            const container = document.getElementById('overlay-items-container');
-            const countTextObj = document.getElementById('overlay-pull-count-text');
-            if (!fromOverlay) {
-                ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true);
-                document.getElementById('egg-container').classList.add('scale-105');
-                document.getElementById('egg-img').classList.add('animate-bounce');
-            }
-            document.getElementById('overlay-actions').classList.add('hidden');
-            document.getElementById('overlay-skip-text').classList.remove('hidden');
-            countTextObj.classList.remove('hidden');
-            countTextObj.innerHTML = `กำลังสุ่ม... <span class="text-white text-3xl ml-1 mr-1">0</span>`;
-            container.innerHTML = '';
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
+        function pullUntilSSR(fO = false) {
+            if (isSpinning) return; isSpinning = true; isOverlayAnimating = true; isAutoPulling = true; autoPullCount = 0;
+            const ov = document.getElementById('pull-overlay'), cn = document.getElementById('overlay-items-container'), ct = document.getElementById('overlay-pull-count-text');
+            if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('egg-img').classList.add('animate-bounce'); }
+            document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); ct.classList.remove('hidden'); ct.innerHTML = `Searching... <span class="text-white text-3xl ml-1 mr-1">0</span>`; cn.innerHTML = ''; ov.classList.remove('hidden'); ov.classList.add('flex');
             setTimeout(() => {
-                if (!fromOverlay) {
-                    ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false);
-                    document.getElementById('egg-container').classList.remove('scale-105');
-                    document.getElementById('egg-img').classList.remove('animate-bounce');
-                }
-                currentAnimationInterval = setInterval(() => {
-                    autoPullCount++;
-                    const newItem = { ...generateRandomItem(), timestamp: Date.now() };
-                    history.push(newItem);
-                    totalPulls++;
-                    container.insertAdjacentHTML('beforeend', createOverlayItemHTML(newItem));
-                    if (container.children.length > 20) container.removeChild(container.firstChild);
-                    overlay.scrollTo({ top: overlay.scrollHeight, behavior: 'smooth' });
-                    countTextObj.innerHTML = `กำลังสุ่ม... <span class="text-white text-3xl ml-1 mr-1">${autoPullCount}</span>`;
-                    if (newItem.rank === 'SSR' || autoPullCount >= 5000) finishAutoPull(newItem.rank === 'SSR');
-                }, 150); 
-            }, fromOverlay ? 50 : 600);
+                if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
+                currentAnimationInterval = setInterval(() => { autoPullCount++; const nI = { ...generateRandomItem(), timestamp: Date.now() }; history.push(nI); totalPulls++; cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(nI)); if (cn.children.length > 20) cn.removeChild(cn.firstChild); ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); ct.innerHTML = `Searching... <span class="text-white text-2xl ml-1 mr-1">${autoPullCount}</span>`; if (nI.rank === 'SSR' || autoPullCount >= 5000) finishAutoPull(nI.rank === 'SSR'); }, 150); 
+            }, fO ? 50 : 600);
         }
 
-        function resetData() {
-            history = [];
-            totalPulls = 0;
-            document.getElementById('total-pulls-text').innerText = '0';
-            renderInventory();
-            updateLuckMeter();
-        }
+        function resetData() { history = []; totalPulls = 0; document.getElementById('total-pulls-text').innerText = '0'; renderInventory(); updateLuckMeter(); }
 
-        window.onload = () => {
-            preloadImages();
-            renderStars();
-            renderRates();
-            renderInventory();
-            updateLuckMeter();
-        };
+        window.onload = () => { preloadImages(); renderStars(); renderRates(); renderInventory(); updateLuckMeter(); };
     </script>
 </body>
 </html>
