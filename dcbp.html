@@ -2,452 +2,437 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROC GGT: Chrono Pass Diary Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ROC Chrono Diary Pro v4.0.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --roc-blue: #2563eb; --roc-gold: #f59e0b; --roc-bg: #f1f5f9; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--roc-bg); color: #334155; }
+        :root { --roc-blue: #2563eb; --roc-bg: #f1f5f9; }
+        html, body { overflow-x: hidden; touch-action: pan-x pan-y; -webkit-text-size-adjust: none; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--roc-bg); color: #334155; -webkit-tap-highlight-color: transparent; }
         .font-gaming { font-family: 'Rajdhani', sans-serif; }
-        .game-card { background: white; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; overflow: hidden; }
-        .pkg-btn { border: 2px solid #e2e8f0; cursor: pointer; transition: all 0.2s; position: relative; }
-        .pkg-btn.active { border-color: var(--roc-blue); background-color: #eff6ff; }
-        .pkg-btn.active::after { content: '✓'; position: absolute; top: -1px; right: -1px; background: var(--roc-blue); color: white; width: 20px; height: 20px; border-radius: 0 10px 0 10px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
-        .btn-roc { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 4px 0 #1e40af; transition: all 0.1s; }
-        .btn-roc:active { transform: translateY(2px); box-shadow: 0 1px 0 #1e40af; }
-        
-        .tab-btn { border-bottom: 3px solid transparent; transition: all 0.3s; color: #94a3b8; }
-        .tab-btn.active { border-color: var(--roc-blue); color: var(--roc-blue); font-weight: bold; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day-card { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: white; border: 1px solid #e2e8f0; position: relative; }
+        .day-card.out-range { opacity: 0.2; cursor: not-allowed !important; background: #f8fafc; }
+        .day-card.in-range:hover { border-color: var(--roc-blue); transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .day-card.today { font-weight: 900; color: var(--roc-blue); }
+        .day-card.today span.date-num { text-decoration: underline; text-underline-offset: 4px; }
+        .day-card.weekly-start { outline: 2px solid var(--roc-blue); outline-offset: -2px; border-radius: 12px; }
+        .day-card.weekly-reset { outline: 2px solid #f59e0b; outline-offset: -2px; border-radius: 12px; }
+        .day-card.active { background: #eff6ff; color: var(--roc-blue); border-color: #bfdbfe; }
+        .status-dot { width: 5px; height: 5px; border-radius: 50%; margin: 1px; }
+        .bg-daily { background-color: #3b82f6; } 
+        .bg-zeny { background-color: #10b981; }  
+        .bg-weekly { background-color: #f59e0b; } 
+        .bg-red { background-color: #ef4444; }    
+        .bg-sv { background-color: #8b5cf6; }     
+        .modal-overlay { transition: opacity 0.3s ease; opacity: 0; }
+        .modal-content { transition: transform 0.3s ease; transform: translateY(100%); }
+        .custom-checkbox { width: 22px; height: 22px; border: 2px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        input:checked + .custom-checkbox { background-color: var(--roc-blue); border-color: var(--roc-blue); }
+        input:checked + .custom-checkbox::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
+        .lock-overlay { opacity: 0.4; filter: grayscale(1); cursor: not-allowed !important; }
+        .complete-tag { font-size: 9px; background: #dcfce7; color: #166534; padding: 1px 4px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
+        input[type="number"] { font-size: 16px !important; border-radius: 8px; outline: none; text-align: center; }
+        .target-input { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); width: 60px; color: white; font-weight: bold; height: 28px; }
+        .target-input:focus { border-color: var(--roc-blue); background: rgba(255,255,255,0.2); }
+        .sv-input { background: #fff; border: 2px solid #e2e8f0; width: 70px; font-weight: 700; color: #8b5cf6; height: 36px; }
+        .sv-input:focus { border-color: #8b5cf6; }
 
-        .log-details summary::-webkit-details-marker { display: none; }
-        .log-details summary { list-style: none; outline: none; cursor: pointer; }
-        .log-details[open] .arrow-icon { transform: rotate(180deg); }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .q-badge { font-size: 9px; padding: 2px 6px; border-radius: 6px; font-weight: bold; display: flex; align-items: center; gap: 3px; }
-
-        .quest-step { position: relative; padding-left: 35px; }
-        .quest-step::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
-        .quest-step:last-child::before { display: none; }
-        .step-bullet { position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: white; border: 2px solid #cbd5e1; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
-        .step-active .step-bullet { border-color: var(--roc-blue); color: var(--roc-blue); box-shadow: 0 0 10px rgba(37, 99, 235, 0.2); }
-        .step-done .step-bullet { background: var(--roc-blue); border-color: var(--roc-blue); color: white; }
+        .confirm-modal-enter { animation: confirm-zoom 0.2s ease-out; }
+        @keyframes confirm-zoom {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body class="pb-10">
 
-    <nav class="bg-white/90 backdrop-sm border-b border-slate-200 sticky top-0 z-50 p-4 shadow-sm">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <a href="/OGHza/index.html" class="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-blue-50 transition-colors">
-                    <i class="fa-solid fa-arrow-left"></i>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 p-4 shadow-sm">
+        <div class="max-w-md mx-auto flex justify-between items-center gap-2">
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="/OGHza/index.html" class="w-8 h-8 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
                 </a>
-                <h1 class="font-gaming text-xl font-bold text-slate-800 uppercase tracking-tight">Chrono Pass <span class="text-blue-600">Diary Pro</span></h1>
+                <div class="flex flex-col leading-none">
+                    <h1 class="font-gaming text-lg font-bold text-slate-800 tracking-tight uppercase">Chrono <span class="text-blue-600">Diary</span></h1>
+                    <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Version 4.0.0</span>
+                </div>
             </div>
-            <button onclick="resetData()" class="text-[10px] font-bold text-slate-400 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition uppercase tracking-widest">Reset Data</button>
+            <div class="flex items-center gap-1.5">
+                <button onclick="showSimulateConfirm()" title="จำลองข้อมูลเต็ม" class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all">
+                    <i class="fa-solid fa-rocket text-xs"></i>
+                </button>
+                <button onclick="showClearConfirm()" title="ล้างข้อมูลทั้งหมด" class="w-8 h-8 bg-slate-100 text-slate-400 rounded-lg flex items-center justify-center hover:text-red-500 active:scale-95 transition-all">
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+                <select id="pkgSelect" onchange="updateUI()" class="bg-slate-100 border-none rounded-lg px-2 py-1.5 text-[9px] font-bold outline-none text-slate-600 w-auto max-w-[140px]">
+                    <option value="normal">NORMAL PASS</option>
+                    <option value="pre0" selected>PREMIUM UNLOCK</option>
+                    <option value="pre25">PREMIUM +25 LV</option>
+                    <option value="pre100">PREMIUM +100 LV</option>
+                </select>
+            </div>
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-6xl mx-auto p-4 space-y-6">
-        
-        <!-- PACKAGE SELECTION -->
-        <section class="game-card p-4">
-            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-1">Active Package</h2>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div onclick="selectPackage('normal')" id="pkg-normal" class="pkg-btn p-3 rounded-xl active"><div class="text-[9px] font-bold text-slate-400 uppercase">Free</div><div class="text-xs font-bold text-slate-700">Normal Pass</div></div>
-                <div onclick="selectPackage('pre0')" id="pkg-pre0" class="pkg-btn p-3 rounded-xl"><div class="text-[9px] font-bold text-blue-400 uppercase">Unlock</div><div class="text-xs font-bold text-slate-700">Premium 0</div></div>
-                <div onclick="selectPackage('pre25')" id="pkg-pre25" class="pkg-btn p-3 rounded-xl"><div class="text-[9px] font-bold text-orange-400 uppercase">+25 Lv</div><div class="text-xs font-bold text-slate-700">Premium 25</div></div>
-                <div onclick="selectPackage('pre100')" id="pkg-pre100" class="pkg-btn p-3 rounded-xl"><div class="text-[9px] font-bold text-purple-400 uppercase">+100 Lv</div><div class="text-xs font-bold text-slate-700">Premium 100</div></div>
+    <main class="max-w-md mx-auto p-4 space-y-6">
+
+        <!-- STATUS CARD -->
+        <section class="bg-slate-900 rounded-[32px] p-6 text-white shadow-xl shadow-blue-900/20 relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-600/20 rounded-full blur-3xl"></div>
+            <div class="relative z-10 flex justify-between items-center mb-4">
+                <div>
+                    <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Status Summary</p>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-5xl font-gaming font-bold" id="displayLv">0</span>
+                        <span class="text-xs font-bold text-slate-500 uppercase">Lv.</span>
+                    </div>
+                </div>
+                <div class="text-right flex flex-col items-end">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Points</p>
+                    <div class="font-gaming font-bold text-2xl text-blue-400" id="displayXP">0 XP</div>
+                    <div class="mt-1 flex items-center gap-1 opacity-80">
+                        <i class="fa-solid fa-gem text-[8px] text-purple-400"></i>
+                        <span class="text-[10px] font-bold text-purple-400 uppercase">Used: <span id="displaySVTotal">0</span> SV</span>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-2 border-t border-white/5 pt-4">
+                <div class="flex justify-between text-[10px] font-bold uppercase tracking-tighter items-center">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-slate-500">Target Lv.</span>
+                        <input type="number" id="targetLevelInput" value="300" inputmode="numeric" pattern="[0-9]*" oninput="updateUI()" class="target-input font-gaming">
+                    </div>
+                    <span class="text-blue-400" id="progressPercent">0% Completed</span>
+                </div>
+                <div class="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                    <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all duration-700" style="width: 0%"></div>
+                </div>
             </div>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- LEFT: PROGRESS & PIPELINE -->
-            <div class="lg:col-span-4 space-y-6">
-                <div class="game-card p-5 bg-slate-900 text-white border-none shadow-xl">
-                    <div class="flex justify-between items-end mb-2">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Progress Level</span>
-                        <span id="bpBadge" class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-600 font-gaming uppercase tracking-widest">ROC GGT</span>
-                    </div>
-                    <div class="flex items-baseline gap-1 mb-4">
-                        <span class="text-6xl font-gaming font-bold text-white leading-none" id="currentLevel">0</span>
-                        <span class="text-xl font-gaming text-slate-500">/ 2500</span>
-                    </div>
-                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-2 shadow-inner">
-                        <div id="progressBar" class="bg-blue-500 h-full transition-all duration-500 shadow-[0_0_10px_rgba(37,99,235,0.5)]" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between items-center pt-3 mt-4 border-t border-white/5">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-[9px]">Total SV Spent</span>
-                        <div class="text-right font-gaming font-bold text-amber-400 text-xl"><span id="totalSpent">0</span> <span class="text-xs">SV</span></div>
-                    </div>
-                </div>
-
-                <div class="game-card p-5">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Weekly Path Pipeline</h2>
-                        <div id="weekRange" class="text-[8px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase">Wait Start</div>
-                    </div>
-                    <div class="space-y-6">
-                        <div id="vStep1" class="quest-step step-active"><div class="step-bullet">1</div><div class="text-xs font-bold text-slate-700">Amdarais (80 XP)</div><div class="text-[9px] text-slate-400" id="vStatus1">Ready</div></div>
-                        <div id="vStep2" class="quest-step"><div class="step-bullet">2</div><div class="text-xs font-bold text-slate-700">Evil Believer (100 XP)</div><div class="text-[9px] text-slate-400" id="vStatus2">Locked</div></div>
-                        <div id="vStep3" class="quest-step"><div class="step-bullet">3</div><div class="text-xs font-bold text-slate-700">Infinite Tao (120 XP)</div><div class="text-[9px] text-slate-400" id="vStatus3">Locked</div></div>
-                        <div id="vStepZ" class="quest-step"><div class="step-bullet">Z</div><div class="text-xs font-bold text-slate-700">Weekly 10M Zeny (40 XP)</div><div class="text-[9px] text-slate-400" id="vStatusZ">Always Ready</div></div>
-                    </div>
+        <!-- CALENDAR -->
+        <section class="space-y-4">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Diary Calendar</h2>
+                <div class="flex gap-2 bg-white rounded-lg p-1 border border-slate-200 shadow-sm">
+                    <button onclick="changeMonth(-1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-blue-600 transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                    <span id="currentMonthLabel" class="text-[11px] font-bold text-slate-600 min-w-[100px] text-center flex items-center justify-center uppercase">Feb 2026</span>
+                    <button onclick="changeMonth(1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-blue-600 transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                 </div>
             </div>
 
-            <!-- RIGHT: ENTRY & TABS -->
-            <div class="lg:col-span-8 space-y-6">
-                <!-- Entry Form -->
-                <div class="game-card p-5 border-t-4 border-blue-500">
-                    <div class="flex justify-between items-center mb-5">
-                        <h2 class="font-bold text-slate-700 flex items-center gap-2">✍️ บันทึกกิจกรรม</h2>
-                        <input type="date" id="logDate" onchange="resetTempState(); updateFormUI()" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-bold text-blue-600 outline-none">
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-3">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Daily Missions</p>
-                            <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-blue-50 transition">
-                                <input type="checkbox" id="qDaily" checked class="w-5 h-5 text-blue-600 rounded-lg">
-                                <div class="text-sm font-bold">Daily Quest <span id="dailyXpHint" class="text-[10px] text-slate-400">(30 XP)</span></div>
-                            </label>
-                            <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-emerald-50 transition">
-                                <input type="checkbox" id="qZenyD" checked class="w-5 h-5 text-emerald-600 rounded-lg">
-                                <div class="text-sm font-bold">Daily Zeny 1M <span class="text-[10px] text-slate-400">(30 XP)</span></div>
-                            </label>
-
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4">Weekly Pipeline</p>
-                            <div id="weeklyInputArea" class="space-y-2"></div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Level Management</p>
-                            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-inner">
-                                <label class="block text-[10px] font-bold text-slate-500 mb-4 text-center uppercase tracking-widest">ซื้อเลเวลเพิ่มวันนี้ (Lv)</label>
-                                <input type="number" id="buyLv" value="0" min="0" class="w-full bg-white border border-slate-200 rounded-2xl text-center text-4xl font-gaming font-bold text-blue-600 p-3 shadow-md outline-none">
-                            </div>
-                            <button onclick="saveEntry()" class="w-full btn-roc py-5 rounded-2xl font-bold text-lg uppercase tracking-widest shadow-xl">บันทึก (Save)</button>
-                        </div>
-                    </div>
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200">
+                <div class="calendar-grid mb-4 text-center text-[10px] font-bold text-slate-300 uppercase">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
-
-                <!-- View Switcher -->
-                <div class="game-card flex flex-col min-h-[450px]">
-                    <div class="flex border-b border-slate-100 bg-slate-50/50">
-                        <button onclick="switchTab('history')" id="tab-history" class="tab-btn active px-6 py-4 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left"></i> History
-                        </button>
-                        <button onclick="switchTab('bags')" id="tab-bags" class="tab-btn px-6 py-4 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                            <i class="fa-solid fa-briefcase"></i> Bags
-                        </button>
-                    </div>
-
-                    <!-- History Container -->
-                    <div id="view-history" class="flex-1 overflow-y-auto custom-scroll divide-y divide-slate-100">
-                        <div id="diaryList"></div>
-                    </div>
-
-                    <!-- Bags Container -->
-                    <div id="view-bags" class="hidden flex-1 overflow-y-auto custom-scroll p-4 space-y-6">
-                        <div class="space-y-3">
-                            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex justify-between px-1">
-                                <span>🆓 Free Rewards</span>
-                                <span id="freeBagCount" class="text-slate-400">0 Items</span>
-                            </h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="bagFreeContent"></div>
-                        </div>
-                        <div id="bagPremiumSection" class="space-y-3 pt-4 border-t border-slate-100">
-                            <h3 class="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex justify-between px-1">
-                                <span>💎 Premium Rewards</span>
-                                <span id="premiumBagCount" class="text-blue-600">0 Items</span>
-                            </h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="bagPremiumContent"></div>
-                        </div>
-                    </div>
-
-                    <div class="p-3 border-t border-slate-50 bg-white flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase px-4">
-                        <span id="logCount">0 Records</span>
-                    </div>
-                </div>
+                <div id="calendarDays" class="calendar-grid"></div>
+            </div>
+        </section>
+        
+        <div class="bg-white border border-slate-200 p-4 rounded-2xl space-y-4 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b pb-2">Legend & Markers</p>
+            <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-[9px] font-bold uppercase">
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-blue-600"></div> เริ่มรอบสัปดาห์</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-amber-500"></div> วันที่จะรีเซ็ตรอบ</div>
+                <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-daily"></div> Daily Quest</div>
+                <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-zeny"></div> Daily Zeny 1M</div>
+                <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-weekly"></div> Weekly Boss</div>
+                <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-red"></div> Weekly Zeny 10M</div>
+                <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-sv"></div> Buy Lv (SV)</div>
             </div>
         </div>
     </main>
 
+    <!-- CONFIRM CLEAR MODAL -->
+    <div id="confirmClearModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm">
+        <div class="bg-white rounded-[32px] p-8 w-full max-w-xs confirm-modal-enter shadow-2xl text-center">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-trash-can text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">ล้างข้อมูลทั้งหมด?</h3>
+            <p class="text-xs text-slate-400 font-medium mb-6 leading-relaxed">ประวัติการบันทึกทั้งหมดของคุณจะถูกลบและไม่สามารถกู้คืนได้ คุณแน่ใจหรือไม่?</p>
+            <div class="flex flex-col gap-2">
+                <button onclick="confirmClearData()" class="w-full bg-red-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-red-100 active:scale-95 transition-all font-kanit">ใช่, ลบข้อมูล</button>
+                <button onclick="hideClearConfirm()" class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-2xl active:scale-95 transition-all font-kanit">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRM SIMULATION MODAL -->
+    <div id="confirmSimulateModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm">
+        <div class="bg-white rounded-[32px] p-8 w-full max-w-xs confirm-modal-enter shadow-2xl text-center">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-rocket text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">จำลองเควสเต็ม?</h3>
+            <p class="text-xs text-slate-400 font-medium mb-6 leading-relaxed">ระบบจะเขียนทับข้อมูลที่คุณบันทึกไว้ด้วยสถานะ "ทำเควสสำเร็จ 100%" ทุกวันเพื่อดูค่า XP สูงสุด คุณแน่ใจหรือไม่?</p>
+            <div class="flex flex-col gap-2">
+                <button onclick="confirmSimulate()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-100 active:scale-95 transition-all font-kanit">ยืนยันการจำลอง</button>
+                <button onclick="hideSimulateConfirm()" class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-2xl active:scale-95 transition-all font-kanit">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIARY MODAL -->
+    <div id="diaryModal" class="fixed inset-0 z-50 hidden modal-overlay bg-slate-900/70 backdrop-blur-sm">
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[40px] p-8 modal-content max-w-md mx-auto shadow-2xl overflow-hidden max-h-[95vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800" id="modalDateLabel">--</h3>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Activity Progress</p>
+                </div>
+                <button onclick="closeModal()" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="p-4 bg-purple-50 rounded-2xl border border-purple-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white shadow-sm"><i class="fa-solid fa-gem text-sm"></i></div>
+                            <div><p class="text-sm font-bold text-purple-900">Buy Level (Silvervine)</p><p class="text-[10px] text-purple-500 font-bold uppercase tracking-tight" id="sv-cost-label">3 SV / 1 LEVEL</p></div>
+                        </div>
+                        <div class="flex flex-col items-center"><input type="number" id="svLevelsInput" value="0" inputmode="numeric" pattern="[0-9]*" onfocus="if(this.value=='0')this.value=''" onblur="if(this.value=='')this.value='0'" oninput="updateSvLevels()" class="sv-input font-gaming"><span class="text-[8px] font-black text-purple-400 mt-1 uppercase">Lv. Purchased</span></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <label class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl cursor-pointer hover:bg-blue-50 transition border border-transparent">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm"><i class="fa-solid fa-calendar-check"></i></div>
+                            <div><p class="text-sm font-bold text-slate-700">Daily Quest</p><p class="text-[10px] text-blue-500 font-bold uppercase tracking-tight" id="dailyXpText">30 XP</p></div>
+                        </div>
+                        <div class="flex items-center gap-3"><span class="text-[10px] font-bold text-blue-500" id="xp-display-daily"></span><input type="checkbox" id="check-daily" class="hidden" onchange="toggleTask('daily')"><div class="custom-checkbox"></div></div>
+                    </label>
+                    <label class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl cursor-pointer hover:bg-emerald-50 transition border border-transparent">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm"><i class="fa-solid fa-coins"></i></div>
+                            <div><p class="text-sm font-bold text-slate-700">Daily Zeny (1M)</p><p class="text-[10px] text-emerald-500 font-bold uppercase tracking-tight">30 XP</p></div>
+                        </div>
+                        <div class="flex items-center gap-3"><span class="text-[10px] font-bold text-emerald-500">+30 XP</span><input type="checkbox" id="check-zenyD" class="hidden" onchange="toggleTask('zenyD')"><div class="custom-checkbox"></div></div>
+                    </label>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Weekly Step Progression</h4>
+                    <div class="space-y-2">
+                        <label id="label-bossA" class="flex items-center justify-between p-3 bg-slate-50 rounded-xl cursor-pointer transition"><div class="flex flex-col"><span class="text-xs font-bold text-slate-600 flex items-center">1. Amdarais (1 ครั้ง) <span id="tag-bossA"></span></span><span class="text-[9px] text-orange-500 font-bold uppercase tracking-tighter" id="progress-bossA">0/1</span></div><div class="flex items-center gap-3"><span class="text-[10px] font-bold text-orange-500">+80 XP</span><input type="checkbox" id="check-bossA" class="hidden" onchange="toggleTask('bossA')"><div class="custom-checkbox"></div></div></label>
+                        <label id="label-bossE" class="flex items-center justify-between p-3 bg-slate-50 rounded-xl cursor-pointer transition"><div class="flex flex-col"><span class="text-xs font-bold text-slate-600 flex items-center">2. Evil Fanatic (2 ครั้ง) <span id="tag-bossE"></span></span><span class="text-[9px] text-orange-500 font-bold uppercase tracking-tighter" id="progress-bossE">0/2</span></div><div class="flex items-center gap-3"><span class="text-[10px] font-bold text-orange-500">+100 XP</span><input type="checkbox" id="check-bossE" class="hidden" onchange="toggleTask('bossE')"><div class="custom-checkbox"></div></div></label>
+                        <label id="label-bossT" class="flex items-center justify-between p-3 bg-slate-50 rounded-xl cursor-pointer transition"><div class="flex flex-col"><span class="text-xs font-bold text-slate-600 flex items-center">3. Infinite Tao Gunka (3 ครั้ง) <span id="tag-bossT"></span></span><span class="text-[9px] text-orange-500 font-bold uppercase tracking-tighter" id="progress-bossT">0/3</span></div><div class="flex items-center gap-3"><span class="text-[10px] font-bold text-orange-500">+120 XP</span><input type="checkbox" id="check-bossT" class="hidden" onchange="toggleTask('bossT')"><div class="custom-checkbox"></div></div></label>
+                        <label id="label-zenyW" class="flex items-center justify-between p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-rose-50 transition mt-2 border-t pt-3"><div class="flex flex-col"><span class="text-xs font-bold text-slate-600 font-bold">ส่ง Weekly Zeny (10M) <span id="tag-zenyW"></span></span><span class="text-[9px] text-rose-500 font-bold uppercase tracking-tight" id="progress-zenyW">Limit: 1/Week</span></div><div class="flex items-center gap-3"><span class="text-[10px] font-bold text-rose-500">+40 XP</span><input type="checkbox" id="check-zenyW" class="hidden" onchange="toggleTask('zenyW')"><div class="custom-checkbox"></div></div></label>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="w-full mt-6 bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">Confirm History</button>
+        </div>
+    </div>
+
     <script>
-        // --- CONSTANTS ---
-        const PKG_INFO = { 'normal': {s:0,c:0,p:false}, 'pre0': {s:0,c:49,p:true}, 'pre25': {s:25,c:115,p:true}, 'pre100': {s:100,c:295,p:true} };
-        const XP_VAL = { daily: 30, dailyzeny: 30, w1: 80, w2: 100, w3: 120, wzeny: 40 };
+        const EVENT_START = new Date(2026, 1, 18, 0, 0, 0, 0);
+        const EVENT_END = new Date(2026, 2, 25, 23, 59, 59, 999);
+        const PKG_CONFIG = { normal: { bonusLv: 0, dailyXp: 20 }, pre0: { bonusLv: 0, dailyXp: 30 }, pre25: { bonusLv: 25, dailyXp: 30 }, pre100: { bonusLv: 100, dailyXp: 30 } };
 
-        // Full Database for accuracy
-        const REWARDS = {
-            1: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "[NFS] Ultimate Cook", q: 5, p: false}, {n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false},
-                {n: "Premium Service 10Day Box", q: 1, p: true}, {n: "Mysterious Medal", q: 10, p: true}, {n: "Treasure Box I", q: 3, p: true}, {n: "Thai Perfume (MATK)", q: 2, p: true}, {n: "Thai Perfume (ATK)", q: 2, p: true}, {n: "Thai Perfume (ASPD)", q: 2, p: true}, {n: "[NFS] Small Life Potion", q: 20, p: true}, {n: "[NFS] Ultimate Cook", q: 10, p: true}, {n: "[NFS] Small Mana Potion", q: 15, p: true}, {n: "[NFS] Advanced Field Manual", q: 10, p: true}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 30, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 30, p: true}],
-            4: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            7: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "Thai Perfume (ATK)", q: 5, p: true}],
-            8: [{n: "Treasure Box I", q: 1, p: false}, {n: "Thai Perfume (ASPD)", q: 5, p: true}],
-            10: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            13: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
-            16: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
-            17: [{n: "Treasure Box I", q: 1, p: false}, {n: "Thai Perfume (ATK)", q: 5, p: true}],
-            19: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
-            20: [{n: "Treasure Box I", q: 1, p: true}],
-            22: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "[NFS] JOB Battle Manual", q: 3, p: true}],
-            23: [{n: "Mysterious Medal", q: 3, p: true}],
-            24: [{n: "Treasure Box II", q: 1, p: true}],
-            25: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            27: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
-            28: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
-            30: [{n: "Treasure Box I", q: 1, p: true}],
-            31: [{n: "Costume Bubble Archangeling Hairband", q: 1, rare: true, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
-            34: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "Treasure Box II", q: 1, p: true}],
-            36: [{n: "Mysterious Medal", q: 3, p: true}],
-            37: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Advanced Field Manual", q: 5, p: true}],
-            40: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            43: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
-            44: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
-            45: [{n: "Treasure Box I", q: 1, p: true}],
-            46: [{n: "Mysterious Medal", q: 3, p: true}],
-            47: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
-            50: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            51: [{n: "Treasure Box I", q: 1, p: true}],
-            53: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
-            55: [{n: "Treasure Box I", q: 1, p: true}],
-            56: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
-            57: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Advanced Field Manual", q: 5, p: true}],
-            59: [{n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "[NFS] JOB Battle Manual", q: 3, p: true}],
-            60: [{n: "Treasure Box I", q: 1, p: true}],
-            61: [{n: "Treasure Box II", q: 1, p: true}],
-            62: [{n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "Mysterious Medal", q: 3, p: true}],
-            65: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            66: [{n: "Treasure Box I", q: 1, p: false}, {n: "[NFS] Ultimate Cook", q: 5, p: true}],
-            67: [{n: "Thai Perfume (MATK)", q: 5, p: true}],
-            68: [{n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "Thai Perfume (ATK)", q: 5, p: true}],
-            70: [{n: "Treasure Box I", q: 1, p: true}],
-            71: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
-            73: [{n: "Treasure Box II", q: 1, p: true}],
-            74: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
-            75: [{n: "Treasure Box I", q: 1, p: true}],
-            77: [{n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
-            80: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            81: [{n: "Treasure Box II", q: 1, p: true}],
-            82: [{n: "Mysterious Medal", q: 3, p: true}],
-            83: [{n: "[NFS] Increase Agility Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Blessing Lv.10 Scroll", q: 10, p: false}, {n: "[NFS] Kafra Card", q: 5, p: true}],
-            84: [{n: "[NFS] Advanced Field Manual", q: 5, p: true}],
-            85: [{n: "Treasure Box I", q: 1, p: true}],
-            86: [{n: "Thai Perfume (ASPD)", q: 2, p: false}, {n: "[NFS] Small Mana Potion", q: 3, p: true}],
-            87: [{n: "[NFS] Small Life Potion", q: 10, p: true}],
-            88: [{n: "Treasure Box III", q: 1, p: true}],
-            89: [{n: "[NFS] Ultimate Cook", q: 3, p: false}, {n: "[NFS] Increase Agility Lv.10 Scroll", q: 15, p: true}, {n: "[NFS] Blessing Lv.10 Scroll", q: 15, p: true}],
-            90: [{n: "Treasure Box I", q: 1, p: true}],
-            91: [{n: "Treasure Box II", q: 1, p: true}],
-            92: [{n: "[NFS] Small Life Potion", q: 5, p: false}, {n: "Thai Perfume (MATK)", q: 5, p: true}],
-            95: [{n: "[NFS] Small Mana Potion", q: 2, p: false}, {n: "Treasure Box I", q: 1, p: true}],
-            98: [{n: "Thai Perfume (ATK)", q: 2, p: false}, {n: "[NFS] Small Life Potion", q: 10, p: true}],
-            99: [{n: "Thai Perfume (MATK)", q: 2, p: false}, {n: "[NFS] Ultimate Cook", q: 5, p: true}],
-            100: [{n: "[Event] Enchant Temporal & Diabolus Slot4 Ticket", q: 1, rare: true, p: false}, {n: "[NFS] Chrono Pass Ticket", q: 1, rare: true, p: true}, {n: "Treasure Box III", q: 1, p: true}],
-            200: [{n: "Costume Cosmic Connection", q: 1, rare: true, p: true}, {n: "Treasure Box III", q: 2, p: true}],
-            300: [{n: "[NFS] Chrono Pass Ticket", q: 1, rare: true, p: true}, {n: "Treasure Box I", q: 30, p: true}, {n: "Treasure Box III", q: 3, p: true}],
-            350: [{n: "[Event] Special Enchant Temporal Boots Ticket", q: 1, rare: true, p: true}, {n: "Guarantee Weapon 7 Up Pack", q: 1, rare: true, p: true}],
-            400: [{n: "Guarantee Armor 7 Up Pack", q: 1, rare: true, p: true}],
-            500: [{n: "Treasure Box II", q: 30, p: true}],
-            600: [{n: "Guarantee Weapon 9 Up Pack", q: 1, rare: true, p: true}],
-            700: [{n: "Guarantee Armor 9 Up Pack", q: 1, rare: true, p: true}],
-            900: [{n: "Treasure Box III", q: 30, p: true}],
-            1500: [{n: "Guarantee Weapon 11 Up Pack", q: 1, rare: true, p: true}],
-            2000: [{n: "Guarantee Armor 11 Up Pack", q: 1, rare: true, p: true}],
-            2500: [{n: "Costume Golden Valkyrie Wings", q: 1, rare: true, p: true}]
-        };
+        let currentMonth = 1;
+        let selectedDateStr = null;
+        let diaryData = JSON.parse(localStorage.getItem('rocChronoDiary_v390')) || {};
 
-        let entries = JSON.parse(localStorage.getItem('roc_ggt_diary_v30')) || [];
-        let config = JSON.parse(localStorage.getItem('roc_ggt_cfg_v30')) || { pkg: 'normal' };
-        let tempQuests = { w1: false, w2: false, w3: false, wzeny: false };
+        function save() { localStorage.setItem('rocChronoDiary_v390', JSON.stringify(diaryData)); }
 
-        const setUI = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+        function formatDateLocal(date) {
+            const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0'); const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function xpToLevel(xp) { return xp < 50 ? 0 : Math.floor((xp - 40) / 10); }
+
+        function getGlobalWeeklyAnchor() {
+            const keys = Object.keys(diaryData).filter(d => diaryData[d].bossA || diaryData[d].bossE || diaryData[d].bossT || diaryData[d].zenyW).sort();
+            if (keys.length === 0) return EVENT_START;
+            const p = keys[0].split('-'); return new Date(p[0], p[1]-1, p[2], 0, 0, 0, 0);
+        }
+
+        function getCycleId(dateStr) {
+            const anchor = getGlobalWeeklyAnchor();
+            if (!anchor) return -1;
+            const p = dateStr.split('-'); const t = new Date(p[0], p[1]-1, p[2], 0, 0, 0, 0);
+            const diff = Math.floor((t.getTime() - anchor.getTime()) / 86400000);
+            if (diff < 0) return -1;
+            return Math.floor(diff / 7);
+        }
+
+        function calculateResults() {
+            let xp = 0; let totalSV = 0;
+            const pkgKey = document.getElementById('pkgSelect').value;
+            const pkg = PKG_CONFIG[pkgKey];
+            if (pkg.bonusLv > 0) xp += (pkg.bonusLv * 10) + 40;
+
+            Object.keys(diaryData).forEach(d => {
+                const day = diaryData[d];
+                if (day.daily) xp += pkg.dailyXp;
+                if (day.zenyD) xp += 30;
+                if (day.svLevels) { xp += (day.svLevels * 10); totalSV += (day.svLevels * 3); }
+            });
+
+            const anchor = getGlobalWeeklyAnchor();
+            if (anchor) {
+                let cyc = {};
+                Object.keys(diaryData).forEach(d => {
+                    const infoId = getCycleId(d); if (infoId === -1) return;
+                    if (!cyc[infoId]) cyc[infoId] = { bossA: 0, bossE: 0, bossT: 0, zenyW: 0 };
+                    if (diaryData[d].bossA) cyc[infoId].bossA++; if (diaryData[d].bossE) cyc[infoId].bossE++;
+                    if (diaryData[d].bossT) cyc[infoId].bossT++; if (diaryData[d].zenyW) cyc[infoId].zenyW++;
+                });
+                Object.values(cyc).forEach(c => {
+                    if (c.bossA >= 1) { xp += 80; if (c.bossE >= 2) { xp += 100; if (c.bossT >= 3) xp += 120; } }
+                    if (c.zenyW >= 1) xp += 40;
+                });
+            }
+            return { xp, totalSV };
+        }
+
+        function updateUI() {
+            const res = calculateResults();
+            const lv = xpToLevel(res.xp);
+            const target = parseInt(document.getElementById('targetLevelInput').value) || 300;
+            document.getElementById('displayLv').innerText = lv.toLocaleString();
+            document.getElementById('displayXP').innerText = res.xp.toLocaleString() + ' XP';
+            document.getElementById('displaySVTotal').innerText = res.totalSV.toLocaleString();
+            const prog = Math.min(100, (lv / target) * 100);
+            document.getElementById('progressBar').style.width = prog + '%';
+            document.getElementById('progressPercent').innerText = `${prog.toFixed(1)}% Completed`;
+            renderCalendar(); save();
+        }
+
+        // --- Confirmation Modal Logic ---
+        function showSimulateConfirm() { document.getElementById('confirmSimulateModal').classList.remove('hidden'); }
+        function hideSimulateConfirm() { document.getElementById('confirmSimulateModal').classList.add('hidden'); }
         
-        function getItemEmoji(name) {
-            if (name.includes("Service")) return "🎖️"; if (name.includes("Medal")) return "🏅"; if (name.includes("Ticket")) return "🎫"; if (name.includes("Costume")) return "🎭"; if (name.includes("Weapon")) return "⚔️"; if (name.includes("Armor")) return "🛡️"; if (name.includes("Box")) return "🎁"; if (name.includes("Wings")) return "🧚"; return "🔹";
-        }
-
-        // --- PIPELINE LOGIC ---
-        function getWeeklyState(targetDateStr) {
-            const past = entries.filter(e => e.date < targetDateStr).sort((a,b) => a.date.localeCompare(b.date));
-            let start = null; let prog = { w1: false, w2: 0, w3: 0, wzeny: false };
-            past.forEach(e => {
-                if (start && (((new Date(e.date)-new Date(start))/86400000)>=7)) { start = null; prog = {w1:false,w2:0,w3:0,wzeny:false}; }
-                if (!start && e.quests.some(q => ['w1','w2','w3','wzeny'].includes(q))) start = e.date;
-                if (start) {
-                    if (e.quests.includes('w1')) prog.w1 = true;
-                    if (e.quests.includes('w2')) prog.w2 += 1;
-                    if (e.quests.includes('w3')) prog.w3 += 1;
-                    if (e.quests.includes('wzeny')) prog.wzeny = true;
-                }
-            });
-            return { currentWeekStart: start, prog };
-        }
-
-        function updateFormUI() {
-            const logInput = document.getElementById('logDate');
-            if(!logInput) return;
-            const pkg = PKG_INFO[config.pkg];
-            const { currentWeekStart, prog } = getWeeklyState(logInput.value);
-            
-            let canDoW1 = !prog.w1;
-            let canDoW2 = (prog.w1 || tempQuests.w1) && (prog.w2 < 2);
-            let totalEB = prog.w2 + (tempQuests.w2 ? 1 : 0);
-            let canDoW3 = (prog.w1 || tempQuests.w1) && totalEB >= 2 && prog.w3 < 3;
-            let canDoZeny = !prog.wzeny;
-
-            let html = "";
-            html += createQuestCard('w1', 'Step 1: Amdarais (1/1)', canDoW1, tempQuests.w1, '80 XP');
-            html += createQuestCard('w2', `Step 2: Evil Believer (${prog.w2}/2)`, canDoW2, tempQuests.w2, '100 XP');
-            html += createQuestCard('w3', `Step 3: Infinite Tao (${prog.w3}/3)`, canDoW3, tempQuests.w3, '120 XP');
-            html += createQuestCard('wzeny', 'Weekly Zeny 10M (1/1)', canDoZeny, tempQuests.wzeny, '40 XP');
-            document.getElementById('weeklyInputArea').innerHTML = html;
-            
-            const setV = (id, sid, state, txt) => { const e = document.getElementById(id); const s = document.getElementById(sid); if(e && s){e.className='quest-step '+(state==='done'?'step-done':state==='active'?'step-active':'opacity-30');s.innerText=txt;} };
-            setV('vStep1', 'vStatus1', prog.w1?'done':'active', prog.w1?'Finished':'Ready');
-            setV('vStep2', 'vStatus2', prog.w2>=2?'done':(prog.w1?'active':'locked'), prog.w2>=2?'Finished':(prog.w1?`${prog.w2}/2`:'Locked'));
-            setV('vStep3', 'vStatus3', prog.w3>=3?'done':(prog.w2>=2?'active':'locked'), prog.w3>=3?'Finished':(prog.w2>=2?`${prog.w3}/3`:'Locked'));
-            setV('vStepZ', 'vStatusZ', prog.wzeny?'done':'active', prog.wzeny?'Finished':'Ready');
-
-            setUI('weekRange', currentWeekStart ? `Start: ${new Date(currentWeekStart).toLocaleDateString('th-TH')}` : "Wait Start");
-            document.querySelectorAll('.pkg-btn').forEach(b => b.classList.toggle('active', b.id === 'pkg-'+config.pkg));
-            document.getElementById('dailyXpHint').innerText = pkg.p ? '(30 XP)' : '(20 XP)';
-        }
-
-        function handleCheckChange(id) { tempQuests[id] = document.getElementById(id).checked; updateFormUI(); }
-        function createQuestCard(id, label, enabled, checked, hint) { return `<label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition ${enabled ? 'cursor-pointer hover:border-blue-300' : 'opacity-40 grayscale cursor-not-allowed'}"><input type="checkbox" id="${id}" ${checked?'checked':''} ${enabled?`onchange="handleCheckChange('${id}')"`:'disabled'} class="w-4 h-4 text-blue-600 rounded-lg"><div class="flex-1 text-[11px]"><div class="font-bold text-slate-700">${label}</div><div class="text-[9px] font-bold text-slate-400 uppercase">${hint}</div></div></label>`; }
-
-        function resetTempState() {
-            const dateStr = document.getElementById('logDate').value;
-            const existing = entries.find(e => e.date === dateStr);
-            if (existing) {
-                tempQuests = { w1: existing.quests.includes('w1'), w2: existing.quests.includes('w2'), w3: existing.quests.includes('w3'), wzeny: existing.quests.includes('wzeny') };
-            } else { tempQuests = { w1: false, w2: false, w3: false, wzeny: false }; }
-        }
-
-        function switchTab(t) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-'+t).classList.add('active');
-            document.getElementById('view-history').classList.toggle('hidden', t !== 'history');
-            document.getElementById('view-bags').classList.toggle('hidden', t !== 'bags');
-        }
-
-        function selectPackage(id) { config.pkg = id; localStorage.setItem('roc_ggt_cfg_v30', JSON.stringify(config)); render(); }
-
-        function saveEntry() {
-            const date = document.getElementById('logDate').value;
-            if(!date) return;
-            const quests = [];
-            if(document.getElementById('qDaily')?.checked) quests.push('daily');
-            if(document.getElementById('qZenyD')?.checked) quests.push('dailyzeny');
-            Object.keys(tempQuests).forEach(key => { if(tempQuests[key]) quests.push(key); });
-            const buyLv = parseInt(document.getElementById('buyLv').value) || 0;
-            const idx = entries.findIndex(e => e.date === date);
-            if(idx > -1) entries[idx] = { date, quests, buyLv }; else entries.push({ date, quests, buyLv });
-            localStorage.setItem('roc_ggt_diary_v30', JSON.stringify(entries));
-            document.getElementById('buyLv').value = 0; render();
-        }
-
-        function render() {
-            entries.sort((a,b) => a.date.localeCompare(b.date));
-            const pkg = PKG_INFO[config.pkg];
-            let currentLv = pkg.s; let currentXP = 0; let totalSV = pkg.c;
-            let wStart = null; let wProg = { w1:false, w2:0, w3:0, wzeny:false };
-            const logs = [];
-
-            let freeInv = {}; let preInv = {}; 
-            
-            // 1. ADD STARTER LOG
-            const startGained = [];
-            if(pkg.p) { preInv["[Premium] Chrono Pass"] = 1; startGained.push({n:"[Premium] Chrono Pass", q:1, p:true}); } 
-            else { freeInv["[Normal] Chrono Pass"] = 1; startGained.push({n:"[Normal] Chrono Pass", q:1, p:false}); }
-            
-            // Loop for Starter Items (Level 1 to Start Level)
-            for(let l=1; l<=pkg.s; l++) {
-                 if(REWARDS[l]) REWARDS[l].forEach(i => {
-                    if(pkg.p || !i.p) { 
-                        if(i.p) preInv[i.n] = (preInv[i.n]||0)+i.q; 
-                        else freeInv[i.n] = (freeInv[i.n]||0)+i.q; 
-                        startGained.push({...i});
-                    }
-                });
-                if(l > 100 && pkg.p) {
-                    if(l % 10 === 0) { preInv["Treasure Box I"] = (preInv["Treasure Box I"]||0)+1; startGained.push({n:"Treasure Box I", q:1, p:true}); }
-                    if(l % 20 === 0) { preInv["Treasure Box II"] = (preInv["Treasure Box II"]||0)+1; startGained.push({n:"Treasure Box II", q:1, p:true}); }
-                    if(l % 50 === 0) { preInv["Treasure Box III"] = (preInv["Treasure Box III"]||0)+1; startGained.push({n:"Treasure Box III", q:1, p:true}); }
-                }
+        function confirmSimulate() {
+            diaryData = {};
+            let temp = new Date(EVENT_START);
+            let dayIndex = 0;
+            while (temp <= EVENT_END) {
+                const ds = formatDateLocal(temp);
+                const cycleDay = dayIndex % 7;
+                diaryData[ds] = {
+                    daily: true, zenyD: true, svLevels: 0,
+                    bossA: (cycleDay === 0),
+                    bossE: (cycleDay === 0 || cycleDay === 1),
+                    bossT: (cycleDay === 0 || cycleDay === 1 || cycleDay === 2),
+                    zenyW: (cycleDay === 0)
+                };
+                temp.setDate(temp.getDate() + 1);
+                dayIndex++;
             }
-            if(startGained.length > 0) {
-                logs.push({ date: "🎁 Starter Package", level: pkg.s, buyLv: 0, quests: [], gained: startGained, isStart: true });
-            }
+            updateUI();
+            hideSimulateConfirm();
+        }
 
-            entries.forEach((e) => {
-                const dayStartLv = currentLv;
-                if(wStart && (((new Date(e.date)-new Date(wStart))/86400000)>=7)) { wStart=null; wProg={w1:false,w2:0,w3:0,wzeny:false}; }
-                currentLv += e.buyLv; totalSV += (e.buyLv * 3);
-                e.quests.forEach(q => {
-                    if(q==='daily') currentXP += (pkg.p ? 30 : 20);
-                    if(q==='dailyzeny') currentXP += 30;
-                    if(q==='w1') currentXP += XP_VAL.w1;
-                    if(q==='w2') currentXP += XP_VAL.w2;
-                    if(q==='w3') currentXP += XP_VAL.w3;
-                    if(q==='wzeny') currentXP += XP_VAL.wzeny;
-                    if(['w1','w2','w3','wzeny'].includes(q) && !wStart) wStart = e.date;
-                });
-                currentLv += Math.floor(currentXP / 10); currentXP %= 10;
-                
-                const gained = [];
-                for(let l = dayStartLv + 1; l <= currentLv; l++) {
-                    if(REWARDS[l]) REWARDS[l].forEach(i => {
-                        if(pkg.p || !i.p) {
-                            if(i.p) preInv[i.n] = (preInv[i.n] || 0) + i.q;
-                            else freeInv[i.n] = (freeInv[i.n] || 0) + i.q;
-                            gained.push(i);
-                        }
-                    });
-                    if(l > 100 && pkg.p) {
-                        const boxAdd = (n) => { preInv[n] = (preInv[n]||0)+1; gained.push({n, q:1, p:true}); };
-                        if(l % 10 === 0) boxAdd("Treasure Box I");
-                        if(l % 20 === 0) boxAdd("Treasure Box II");
-                        if(l % 50 === 0) boxAdd("Treasure Box III");
+        function showClearConfirm() { document.getElementById('confirmClearModal').classList.remove('hidden'); }
+        function hideClearConfirm() { document.getElementById('confirmClearModal').classList.add('hidden'); }
+        
+        function confirmClearData() {
+            diaryData = {};
+            updateUI();
+            hideClearConfirm();
+        }
+
+        function changeMonth(dir) { currentMonth = Math.max(1, Math.min(2, currentMonth + dir)); renderCalendar(); }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendarDays');
+            document.getElementById('currentMonthLabel').innerText = ["January", "February 2026", "March 2026"][currentMonth];
+            container.innerHTML = '';
+            const first = new Date(2026, currentMonth, 1).getDay();
+            const count = new Date(2026, currentMonth + 1, 0).getDate();
+            for (let i = 0; i < first; i++) container.innerHTML += '<div class="day-card out-range"></div>';
+            const today = formatDateLocal(new Date());
+            const anchor = getGlobalWeeklyAnchor();
+            for (let d = 1; d <= count; d++) {
+                const dateObj = new Date(2026, currentMonth, d, 0, 0, 0, 0);
+                const ds = formatDateLocal(dateObj);
+                const cycId = getCycleId(ds);
+                let cls = (dateObj >= EVENT_START && dateObj <= EVENT_END) ? 'day-card in-range' : 'day-card out-range';
+                if (ds === today) cls += ' today';
+                if (anchor) {
+                    const diffDays = Math.floor((dateObj.getTime() - anchor.getTime()) / 86400000);
+                    if (diffDays >= 0 && diffDays % 7 === 0) {
+                        cls += (diffDays === 0) ? ' weekly-start' : ' weekly-reset';
                     }
                 }
-                logs.push({ ...e, levelAtEnd: currentLv, gained });
-            });
-
-            setUI('currentLevel', currentLv); setUI('totalSpent', totalSV.toLocaleString());
-            const progressBar = document.getElementById('progressBar');
-            if(progressBar) progressBar.style.width = Math.min(100, (currentLv/2500)*100) + '%';
-            
-            document.getElementById('diaryList').innerHTML = logs.slice().reverse().map(e => {
-                if(e.isStart) {
-                    return `<div class="p-4 bg-yellow-50 border-l-4 border-yellow-400"><details class="log-details group"><summary class="flex items-center gap-4"><div class="flex-none w-14 text-center"><div class="text-[9px] font-bold text-yellow-600 uppercase">PKG</div><div class="text-xl font-gaming font-bold text-yellow-700 mt-1">${e.level}</div></div><div class="flex-1"><div class="text-xs font-bold text-yellow-800">🎁 Starter Package Received</div><div class="text-[9px] text-yellow-600 mt-1">${e.gained.length} Items Added to Bag</div></div><div class="flex-none text-yellow-400 arrow-icon"><i class="fa-solid fa-chevron-down text-xs"></i></div></summary><div class="mt-4 pt-3 border-t border-yellow-200 grid grid-cols-1 gap-1">${e.gained.map(i => `<div class="flex justify-between p-2 bg-white rounded-lg border border-yellow-100 text-[10px]"><span>${getItemEmoji(i.n)} ${i.n}</span><span class="font-bold text-yellow-600">x${i.q}</span></div>`).join('')}</div></details></div>`;
+                let dots = '';
+                if (diaryData[ds]) {
+                    const day = diaryData[ds];
+                    if (day.daily) dots += '<div class="status-dot bg-daily"></div>';
+                    if (day.zenyD) dots += '<div class="status-dot bg-zeny"></div>';
+                    if (day.bossA || day.bossE || day.bossT) dots += '<div class="status-dot bg-weekly"></div>';
+                    if (day.zenyW) dots += '<div class="status-dot bg-red"></div>';
+                    if (day.svLevels > 0) dots += '<div class="status-dot bg-sv"></div>';
                 }
-                
-                const qIcons = e.quests.map(q => {
-                    if(q==='daily') return '<span class="q-badge bg-blue-50 text-blue-600">📅 Daily</span>';
-                    if(q==='dailyzeny') return '<span class="q-badge bg-emerald-50 text-emerald-600">💰 Zeny</span>';
-                    return '<span class="q-badge bg-indigo-50 text-indigo-600">⚔️ Step</span>';
-                }).join('');
-                return `<div class="p-4 hover:bg-slate-50 transition border-l-4 ${e.buyLv>0?'border-amber-400 bg-amber-50/10':'border-transparent'}"><details class="log-details group"><summary class="flex items-center gap-4"><div class="flex-none w-14 text-center"><div class="text-[9px] font-bold text-slate-400 uppercase">${new Date(e.date).toLocaleDateString('th-TH',{day:'2-digit',month:'short'})}</div><div class="text-2xl font-gaming font-bold text-blue-600 mt-1">${e.levelAtEnd}</div></div><div class="flex-1 space-y-1.5"><div class="flex flex-wrap gap-1.5">${qIcons} ${e.buyLv>0?`<span class="q-badge bg-amber-100 text-amber-600">+${e.buyLv} LV</span>`:''}</div><div class="text-[9px] font-bold text-slate-400 truncate">${e.gained.length>0?`<span class="text-blue-500">✨ ${e.gained.length} Items</span>`:'No new rewards'}</div></div><div class="flex-none text-slate-300 arrow-icon"><i class="fa-solid fa-chevron-down text-xs"></i></div></summary><div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-1 gap-1">${e.gained.map(i => `<div class="flex justify-between p-2 bg-white rounded-lg border border-slate-100 text-[10px]"><span>${getItemEmoji(i.n)} ${i.n}</span><span class="font-bold text-blue-600">x${i.q}</span></div>`).join('')}</div></details></div>`;
-            }).join('') || '<div class="p-20 text-center text-slate-300 text-xs italic font-bold">LOG IS EMPTY</div>';
-
-            const renderBag = (inv, color) => Object.entries(inv).sort((a,b)=>b[1]-a[1]).map(([n, q]) => `<div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex justify-between items-center group hover:border-blue-300 transition"><div class="flex items-center gap-3 overflow-hidden"><div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-blue-500">${getItemEmoji(n)}</div><span class="text-xs font-bold text-slate-700 truncate">${n}</span></div><span class="font-gaming font-bold ${color} flex-shrink-0 ml-2">x${q.toLocaleString()}</span></div>`).join('');
-            document.getElementById('bagFreeContent').innerHTML = renderBag(freeInv, 'text-slate-500') || '<div class="col-span-full p-10 text-center text-slate-300 text-xs italic">NO ITEMS</div>';
-            document.getElementById('bagPremiumContent').innerHTML = renderBag(preInv, 'text-blue-600');
-            setUI('freeBagCount', `${Object.keys(freeInv).length} Items`); setUI('premiumBagCount', `${Object.keys(preInv).length} Items`);
-            document.getElementById('bagPremiumSection').classList.toggle('hidden', !pkg.p);
-            
-            resetTempState(); updateFormUI();
+                container.innerHTML += `<div class="${cls}" onclick="${cls.includes('in-range') ? `openDiary('${ds}')` : ''}"><span class="date-num relative z-10">${d}</span><div class="flex flex-wrap justify-center mt-1 w-full px-1">${dots}</div></div>`;
+            }
         }
 
-        function resetData() { if(confirm('คุณต้องการล้างข้อมูลทั้งหมดใช่หรือไม่?')){ entries = []; localStorage.removeItem('roc_ggt_diary_v30'); render(); } }
-        window.addEventListener('DOMContentLoaded', () => { document.getElementById('logDate').valueAsDate = new Date(); render(); });
+        function openDiary(dateStr) {
+            selectedDateStr = dateStr; const data = diaryData[dateStr] || {};
+            const cycleId = getCycleId(dateStr); const p = dateStr.split('-');
+            document.getElementById('modalDateLabel').innerText = new Date(p[0], p[1]-1, p[2]).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+            const stats = { bossA: 0, bossE: 0, bossT: 0, zenyW: 0 };
+            if (cycleId !== -1) {
+                Object.keys(diaryData).forEach(d => { if (getCycleId(d) === cycleId) {
+                    if (diaryData[d].bossA) stats.bossA++; if (diaryData[d].bossE) stats.bossE++; if (diaryData[d].bossT) stats.bossT++;
+                    if (diaryData[d].zenyW) stats.zenyW++;
+                }});
+            }
+            const setupWeekly = (key, quota, prevKey, prevQuota, tagId, progressId, labelId) => {
+                const check = document.getElementById(`check-${key}`); const label = document.getElementById(labelId);
+                const progress = document.getElementById(progressId); const tag = document.getElementById(tagId);
+                check.checked = data[key] || false;
+                progress.innerText = (quota > 1) ? `${stats[key]}/${quota}` : (stats[key] >= 1 ? '1/1' : '0/1');
+                if (tag) tag.innerHTML = stats[key] >= quota ? '<span class="complete-tag">DONE</span>' : '';
+                check.disabled = false; label.classList.remove('lock-overlay');
+                if (prevKey && stats[prevKey] < prevQuota) { check.disabled = true; label.classList.add('lock-overlay'); }
+                if (stats[key] >= quota && !data[key]) { check.disabled = true; label.classList.add('lock-overlay'); }
+            };
+            setupWeekly('bossA', 1, null, 0, 'tag-bossA', 'progress-bossA', 'label-bossA');
+            setupWeekly('bossE', 2, 'bossA', 1, 'tag-bossE', 'progress-bossE', 'label-bossE');
+            setupWeekly('bossT', 3, 'bossE', 2, 'tag-bossT', 'progress-bossT', 'label-bossT');
+            setupWeekly('zenyW', 1, null, 0, 'tag-zenyW', 'progress-zenyW', 'label-zenyW');
+            ['daily', 'zenyD'].forEach(id => { document.getElementById(`check-${id}`).checked = data[id] || false; });
+            document.getElementById('svLevelsInput').value = data.svLevels || 0;
+            updateSvLevels();
+            const pkgKey = document.getElementById('pkgSelect').value;
+            const val = PKG_CONFIG[pkgKey].dailyXp + ' XP';
+            document.getElementById('dailyXpText').innerText = val;
+            document.getElementById('xp-display-daily').innerText = `+${val}`;
+            document.getElementById('diaryModal').classList.remove('hidden');
+            setTimeout(() => { document.getElementById('diaryModal').style.opacity = '1'; document.getElementById('diaryModal').querySelector('.modal-content').style.transform = 'translateY(0)'; }, 10);
+        }
+
+        function updateSvLevels() {
+            const lv = parseInt(document.getElementById('svLevelsInput').value) || 0;
+            document.getElementById('sv-cost-label').innerText = `${lv * 3} SV Used (+${lv * 10} XP)`;
+            if (!diaryData[selectedDateStr]) diaryData[selectedDateStr] = {};
+            diaryData[selectedDateStr].svLevels = lv;
+            updateUI(); 
+        }
+
+        function toggleTask(key) {
+            const cb = document.getElementById(`check-${key}`); if (cb.disabled) return;
+            if (!diaryData[selectedDateStr]) diaryData[selectedDateStr] = {};
+            diaryData[selectedDateStr][key] = cb.checked;
+            openDiary(selectedDateStr); updateUI();
+        }
+
+        function closeModal() {
+            document.getElementById('diaryModal').querySelector('.modal-content').style.transform = 'translateY(100%)';
+            document.getElementById('diaryModal').style.opacity = '0';
+            setTimeout(() => document.getElementById('diaryModal').classList.add('hidden'), 300);
+        }
+        window.onload = updateUI;
     </script>
 </body>
 </html>
+
