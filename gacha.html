@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Aquarius Diadem Gacha Simulator</title>
     
-    <!-- แก้ไขแถบสีขาวด้านบนบน iPhone และทำให้เหมือน App จริง -->
     <meta name="theme-color" content="#05020a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-touch-fullscreen" content="yes">
 
-    <!-- โหลด Tailwind CSS ผ่าน CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700;800&display=swap');
@@ -27,13 +25,11 @@
             color: #e2e8f0;
             margin: 0;
             padding: 0;
-            /* ป้องกันการกระตุกเวลาดึงหน้าจอลงบน Safari */
             overscroll-behavior-y: none;
         }
 
         .georgia-font { font-family: 'Georgia', serif; }
         
-        /* Glassmorphism Panels */
         .glass-panel {
             background: rgba(15, 23, 42, 0.4);
             backdrop-filter: blur(16px);
@@ -42,7 +38,6 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* Magic Circle Animations */
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
         @keyframes spin-slow-reverse { 100% { transform: rotate(-360deg); } }
         .magic-circle { animation: spin-slow 20s linear infinite; }
@@ -64,22 +59,26 @@
         
         .ssr-glow { box-shadow: 0 0 25px rgba(250, 204, 21, 0.6), inset 0 0 15px rgba(250, 204, 21, 0.4); }
 
-        /* จัดการ Safe Area สำหรับ iPhone */
-        .hud-top {
-            padding-top: calc(1rem + var(--safe-top));
+        /* ปรับ Header หลักให้ดูเป็นบาร์ที่สวยงามและรองรับ Safe Area */
+        .app-header {
+            padding-top: calc(0.5rem + var(--safe-top));
+            padding-bottom: 0.5rem;
         }
         .main-content {
-            padding-top: calc(4rem + var(--safe-top));
+            padding-top: calc(5.5rem + var(--safe-top));
             padding-bottom: calc(2rem + var(--safe-bottom));
         }
         .overlay-top {
-            padding-top: calc(5rem + var(--safe-top));
+            padding-top: calc(4.5rem + var(--safe-top));
+        }
+        /* ดันเนื้อหาคอนเทนเนอร์ใน Overlay ให้ไม่โดนปุ่มบัง */
+        .overlay-content-padding {
+            padding-bottom: calc(10rem + var(--safe-bottom));
         }
     </style>
 </head>
 <body class="relative min-h-screen overflow-x-hidden selection:bg-indigo-500/30">
 
-    <!-- Nebula Background (ขยายเต็มหน้าจอถึงใต้ Status Bar) -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/40 rounded-full mix-blend-screen filter blur-[120px]"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-900/30 rounded-full mix-blend-screen filter blur-[150px]"></div>
@@ -91,35 +90,65 @@
         <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
     </div>
 
-    <!-- Top HUD (ปรับระยะให้หลบรอยบาก iPhone) -->
-    <div class="fixed top-0 left-0 w-full hud-top px-4 md:px-8 flex justify-between items-center z-50 pointer-events-none">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-lg">
-                <svg class="w-5 h-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <!-- Sticky Header แบบใหม่ ดึงเงินและการสุ่มมาอยู่ในบาร์เลย -->
+    <div class="fixed top-0 left-0 w-full app-header px-4 md:px-6 z-50 bg-[#05020a]/85 backdrop-blur-md border-b border-white/10 shadow-lg flex justify-between items-center">
+        <!-- Logo / Title -->
+        <div class="flex items-center gap-2 md:gap-3">
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-lg">
+                <svg class="w-4 h-4 md:w-5 md:h-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
-            <div class="hidden md:block text-slate-300 font-bold tracking-wider">GACHA SYSTEM</div>
+            <div class="text-slate-300 font-bold tracking-wider text-xs md:text-sm uppercase hidden sm:block">Gacha System</div>
         </div>
-        <div class="pointer-events-auto flex items-center gap-2 bg-slate-900/80 border border-slate-700 rounded-full pl-4 pr-2 py-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Total Pulls</span>
-            <span id="total-pulls-text" class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 w-12 text-right">0</span>
-            <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-400/50 flex items-center justify-center ml-2">
-                <svg class="w-4 h-4 text-indigo-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        
+        <!-- HUD Stats -->
+        <div class="flex items-center gap-4 md:gap-6 bg-slate-900/60 border border-slate-700/50 rounded-xl px-3 md:px-4 py-1.5 md:py-2">
+            <!-- Total Pulls -->
+            <div class="flex flex-col items-end">
+                <span class="text-[8px] md:text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">สุ่มไปแล้ว</span>
+                <div class="flex items-baseline gap-1">
+                    <span id="total-pulls-text" class="text-sm md:text-base leading-none font-black text-blue-400">0</span>
+                    <span class="text-[8px] text-slate-500">ครั้ง</span>
+                </div>
+            </div>
+            
+            <div class="w-[1px] h-6 bg-slate-700/50"></div>
+            
+            <!-- Total Cost -->
+            <div class="flex flex-col items-end">
+                <div class="flex items-center gap-1 mb-0.5">
+                    <span class="text-[8px] md:text-[9px] text-slate-400 font-medium uppercase tracking-wider">ยอดเงิน </span>
+                    <input type="number" id="price-per-pull" value="50" class="w-7 md:w-8 bg-transparent border-b border-slate-600 text-slate-300 text-[8px] md:text-[9px] text-center outline-none p-0 hide-arrows" oninput="updateCost()">
+                    <span class="text-[8px] md:text-[9px] text-slate-500">฿/ครั้ง</span>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span id="total-cost-text" class="text-sm md:text-base leading-none font-black text-red-400">0</span>
+                    <span class="text-[8px] text-slate-500">฿</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Overlay Pull (จัดการ Scroll และที่ว่างบน iPhone) -->
-    <div id="pull-overlay" class="fixed inset-0 bg-black/90 z-[100] hidden flex-col items-center justify-start overlay-top pb-10 px-4 md:p-12 backdrop-blur-md transition-opacity duration-300 overflow-y-auto" onclick="handleOverlayClick(event)">
-        <h2 id="overlay-skip-text" class="text-slate-400 font-medium text-xs animate-pulse tracking-widest uppercase mb-4 text-center">Tap anywhere to skip</h2>
-        <h3 id="overlay-pull-count-text" class="text-fuchsia-400 font-black text-xl mb-6 hidden text-center drop-shadow-[0_0_10px_rgba(192,38,211,0.6)]"></h3>
-        <div id="overlay-items-container" class="grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-5 max-w-5xl w-full justify-center"></div>
-        <div id="overlay-actions" class="hidden flex-col items-center gap-6 mt-10 pb-12">
+    <!-- Overlay Pull -->
+    <div id="pull-overlay" class="fixed inset-0 bg-black/95 z-[100] hidden flex-col items-center justify-start overlay-top px-4 md:p-12 backdrop-blur-xl transition-opacity duration-300 overflow-y-auto" onclick="handleOverlayClick(event)">
+        
+        <!-- ข้อความบอกจำนวนการหมุน (Sticky ล็อคติดด้านบนใน Overlay) -->
+        <div id="overlay-header-info" class="sticky top-2 z-[110] flex flex-col items-center w-full max-w-sm mb-6 gap-2">
+            <!-- แท็กข้ามที่ถูกเพิ่มกลับมาเพื่อแก้ Error -->
+            <h2 id="overlay-skip-text" class="text-slate-300 font-medium text-xs animate-pulse tracking-widest uppercase text-center bg-black/60 px-4 py-1 rounded-full backdrop-blur-md border border-white/10 shadow-lg">แตะที่ใดก็ได้เพื่อข้าม</h2>
+            <h3 id="overlay-pull-count-text" class="text-fuchsia-400 font-black text-lg md:text-xl text-center drop-shadow-[0_0_10px_rgba(192,38,211,0.6)] bg-black/70 px-6 py-2 rounded-full backdrop-blur-md border border-fuchsia-500/30 w-full hidden"></h3>
+        </div>
+        
+        <div id="overlay-items-container" class="grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-5 max-w-5xl w-full justify-center overlay-content-padding"></div>
+        
+        <!-- ปุ่ม Action Fixed อยู่ด้านล่างเสมอ -->
+        <div id="overlay-actions" class="hidden fixed bottom-0 left-0 w-full flex-col items-center gap-4 pb-6 pt-12 bg-gradient-to-t from-[#020108] via-[#05020a]/90 to-transparent z-[120]" style="padding-bottom: calc(1.5rem + var(--safe-bottom));">
             <div class="flex flex-wrap justify-center gap-3">
-                <button onclick="pull(1, true)" class="rounded-full bg-slate-800/80 border border-slate-500 text-white px-6 py-3 font-bold shadow-lg flex items-center gap-2 text-sm">PULL x1</button>
-                <button onclick="pull(10, true)" class="rounded-full bg-gradient-to-b from-yellow-500 to-amber-700 border border-yellow-300 text-amber-950 px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm">PULL x10</button>
-                <button onclick="pullUntilSSR(true)" class="rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-700 border border-fuchsia-400 text-white px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm">UNTIL SSR</button>
+                <button onclick="pull(1, true)" class="rounded-full bg-slate-800/90 border border-slate-500 text-white px-6 py-3 font-bold shadow-lg flex items-center gap-2 text-sm backdrop-blur-md">สุ่ม x 1</button>
+                <button onclick="pull(10, true)" class="rounded-full bg-gradient-to-b from-yellow-500 to-amber-700 border border-yellow-300 text-amber-950 px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm backdrop-blur-md">สุ่ม x 10</button>
+                <button onclick="pullUntilSSR(true)" class="rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-700 border border-fuchsia-400 text-white px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm backdrop-blur-md">สุ่มจนกว่าจะออก SSR</button>
             </div>
-            <div class="text-slate-400 text-xs bg-white/10 px-6 py-2 rounded-full border border-white/10">แตะพื้นที่ว่างเพื่อกลับหน้าหลัก</div>
+            <!-- ตัวหนังสือ minimal ไม่มีกรอบ -->
+            <div class="text-slate-400 text-sm hover:text-white transition-colors cursor-pointer select-none">แตะพื้นที่ว่างเพื่อกลับหน้าหลัก</div>
         </div>
     </div>
 
@@ -142,10 +171,19 @@
             </div>
             <div class="flex flex-col gap-3 mt-10 w-full max-w-xs px-4">
                 <div class="flex gap-3">
-                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-4 font-bold">Summon x1</button>
-                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 text-amber-950 py-4 font-black">Summon x10</button>
+                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-3 md:py-4 font-bold flex flex-col items-center shadow-lg backdrop-blur-sm">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-widest mb-0.5">สุ่ม</span>
+                        <span class="text-base md:text-lg">x 1</span>
+                    </button>
+                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 border border-yellow-500/80 text-amber-950 py-3 md:py-4 font-black flex flex-col items-center shadow-lg">
+                        <span class="text-[10px] text-amber-900/70 uppercase tracking-widest mb-0.5">สุ่ม</span>
+                        <span class="text-base md:text-lg">x 10</span>
+                    </button>
                 </div>
-                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 text-white py-3 font-black text-sm uppercase">สุ่มจนกว่าจะได้ SSR</button>
+                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 text-white py-3 font-black text-sm uppercase flex justify-center gap-2 items-center shadow-lg shadow-fuchsia-900/30">
+                    <svg class="w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20"/><path d="m17 7-5-5-5 5"/><path d="m17 17-5 5-5-5"/></svg>
+                    สุ่มจนกว่าจะออก SSR
+                </button>
             </div>
         </div>
 
@@ -153,7 +191,7 @@
             <div class="glass-panel rounded-3xl p-6 relative overflow-hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase">Inventory</h3>
-                    <button onclick="resetData()" class="px-4 py-2 text-[10px] font-bold uppercase text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg">Clear</button>
+                    <button onclick="resetData()" class="px-4 py-2 text-[10px] font-bold uppercase text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg transition-colors hover:bg-red-900/60">Clear</button>
                 </div>
                 <div id="empty-inventory-state" class="h-40 flex flex-col items-center justify-center text-slate-500 text-sm italic">Tap Summon to start</div>
                 <div id="inventory-section" class="hidden">
@@ -161,7 +199,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div id="luck-meter-container" class="glass-panel rounded-3xl p-6 hidden">
                     <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Luck Meter</h3>
                     <div class="text-center bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-4">
@@ -181,6 +219,18 @@
             </div>
         </div>
     </div>
+
+    <style>
+        /* ซ่อนลูกศรขึ้นลงใน input number */
+        input[type="number"].hide-arrows::-webkit-outer-spin-button,
+        input[type="number"].hide-arrows::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"].hide-arrows {
+            -moz-appearance: textfield;
+        }
+    </style>
 
     <script>
         const ITEMS = [
@@ -232,6 +282,12 @@
         function preloadImages() {
             const allImages = ['images/egg.png', ...ITEMS.map(i => i.imgSrc)];
             allImages.forEach(src => { const img = new Image(); img.src = src; });
+        }
+
+        function updateCost() {
+            const price = parseFloat(document.getElementById('price-per-pull').value) || 0;
+            const totalCost = totalPulls * price;
+            document.getElementById('total-cost-text').innerText = totalCost.toLocaleString();
         }
 
         function renderStars() {
@@ -315,9 +371,11 @@
             const overlay = document.getElementById('pull-overlay'), container = document.getElementById('overlay-items-container'), actions = document.getElementById('overlay-actions'), skip = document.getElementById('overlay-skip-text');
             container.innerHTML = ''; actions.classList.add('hidden'); skip.classList.remove('hidden'); overlay.classList.remove('hidden'); overlay.classList.add('flex');
             let idx = 0; if (currentAnimationInterval) clearInterval(currentAnimationInterval);
+            
+            // ใช้ opacity 0 เพื่อดันให้การ์ดค่อยๆ โผล่
             container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); idx++;
             if (idx >= pulls.length) setTimeout(endAnimation, 300);
-            else { currentAnimationInterval = setInterval(() => { if (idx >= pulls.length) { endAnimation(); return; } container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); overlay.scrollTo({ top: overlay.scrollHeight, behavior: 'smooth' }); idx++; }, 200); }
+            else { currentAnimationInterval = setInterval(() => { if (idx >= pulls.length) { endAnimation(); return; } container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); idx++; }, 200); }
         }
 
         function endAnimation() {
@@ -332,27 +390,61 @@
         function finishAutoPull(gS) {
             clearInterval(currentAnimationInterval); isSpinning = false; isOverlayAnimating = false; isAutoPulling = false;
             document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
+            updateCost();
             renderInventory(); updateLuckMeter();
-            const ct = document.getElementById('overlay-pull-count-text'); ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-3xl ml-1 mr-1">${autoPullCount}</span>`;
+            
+            const ct = document.getElementById('overlay-pull-count-text'); 
+            const price = parseFloat(document.getElementById('price-per-pull').value) || 0;
+            const totalCost = (autoPullCount * price).toLocaleString();
+            
+            ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-2xl ml-1 mr-1">${autoPullCount}</span><br><span class="text-xs text-fuchsia-200 font-normal">ใช้เงินไป ${totalCost} ฿</span>`;
+            
             document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-actions').classList.add('flex'); document.getElementById('overlay-skip-text').classList.add('hidden');
             if (gS) { const spk = document.getElementById('sparkle-overlay'); spk.classList.remove('hidden'); spk.classList.add('flex'); setTimeout(() => { spk.classList.add('hidden'); spk.classList.remove('flex'); }, 1500); }
         }
 
         function handleOverlayClick(e) {
-            if (e.target.closest('button')) return;
+            if (e.target.closest('button') || e.target.closest('input')) return;
             const ov = document.getElementById('pull-overlay'), cn = document.getElementById('overlay-items-container');
+            
             if (isAutoPulling) {
-                clearInterval(currentAnimationInterval); let gS = false;
+                // กรณีกด Skip ตอนกำลัง Auto Pull
+                clearInterval(currentAnimationInterval); 
+                let gS = false;
+                
                 while (!gS && autoPullCount < 5000) {
-                    autoPullCount++; const sI = generateRandomItem(); const nI = { ...sI, timestamp: Date.now() + autoPullCount };
-                    history.push(nI); totalPulls++;
-                    if (nI.rank === 'SSR') { gS = true; cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(nI)); if (cn.children.length > 20) cn.removeChild(cn.firstChild); ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); }
+                    autoPullCount++; 
+                    const sI = generateRandomItem(); 
+                    const nI = { ...sI, timestamp: Date.now() + autoPullCount };
+                    history.push(nI); 
+                    totalPulls++;
+                    if (nI.rank === 'SSR') { 
+                        gS = true; 
+                    }
                 }
+                
+                // คำนวณหาจำนวนชิ้นที่ต้องแสดงในหน้าสุดท้าย (สมจริงตาม Grid 15 ช่อง)
+                const itemsOnLastPage = autoPullCount % 15 || 15;
+                const lastPageItems = history.slice(-itemsOnLastPage);
+                
+                cn.innerHTML = '';
+                lastPageItems.forEach(item => {
+                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(item)); 
+                });
+                
+                ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' });
                 finishAutoPull(gS);
+                
             } else if (isOverlayAnimating) {
-                clearInterval(currentAnimationInterval); for (let i = cn.children.length; i < currentPullsToAnimate.length; i++) cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(currentPullsToAnimate[i]));
-                ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); endAnimation();
-            } else closeOverlay();
+                // กรณีกด Skip ตอนกำลังสุ่มปกติ
+                clearInterval(currentAnimationInterval); 
+                for (let i = cn.children.length; i < currentPullsToAnimate.length; i++) {
+                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(currentPullsToAnimate[i]));
+                }
+                endAnimation();
+            } else {
+                closeOverlay();
+            }
         }
 
         function closeOverlay() { const overlay = document.getElementById('pull-overlay'); overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
@@ -367,6 +459,7 @@
                 history = [...nP, ...history]; totalPulls += c; isSpinning = false;
                 if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
                 document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
+                updateCost();
                 renderInventory(); updateLuckMeter(); startPullAnimation(nP);
             }, fO ? 50 : 600);
         }
@@ -375,17 +468,37 @@
             if (isSpinning) return; isSpinning = true; isOverlayAnimating = true; isAutoPulling = true; autoPullCount = 0;
             const ov = document.getElementById('pull-overlay'), cn = document.getElementById('overlay-items-container'), ct = document.getElementById('overlay-pull-count-text');
             if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('egg-img').classList.add('animate-bounce'); }
-            document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); ct.classList.remove('hidden'); ct.innerHTML = `Searching... <span class="text-white text-3xl ml-1 mr-1">0</span>`; cn.innerHTML = ''; ov.classList.remove('hidden'); ov.classList.add('flex');
+            document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); ct.classList.remove('hidden'); 
+            ct.innerHTML = `กำลังสุ่มครั้งที่ <span class="text-white text-xl ml-1 mr-1">0</span>`; 
+            cn.innerHTML = ''; ov.classList.remove('hidden'); ov.classList.add('flex');
+            
             setTimeout(() => {
                 if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
-                currentAnimationInterval = setInterval(() => { autoPullCount++; const nI = { ...generateRandomItem(), timestamp: Date.now() }; history.push(nI); totalPulls++; cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(nI)); if (cn.children.length > 20) cn.removeChild(cn.firstChild); ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); ct.innerHTML = `Searching... <span class="text-white text-2xl ml-1 mr-1">${autoPullCount}</span>`; if (nI.rank === 'SSR' || autoPullCount >= 5000) finishAutoPull(nI.rank === 'SSR'); }, 150); 
+                
+                currentAnimationInterval = setInterval(() => { 
+                    autoPullCount++; 
+                    const nI = { ...generateRandomItem(), timestamp: Date.now() }; 
+                    history.push(nI); totalPulls++; 
+                    
+                    // เคลียร์หน้าจอทุกๆ 15 ใบ เพื่อเริ่มวางที่สล็อตที่ 1 ใหม่
+                    if (cn.children.length >= 15) {
+                        cn.innerHTML = '';
+                    }
+                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(nI)); 
+                    
+                    ct.innerHTML = `กำลังสุ่มครั้งที่ <span class="text-white text-xl ml-1 mr-1">${autoPullCount}</span>`; 
+                    updateCost();
+                    
+                    if (nI.rank === 'SSR' || autoPullCount >= 5000) finishAutoPull(nI.rank === 'SSR'); 
+                }, 150); 
             }, fO ? 50 : 600);
         }
 
-        function resetData() { history = []; totalPulls = 0; document.getElementById('total-pulls-text').innerText = '0'; renderInventory(); updateLuckMeter(); }
+        function resetData() { history = []; totalPulls = 0; document.getElementById('total-pulls-text').innerText = '0'; updateCost(); renderInventory(); updateLuckMeter(); }
 
-        window.onload = () => { preloadImages(); renderStars(); renderRates(); renderInventory(); updateLuckMeter(); };
+        window.onload = () => { preloadImages(); renderStars(); renderRates(); renderInventory(); updateLuckMeter(); updateCost(); };
     </script>
 </body>
 </html>
+
 
