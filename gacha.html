@@ -43,87 +43,49 @@
         }
 
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
-        @keyframes spin-slow-reverse { 100% { transform: rotate(-360deg); } }
         .magic-circle { animation: spin-slow 20s linear infinite; }
-        .magic-circle-reverse { animation: spin-slow-reverse 15s linear infinite; }
 
         @keyframes inner-breathe-spin {
             0% { transform: rotate(0deg) scale(0.85); }
             50% { transform: rotate(-180deg) scale(1.05); }
             100% { transform: rotate(-360deg) scale(0.85); }
         }
-        .magic-inner-dynamic { 
-            animation: inner-breathe-spin 12s ease-in-out infinite; 
-        }
+        .magic-inner-dynamic { animation: inner-breathe-spin 12s ease-in-out infinite; }
 
-        @keyframes triangle-morph-up {
-            0%, 100% { transform: scale(1, 1); }
-            50% { transform: scale(1.2, 0.85); }
-        }
-        @keyframes triangle-morph-down {
-            0%, 100% { transform: scale(1, 1); }
-            50% { transform: scale(0.85, 1.2); }
-        }
         @keyframes magic-glow {
             0%, 100% { filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3)); opacity: 0.4; }
             50% { filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9)); opacity: 0.9; }
         }
-        .triangle-up { animation: triangle-morph-up 7s ease-in-out infinite; transform-origin: 50px 50px; }
-        .triangle-down { animation: triangle-morph-down 7s ease-in-out infinite; transform-origin: 50px 50px; }
         .magic-glow-effect { animation: magic-glow 4s ease-in-out infinite; }
 
         @keyframes popUp {
-            0% { transform: scale(0.5) translateY(20px); opacity: 0; }
-            70% { transform: scale(1.1) translateY(-5px); opacity: 1; }
-            100% { transform: scale(1) translateY(0); opacity: 1; }
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
         .animate-pop-up { animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        
-        .shimmer {
-            background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0.8) 60%, transparent 80%);
-            background-size: 200% 100%;
-            animation: shimmer 2.5s infinite linear;
-        }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        
-        .ssr-glow { box-shadow: 0 0 25px rgba(250, 204, 21, 0.6), inset 0 0 15px rgba(250, 204, 21, 0.4); }
 
         .app-header { padding-top: calc(0.5rem + var(--safe-top)); padding-bottom: 0.5rem; }
         .main-content { padding-top: calc(5.5rem + var(--safe-top)); padding-bottom: calc(2rem + var(--safe-bottom)); }
         .overlay-top { padding-top: calc(4.5rem + var(--safe-top)); }
-        .overlay-content-padding { padding-bottom: calc(10rem + var(--safe-bottom)); }
 
         input[type="number"].hide-arrows::-webkit-outer-spin-button,
-        input[type="number"].hide-arrows::-webkit-inner-spin-button {
-            -webkit-appearance: none; margin: 0;
-        }
-        input[type="number"].hide-arrows { -moz-appearance: textfield; }
+        input[type="number"].hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         
-        #share-template {
-            width: 640px;
-            height: auto;
-            min-height: 850px;
-        }
+        #share-template { width: 640px; height: auto; min-height: 850px; }
     </style>
 </head>
 <body class="relative min-h-screen overflow-x-hidden selection:bg-indigo-500/30">
 
-    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/40 rounded-full mix-blend-screen filter blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-900/30 rounded-full mix-blend-screen filter blur-[150px]"></div>
-        <svg class="absolute inset-0 w-full h-full opacity-40" id="stars-container"></svg>
-    </div>
-
     <div id="sparkle-overlay" class="fixed inset-0 pointer-events-none z-[999] hidden items-center justify-center">
         <div class="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
-        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/></svg>
+        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
     </div>
 
     <!-- Header หน้าหลัก -->
     <div class="fixed top-0 left-0 w-full app-header px-4 md:px-6 z-50 bg-[#05020a]/85 backdrop-blur-md border-b border-white/10 shadow-lg flex justify-between items-center">
         <div class="flex items-center gap-2 md:gap-3">
-            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-lg">
-                <svg class="w-4 h-4 md:w-5 md:h-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-lg text-indigo-400">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
             <div class="text-slate-300 font-bold tracking-wider text-xs md:text-sm uppercase hidden sm:block">Gacha System</div>
         </div>
@@ -157,114 +119,92 @@
             <h2 id="overlay-skip-text" class="text-slate-300 font-medium text-xs animate-pulse tracking-widest uppercase text-center bg-black/60 px-4 py-1 rounded-full backdrop-blur-md border border-white/10 shadow-lg cursor-pointer">แตะที่ใดก็ได้เพื่อข้าม</h2>
             <h3 id="overlay-pull-count-text" class="text-fuchsia-400 font-black text-lg md:text-xl text-center drop-shadow-[0_0_10px_rgba(192,38,211,0.6)] bg-black/70 px-6 py-2 rounded-full backdrop-blur-md border border-fuchsia-500/30 w-full hidden"></h3>
         </div>
-        
-        <div id="overlay-items-container" class="grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-5 max-w-5xl w-full justify-center overlay-content-padding"></div>
-        
+        <div id="overlay-items-container" class="grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-5 max-w-5xl w-full justify-center pb-20"></div>
         <div id="overlay-actions" class="hidden fixed bottom-0 left-0 w-full flex-col items-center gap-4 pb-6 pt-12 bg-gradient-to-t from-[#020108] via-[#05020a]/90 to-transparent z-[120]" style="padding-bottom: calc(1.5rem + var(--safe-bottom));">
             <div class="flex flex-wrap justify-center gap-3">
-                <button onclick="pull(1, true)" class="rounded-full bg-slate-800/90 border border-slate-500 text-white px-6 py-3 font-bold shadow-lg flex items-center gap-2 text-sm backdrop-blur-md hover:bg-slate-700">สุ่ม x 1</button>
-                <button onclick="pull(10, true)" class="rounded-full bg-gradient-to-b from-yellow-500 to-amber-700 border border-yellow-300 text-amber-950 px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm backdrop-blur-md hover:scale-105 transition-transform">สุ่ม x 10</button>
-                <button onclick="pullUntilSSR(true)" class="rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-700 border border-fuchsia-400 text-white px-6 py-3 font-black shadow-lg flex items-center gap-2 text-sm backdrop-blur-md hover:scale-105 transition-transform">สุ่มจนกว่าจะออก SSR</button>
+                <button onclick="pull(1, true)" class="rounded-full bg-slate-800/90 border border-slate-500 text-white px-6 py-3 font-bold shadow-lg text-sm backdrop-blur-md">สุ่ม x 1</button>
+                <button onclick="pull(10, true)" class="rounded-full bg-gradient-to-b from-yellow-500 to-amber-700 border border-yellow-300 text-amber-950 px-6 py-3 font-black shadow-lg text-sm">สุ่ม x 10</button>
+                <button onclick="pullUntilSSR(true)" class="rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-700 border border-fuchsia-400 text-white px-6 py-3 font-black shadow-lg text-sm">สุ่มจนกว่าจะออก SSR</button>
             </div>
-            <div class="text-slate-400 text-sm hover:text-white transition-colors cursor-pointer select-none">แตะพื้นที่ว่างเพื่อกลับหน้าหลัก</div>
         </div>
     </div>
 
-    <!-- Modal สำหรับโชว์รูปภาพแชร์ -->
+    <!-- Modal แชร์ -->
     <div id="share-modal" class="fixed inset-0 bg-black/90 z-[300] hidden flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300">
-        <h3 class="text-white text-base md:text-lg font-bold mb-4 drop-shadow-md animate-pulse">📸 กดค้างที่รูปภาพเพื่อบันทึกหรือแชร์</h3>
-        
-        <div class="relative w-full max-w-[320px] md:max-w-sm max-h-[70vh] rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(79,70,229,0.4)] flex justify-center items-center bg-[#090314] border border-indigo-500/50">
+        <h3 class="text-white text-base font-bold mb-4 drop-shadow-md animate-pulse text-center">📸 กดค้างที่รูปภาพเพื่อบันทึกหรือแชร์</h3>
+        <div class="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(79,70,229,0.4)] bg-[#090314] border border-indigo-500/50">
             <div id="share-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-[#090314]/90 z-10">
                <div class="animate-spin w-10 h-10 border-4 border-fuchsia-500 border-t-transparent rounded-full mb-3"></div>
-               <p class="text-fuchsia-300 text-xs font-bold mt-2 tracking-widest uppercase">GENERATING MEME...</p>
+               <p class="text-fuchsia-300 text-xs font-bold mt-2">GENERATING MEME...</p>
             </div>
-            <img id="share-result-img" src="" alt="Share Result" class="w-full h-auto max-h-[70vh] object-contain hidden" />
+            <img id="share-result-img" src="" alt="Share Result" class="w-full h-auto object-contain hidden" />
         </div>
-
-        <button onclick="closeShareModal()" class="mt-6 rounded-full bg-slate-800/80 border border-slate-500 text-white px-8 py-3 font-bold hover:bg-slate-700 transition-colors">ปิดหน้าต่าง</button>
+        <button onclick="closeShareModal()" class="mt-6 rounded-full bg-slate-800/80 border border-slate-500 text-white px-8 py-3 font-bold">ปิดหน้าต่าง</button>
     </div>
 
     <!-- 🎯 Hidden Template สำหรับสร้างรูปภาพ Share -->
     <div class="fixed top-0" style="left: -9999px;">
         <div id="share-template" class="p-10 relative overflow-hidden flex flex-col items-center bg-[#090314]">
             
-            <div class="absolute top-[-20%] left-[-20%] w-[80%] h-[70%] z-0 pointer-events-none" style="background: radial-gradient(circle, rgba(192, 38, 211, 0.35) 0%, transparent 70%);"></div>
-            <div class="absolute bottom-[-20%] right-[-20%] w-[80%] h-[70%] z-0 pointer-events-none" style="background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);"></div>
-            <div class="absolute top-[20%] left-[20%] w-[60%] h-[60%] z-0 pointer-events-none" style="background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 60%);"></div>
+            <div class="absolute inset-0 z-0 pointer-events-none" style="background: radial-gradient(circle at 50% 30%, rgba(93, 21, 135, 0.4) 0%, transparent 100%);"></div>
 
-            <div id="share-magic-circle" class="absolute top-[35%] left-[50%] w-[110%] opacity-20 pointer-events-none text-cyan-200 z-0 transition-transform duration-0" style="transform: translate(-50%, -50%);">
+            <div id="share-magic-circle" class="absolute top-[35%] left-[50%] w-[110%] opacity-20 pointer-events-none text-cyan-200 z-0" style="transform: translate(-50%, -50%);">
                 <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.3">
                     <circle cx="50" cy="50" r="45" stroke-dasharray="2 6"/>
-                    <circle cx="50" cy="50" r="35"/>
-                    <circle cx="50" cy="50" r="20" stroke-dasharray="10 5"/>
+                    <circle cx="50" cy="50" r="35"/><circle cx="50" cy="50" r="20" stroke-dasharray="10 5"/>
                     <polygon points="50,5 95,75 5,75" stroke-width="0.2" opacity="0.4"/>
                     <polygon points="50,95 5,25 95,25" stroke-width="0.2" opacity="0.4"/>
                 </svg>
             </div>
             
-            <svg class="absolute inset-0 w-full h-full opacity-80 z-0 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="15%" cy="20%" r="2" fill="#ffffff" opacity="0.9" />
-                <circle cx="85%" cy="15%" r="1.5" fill="#ffffff" opacity="0.6" />
-                <circle cx="75%" cy="40%" r="2.5" fill="#ffffff" opacity="0.9" />
-                <circle cx="20%" cy="60%" r="1.5" fill="#ffffff" opacity="0.7" />
-                <circle cx="80%" cy="80%" r="2" fill="#ffffff" opacity="0.8" />
-                <circle cx="35%" cy="85%" r="1" fill="#ffffff" opacity="0.5" />
-            </svg>
-            
             <div class="relative z-10 w-full flex flex-col items-center">
                 
-                <!-- 🎯 Header: ปรับเยื้องรูปไข่ขึ้นตามเงื่อนไข (เลยบน Aquarius แต่ไม่ถึงล่าง Diadem) -->
-                <div class="w-full flex items-center justify-center gap-5 mb-8 mt-4 z-10 relative">
-                    <div class="w-28 h-28 shrink-0 flex items-center justify-center transform -translate-y-4">
-                        <img src="images/egg.png" class="max-w-full max-h-full object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]" crossorigin="anonymous" />
+                <!-- 🎯 Header: บังคับพิกเซล ขอบไข่บน=ขอบหนังสือบน / ขอบไข่ล่าง=ขอบหนังสือล่าง -->
+                <div class="w-full flex items-center justify-center gap-6 mb-14 mt-6 z-10 relative h-[110px]">
+                    <!-- รูปไข่ล็อคความสูง 110px และสั่งไม่ให้มีช่องว่าง -->
+                    <div class="h-[110px] w-[110px] shrink-0 flex items-center justify-center">
+                        <img src="images/egg.png" class="h-full w-full object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]" crossorigin="anonymous" />
                     </div>
-                    <h1 class="text-[52px] font-black leading-tight drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font text-left tracking-wide">
-                        <span class="text-yellow-400 block -mb-2">AQUARIUS</span>
-                        <span class="text-cyan-400 block">DIADEM</span>
-                    </h1>
+                    <!-- ชุดตัวหนังสือล็อคความสูง 110px ชนขอบบน-ล่าง -->
+                    <div class="h-[110px] flex flex-col justify-between items-start">
+                        <h1 class="text-[60px] font-black leading-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font text-yellow-400 m-0 p-0" style="margin-top: -8px;">AQUARIUS</h1>
+                        <h1 class="text-[60px] font-black leading-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font text-cyan-400 m-0 p-0" style="margin-bottom: -10px;">DIADEM</h1>
+                    </div>
                 </div>
 
-                <!-- 🎯 สรุปดวง: ลดขนาดฟอนต์ลงตามต้องการ -->
+                <!-- สรุปดวง: ลดขนาดฟอนต์ฉายาลงเพื่อให้ชื่อตู้เด่นที่สุด -->
                 <div class="w-full text-center relative mb-12">
-                    <div id="tpl-luck-name" class="text-[38px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4">👑 ลูกรัก GM</div>
-                    <div id="tpl-fun-quote" class="text-yellow-300 font-bold text-xl italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                        "ชาตินี้ใช้ดวงหมดแล้ว!"
-                    </div>
+                    <div id="tpl-luck-name" class="text-[26px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 uppercase tracking-[0.3em]">👑 ลูกรัก GM</div>
+                    <div id="tpl-fun-quote" class="text-yellow-300 font-bold text-xl italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">"ชาตินี้ใช้ดวงหมดแล้ว!"</div>
                 </div>
 
                 <!-- สถิติ -->
                 <div class="w-full flex justify-center gap-16 mb-12">
                     <div class="flex flex-col items-center">
-                        <span class="text-rose-400 text-sm font-black uppercase tracking-wider mb-2 drop-shadow-md">💸 โดนสูบไปแล้ว</span>
-                        <span id="tpl-cost" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(225,29,72,0.8)]">15,000 ฿</span>
+                        <span class="text-rose-400 text-[10px] font-black uppercase tracking-widest mb-2 opacity-80">💸 โดนสูบไปแล้ว</span>
+                        <span id="tpl-cost" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(225,29,72,0.8)]">0 ฿</span>
                     </div>
-                    <div class="w-[2px] h-20 bg-gradient-to-b from-transparent via-white/30 to-transparent self-center"></div>
+                    <div class="w-[1px] h-16 bg-white/20 self-center"></div>
                     <div class="flex flex-col items-center">
-                        <span class="text-cyan-400 text-sm font-black uppercase tracking-wider mb-2 drop-shadow-md">🎰 กดไปทั้งหมด</span>
-                        <span id="tpl-pulls" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">300 โรล</span>
+                        <span class="text-cyan-400 text-[10px] font-black uppercase tracking-widest mb-2 opacity-80">🎰 กดไปทั้งหมด</span>
+                        <span id="tpl-pulls" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">0 โรล</span>
                     </div>
                 </div>
 
                 <!-- Section ของแรร์ -->
                 <div class="w-full flex flex-col mt-4">
                     <div class="flex justify-between items-end mb-6 border-b border-white/20 pb-3 px-4">
-                        <h3 class="text-xl font-black text-white flex items-center gap-2 drop-shadow-md">
-                            ✨ สิ่งที่ตกถึงท้อง
-                        </h3>
-                        <span id="tpl-ssr-count" class="text-base font-bold text-yellow-400 drop-shadow-md">ได้ SSR: 1 ชิ้น</span>
+                        <h3 class="text-xl font-black text-white flex items-center gap-2">✨ สิ่งที่ตกถึงท้อง</h3>
+                        <span id="tpl-ssr-count" class="text-sm font-bold text-yellow-400">SSR: 0</span>
                     </div>
-                    
-                    <div id="tpl-rare-grid" class="grid grid-cols-3 gap-y-6 gap-x-4 px-2">
-                        <!-- JS fills this -->
-                    </div>
+                    <div id="tpl-rare-grid" class="grid grid-cols-3 gap-y-6 gap-x-4 px-2"></div>
                 </div>
 
                 <!-- Footer -->
-                <div class="mt-12 pt-4 flex justify-between items-center text-slate-400/80 text-sm font-bold uppercase tracking-widest w-full px-4 border-t border-white/10">
+                <div class="mt-12 pt-6 flex justify-between items-center text-slate-400/60 text-[11px] font-bold uppercase tracking-[0.3em] w-full px-4 border-t border-white/10">
                     <span class="text-cyan-400/90">#gacha_simulator</span>
                     <div class="flex items-center justify-center text-slate-300">
-                        <svg width="22" height="22" class="text-red-500 mr-2 transform translate-y-[2px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        <svg width="18" height="18" class="text-red-500 mr-2 transform translate-y-[2.5px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                         <span>YOUTUBE: @SDEKZA-RO</span>
                     </div>
                 </div>
@@ -272,85 +212,64 @@
         </div>
     </div>
 
-
-    <!-- Main Layout หลัก -->
+    <!-- UI หน้าหลัก -->
     <div class="relative z-10 max-w-[1400px] mx-auto min-h-screen flex flex-col lg:flex-row main-content">
         <div class="w-full lg:w-5/12 flex flex-col items-center justify-center p-6 mt-4 lg:mt-0">
             <div class="text-center mb-8">
-                <h1 class="text-5xl md:text-7xl font-black mb-2 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] georgia-font leading-tight text-white">
+                <h1 class="text-5xl md:text-7xl font-black mb-2 georgia-font leading-tight text-white drop-shadow-xl">
                     <span class="bg-gradient-to-b from-yellow-100 via-yellow-400 to-amber-600 bg-clip-text text-transparent block uppercase">Aquarius</span>
                     <span class="bg-gradient-to-b from-blue-100 via-blue-400 to-indigo-600 bg-clip-text text-transparent block uppercase">Diadem</span>
                 </h1>
-                <p class="text-indigo-200/80 font-bold tracking-[0.3em] uppercase text-[10px] md:text-xs">Scroll Simulator</p>
+                <p class="text-indigo-200/80 font-bold tracking-[0.3em] uppercase text-[10px] md:text-xs text-center">Scroll Simulator</p>
             </div>
-            <div id="egg-container" class="relative flex items-center justify-center w-full max-w-[280px] aspect-square transition-all duration-300">
+            <div id="egg-container" class="relative flex items-center justify-center w-full max-w-[280px] aspect-square">
                 <div class="absolute inset-0 flex items-center justify-center text-blue-400 scale-[1.4] magic-glow-effect">
                     <svg class="w-full h-full" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.5">
-                        <g class="magic-circle" style="transform-origin: 50px 50px;">
-                            <circle cx="50" cy="50" r="48" stroke-dasharray="4 4"/>
-                            <circle cx="50" cy="50" r="46" stroke-width="0.1" opacity="0.5" />
-                        </g>
+                        <g class="magic-circle" style="transform-origin: 50px 50px;"><circle cx="50" cy="50" r="48" stroke-dasharray="4 4"/></g>
                         <g class="magic-inner-dynamic" style="transform-origin: 50px 50px;">
-                            <circle cx="50" cy="50" r="40"/>
-                            <circle cx="50" cy="50" r="30" stroke-dasharray="8 4" opacity="0.8"/>
-                            <polygon class="triangle-up" points="50,15 80,67 20,67" stroke-width="0.3" />
-                            <polygon class="triangle-down" points="50,85 20,33 80,33" stroke-width="0.3" />
-                            <circle cx="50" cy="50" r="10" stroke-width="0.2" />
+                            <circle cx="50" cy="50" r="40"/><circle cx="50" cy="50" r="30" stroke-dasharray="8 4" opacity="0.8"/>
+                            <polygon points="50,15 80,67 20,67" stroke-width="0.3"/><polygon points="50,85 20,33 80,33" stroke-width="0.3"/>
                         </g>
                     </svg>
                 </div>
-                <div id="egg-glow" class="absolute w-40 h-40 bg-blue-500 rounded-full blur-[60px] opacity-30"></div>
+                <div class="absolute w-40 h-40 bg-blue-500 rounded-full blur-[60px] opacity-30"></div>
                 <img id="egg-img" src="images/egg.png" alt="Egg" class="relative z-10 w-[70%] object-contain drop-shadow-[0_0_30px_rgba(59,130,246,0.4)]" />
             </div>
             <div class="flex flex-col gap-3 mt-10 w-full max-w-xs px-4">
                 <div class="flex gap-3">
-                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-3 md:py-4 font-bold flex flex-col items-center shadow-lg backdrop-blur-sm hover:bg-slate-700 transition-colors">
-                        <span class="text-[10px] text-slate-400 uppercase tracking-widest mb-0.5">สุ่ม</span>
-                        <span class="text-base md:text-lg">x 1</span>
+                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-4 font-bold hover:bg-slate-700 transition-colors shadow-lg">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-widest block mb-0.5">สุ่ม</span><span class="text-base">x 1</span>
                     </button>
-                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 border border-yellow-500/80 text-amber-950 py-3 md:py-4 font-black flex flex-col items-center shadow-lg hover:scale-105 transition-transform">
-                        <span class="text-[10px] text-amber-900/70 uppercase tracking-widest mb-0.5">สุ่ม</span>
-                        <span class="text-base md:text-lg">x 10</span>
+                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 border border-yellow-500/80 text-amber-950 py-4 font-black hover:scale-105 transition-transform shadow-lg">
+                        <span class="text-[10px] text-amber-900/70 uppercase tracking-widest block mb-0.5">สุ่ม</span><span class="text-base">x 10</span>
                     </button>
                 </div>
-                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 text-white py-3 font-black text-sm uppercase flex justify-center gap-2 items-center shadow-lg shadow-fuchsia-900/30 hover:scale-105 transition-transform">
-                    <svg class="w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20"/><path d="m17 7-5-5-5 5"/><path d="m17 17-5 5-5-5"/></svg>
-                    สุ่มจนกว่าจะออก SSR
-                </button>
+                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 text-white py-4 font-black text-sm uppercase hover:scale-105 transition-transform shadow-lg shadow-fuchsia-900/30">สุ่มจนกว่าจะออก SSR</button>
             </div>
         </div>
 
         <div class="w-full lg:w-7/12 flex flex-col gap-6 p-4 md:p-8 lg:overflow-y-auto">
-            <div class="glass-panel rounded-3xl p-6 relative overflow-hidden">
+            <div class="glass-panel rounded-3xl p-6 min-h-[300px]">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase">Inventory</h3>
-                    <button onclick="resetData()" class="px-4 py-2 text-[10px] font-bold uppercase text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg transition-colors hover:bg-red-900/60">Clear</button>
+                    <h3 class="text-lg font-bold text-white uppercase tracking-widest">Inventory</h3>
+                    <button onclick="resetData()" class="px-4 py-2 text-[10px] font-bold uppercase text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg hover:bg-red-900/60 transition-colors">Clear</button>
                 </div>
                 <div id="empty-inventory-state" class="h-40 flex flex-col items-center justify-center text-slate-500 text-sm italic">Tap Summon to start</div>
-                <div id="inventory-section" class="hidden">
-                    <div id="inventory-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"></div>
-                </div>
+                <div id="inventory-section" class="hidden"><div id="inventory-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"></div></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                <div id="luck-meter-container" class="glass-panel rounded-3xl p-6 hidden">
+                <div id="luck-meter-container" class="glass-panel rounded-3xl p-6 hidden text-center">
                     <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Luck Meter</h3>
-                    <div class="text-center bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-4">
-                        <div id="luck-tier-name" class="text-xl font-black mb-1">👑 ลูกรัก GM</div>
-                        <div id="luck-tier-desc" class="text-[10px] font-medium text-slate-400 uppercase tracking-tighter">Lucky! Let's pull more!</div>
-                    </div>
-                    <div class="space-y-3 text-[10px] font-medium text-slate-300 mb-6">
+                    <div id="luck-tier-name" class="text-xl font-black mb-1">👑 ลูกรัก GM</div>
+                    <div id="luck-tier-desc" class="text-[10px] font-medium text-slate-400 uppercase mb-4">Lucky! Let's pull more!</div>
+                    <div class="space-y-3 text-[10px] font-medium text-slate-300 mb-6 text-left">
                         <div class="flex justify-between items-center bg-slate-800/40 p-2 rounded-lg"><span>Luck Score:</span> <span id="luck-score-text" class="font-black text-white">120%</span></div>
-                        <div class="flex justify-between px-2"><span>SSR Acquired:</span> <span id="luck-ssr-actual" class="font-bold text-yellow-400">2</span></div>
-                        <div class="flex justify-between px-2 text-slate-500"><span>Expected:</span> <span id="luck-ssr-expected">0.50</span></div>
+                        <div class="flex justify-between px-2"><span>SSR Acquired:</span> <span id="luck-ssr-actual" class="font-bold text-yellow-400">0</span></div>
+                        <div class="flex justify-between px-2 text-slate-500"><span>Expected:</span> <span id="luck-ssr-expected">0.00</span></div>
                     </div>
-                    
-                    <button onclick="openShareModal()" class="w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 border border-fuchsia-400/80 text-white py-3 font-black text-sm uppercase flex justify-center gap-2 items-center shadow-lg shadow-fuchsia-900/30 transform active:scale-95 transition-all">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                        แชร์ผลประกอบการ 📸
-                    </button>
+                    <button onclick="openShareModal()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white py-3 font-black text-sm uppercase shadow-lg hover:scale-[1.02] transition-all">แชร์ผลประกอบการ 📸</button>
                 </div>
-                
                 <div class="glass-panel rounded-3xl p-6">
                     <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Rates</h3>
                     <div id="rates-container" class="space-y-2"></div>
@@ -377,18 +296,17 @@
             { id: 'a1', name: 'Blood Twig', rank: 'A', qty: 1, imgSrc: 'images/14.png' },
             { id: 'b1', name: 'Class Shadow Cube', rank: 'B', qty: 1, imgSrc: 'images/15.png' },
             { id: 'b2', name: 'Poison Bottle Box', rank: 'B', qty: 1, imgSrc: 'images/16.png' },
-            { id: 'b3', name: '[Scroll] STR Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/17.png' },
-            { id: 'b4', name: '[Scroll] AGI Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/18.png' },
-            { id: 'b5', name: '[Scroll] INT Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/19.png' },
-            { id: 'b6', name: '[Scroll] VIT Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/20.png' },
-            { id: 'b7', name: '[Scroll] DEX Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/21.png' },
-            { id: 'b8', name: '[Scroll] LUK Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/22.png' },
-            { id: 'c1', name: '[Scroll] Blessing Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: 'images/23.png' },
-            { id: 'c2', name: '[Scroll] Increase Agility Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: 'images/24.png' },
-            { id: 'e1', name: '[Scroll] Ex Def Potion', rank: 'E', qty: 5, imgSrc: 'images/25.png' },
-            { id: 'e2', name: '[Scroll] Kafra Card', rank: 'E', qty: 5, imgSrc: 'images/26.png' },
+            { id: 'b3', name: 'STR Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/17.png' },
+            { id: 'b4', name: 'AGI Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/18.png' },
+            { id: 'b5', name: 'INT Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/19.png' },
+            { id: 'b6', name: 'VIT Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/20.png' },
+            { id: 'b7', name: 'DEX Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/21.png' },
+            { id: 'b8', name: 'LUK Biscuit Stick', rank: 'B', qty: 2, imgSrc: 'images/22.png' },
+            { id: 'c1', name: 'Blessing Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: 'images/23.png' },
+            { id: 'c2', name: 'Increase Agility Lv.10 Scroll', rank: 'C', qty: 10, imgSrc: 'images/24.png' },
+            { id: 'e1', name: 'Ex Def Potion', rank: 'E', qty: 5, imgSrc: 'images/25.png' },
+            { id: 'e2', name: 'Kafra Card', rank: 'E', qty: 5, imgSrc: 'images/26.png' },
         ];
-
         const RATES = { SSR: 0.35, SR: 1.5, R: 10.0, A: 15.0, B: 31.0, C: 21.0, E: 21.15 };
         const RANK_STYLES = {
             'SSR': { bg: 'bg-gradient-to-br from-yellow-100 to-amber-200 ssr-glow', border: 'border-yellow-400', text: 'text-amber-900 font-extrabold', grad: 'from-amber-400 to-yellow-600', hex: 'text-yellow-400', shareBg: 'bg-yellow-500/10 border border-yellow-500/30' },
@@ -399,31 +317,16 @@
             'C': { bg: 'bg-white', border: 'border-slate-300', text: 'text-slate-800 font-bold', grad: 'from-slate-300 to-slate-400' },
             'E': { bg: 'bg-slate-200', border: 'border-slate-400', text: 'text-slate-700 font-bold', grad: 'from-slate-400 to-slate-500' }
         };
-
         const RANK_POINTS = { 'SSR': 500, 'SR': 100, 'R': 20, 'A': 15, 'B': 5, 'C': 2, 'E': 1 };
         const EXPECTED_SCORE_PER_PULL = 9.6815;
 
-        let history = [], totalPulls = 0, isSpinning = false, currentAnimationInterval = null, pullTimeout = null, currentPullsToAnimate = [], isOverlayAnimating = false, isAutoPulling = false, autoPullCount = 0;
-        let currentLuckData = { tN: '', tD: '', tC: '', luckPercent: 0, ssrCount: 0, funQuote: '' };
+        let history = [], totalPulls = 0, isSpinning = false, currentAnimationInterval = null, pullTimeout = null;
+        let isOverlayAnimating = false, isAutoPulling = false, autoPullCount = 0, currentLuckData = {};
 
-        function preloadImages() { const allImages = ['images/egg.png', ...ITEMS.map(i => i.imgSrc)]; allImages.forEach(src => { const img = new Image(); img.src = src; }); }
+        function preloadImages() { ['images/egg.png', ...ITEMS.map(i => i.imgSrc)].forEach(src => { const img = new Image(); img.src = src; }); }
         function updateCost() { const price = parseFloat(document.getElementById('price-per-pull').value) || 0; const totalCost = totalPulls * price; document.getElementById('total-cost-text').innerText = totalCost.toLocaleString(); return totalCost; }
-        function renderStars() { const container = document.getElementById('stars-container'); let starsHTML = ''; for(let i=0; i<60; i++) starsHTML += `<circle cx="${Math.random() * 100}%" cy="${Math.random() * 100}%" r="${Math.random() * 1.5 + 0.5}" fill="#cbd5e1" opacity="${Math.random() * 0.8 + 0.2}" />`; container.innerHTML = starsHTML; }
-        function renderRates() { const container = document.getElementById('rates-container'); let html = ''; for (const [rank, rate] of Object.entries(RATES)) { const style = RANK_STYLES[rank]; html += `<div class="flex justify-between items-center text-[10px] font-medium"><span class="w-8 font-black text-transparent bg-clip-text bg-gradient-to-b ${style.grad}">${rank}</span><div class="flex-1 mx-3 h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r ${style.grad}" style="width: ${rate}%"></div></div><span class="text-slate-400 w-10 text-right">${rate}%</span></div>`; } container.innerHTML = html; }
-        function renderInventory() {
-            const section = document.getElementById('inventory-section'), container = document.getElementById('inventory-container'), emptyState = document.getElementById('empty-inventory-state');
-            if (history.length === 0) { section.classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); return; }
-            section.classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
-            const inventory = {}; history.forEach(item => { if (inventory[item.id]) inventory[item.id].totalCount += item.qty; else inventory[item.id] = { ...item, totalCount: item.qty }; });
-            const rankOrder = { 'SSR': 1, 'SR': 2, 'R': 3, 'A': 4, 'B': 5, 'C': 6, 'E': 7 };
-            const sortedItems = Object.values(inventory).sort((a, b) => rankOrder[a.rank] - rankOrder[b.rank]);
-            let html = ''; sortedItems.forEach(item => {
-                const style = RANK_STYLES[item.rank];
-                let bgEffect = item.rank === 'SSR' ? `<div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none"></div>` : '';
-                html += `<div class="${style.bg} border ${style.border} p-1.5 rounded-xl text-center flex flex-col items-center justify-between min-h-[90px] relative overflow-hidden shadow-sm">${bgEffect}<div class="absolute top-0.5 right-0.5 text-[8px] font-black px-1 py-0.5 rounded-md text-white bg-slate-900/80 shadow border border-slate-600 z-20">x${item.totalCount.toLocaleString()}</div><img src="${item.imgSrc}" alt="${item.name}" class="w-10 h-10 mt-3 z-10 object-contain mix-blend-multiply" crossorigin="anonymous" /><div class="z-10 w-full pb-0.5 relative"><p class="text-[8px] leading-tight line-clamp-2 ${style.text}">${item.name}</p></div></div>`;
-            }); container.innerHTML = html;
-        }
-
+        function renderRates() { let html = ''; for (const [rank, rate] of Object.entries(RATES)) { const style = RANK_STYLES[rank]; html += `<div class="flex justify-between items-center text-[10px] font-medium"><span class="w-8 font-black text-transparent bg-clip-text bg-gradient-to-b ${style.grad}">${rank}</span><div class="flex-1 mx-3 h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r ${style.grad}" style="width: ${rate}%"></div></div><span class="text-slate-400 w-10 text-right">${rate}%</span></div>`; } document.getElementById('rates-container').innerHTML = html; }
+        
         function updateLuckMeter() {
             const container = document.getElementById('luck-meter-container');
             if (totalPulls === 0) { container.classList.add('hidden'); return; }
@@ -443,189 +346,117 @@
             else if (luckRatio >= 0.5) { tN = '🧂 เกลือ'; tD = 'SALTY'; tC = 'text-orange-400'; funQuote = '"เค็มปี๋เลยลูกพี่ ไตจะพังแล้ว!"'; } 
             else if (luckRatio >= 0.3) { tN = '🏜️ โคตรเกลือ'; tD = 'VERY SALTY'; tC = 'text-orange-600'; funQuote = '"แห้งแล้งเหลือเกิน ถอนตัวตอนนี้ยังทัน"'; } 
             else { tN = '💀 ทะเลเดดซี'; tD = 'EXTREME SALT'; tC = 'text-red-500'; funQuote = '"สวดอภิธรรมศพกระเป๋าตังค์ ลบเกมทิ้งเถอะ"'; }
-            
-            document.getElementById('luck-tier-name').innerText = tN;
-            document.getElementById('luck-tier-name').className = `text-xl font-black mb-1 ${tC}`;
-            document.getElementById('luck-tier-desc').innerText = tD;
-            document.getElementById('luck-score-text').innerText = `${luckPercent}%`;
-            document.getElementById('luck-ssr-actual').innerText = ssrCount.toLocaleString();
-            document.getElementById('luck-ssr-expected').innerText = (totalPulls * 0.0035).toFixed(2);
+            document.getElementById('luck-tier-name').innerText = tN; document.getElementById('luck-tier-name').className = `text-xl font-black mb-1 ${tC}`;
+            document.getElementById('luck-tier-desc').innerText = tD; document.getElementById('luck-score-text').innerText = `${luckPercent}%`;
+            document.getElementById('luck-ssr-actual').innerText = ssrCount.toLocaleString(); document.getElementById('luck-ssr-expected').innerText = (totalPulls * 0.0035).toFixed(2);
             currentLuckData = { tN, tD, tC, luckPercent, ssrCount, funQuote };
         }
 
         function createOverlayItemHTML(item) {
             const style = RANK_STYLES[item.rank];
-            let bgEffect = item.rank === 'SSR' ? `<div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none rounded-xl"></div>` : '';
-            const q = item.qty > 1 ? `<p class="text-[8px] text-white font-bold bg-slate-900/60 border border-slate-600 px-2 py-0.5 rounded-full mt-1 z-20 relative">${item.qty} ea</p>` : '';
-            return `<div class="${style.bg} border ${style.border} p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md">${bgEffect}<img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 mt-2 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full mt-1 pb-1 relative"><p class="text-[9px] leading-tight line-clamp-2 ${style.text}">${item.name}</p>${q}</div></div>`;
+            return `<div class="${style.bg} border ${style.border} p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md"><img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 mt-2 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full mt-1 pb-1 relative"><p class="text-[9px] leading-tight line-clamp-2 ${style.text}">${item.name}</p></div></div>`;
         }
 
-        // ==========================================
-        // ระบบสร้างรูปภาพแชร์
-        // ==========================================
         function openShareModal() {
             if (totalPulls === 0) return;
             const modal = document.getElementById('share-modal'), loading = document.getElementById('share-loading'), resultImg = document.getElementById('share-result-img');
             modal.classList.remove('hidden'); modal.classList.add('flex'); loading.classList.remove('hidden'); resultImg.classList.add('hidden');
-
             const totalCost = updateCost();
             document.getElementById('tpl-luck-name').innerText = currentLuckData.tN;
-            document.getElementById('tpl-luck-name').className = `text-[38px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 ${currentLuckData.tC}`;
+            document.getElementById('tpl-luck-name').className = `text-[26px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 ${currentLuckData.tC} uppercase tracking-[0.3em]`;
             document.getElementById('tpl-fun-quote').innerText = currentLuckData.funQuote;
             document.getElementById('tpl-cost').innerText = totalCost.toLocaleString() + ' ฿';
             document.getElementById('tpl-pulls').innerText = totalPulls.toLocaleString() + ' โรล';
-            document.getElementById('tpl-ssr-count').innerText = `ได้ SSR: ${currentLuckData.ssrCount.toLocaleString()} ชิ้น`;
-
-            // 🎯 สุ่มตำแหน่ง ขนาด และองศาของวงเวทมนตร์ (Randomized Patterns)
-            const magicCircle = document.getElementById('share-magic-circle');
-            if (magicCircle) {
-                const randomTop = Math.floor(Math.random() * 50) + 25; 
-                const randomLeft = Math.floor(Math.random() * 50) + 25; 
-                const randomScale = (Math.random() * 0.8) + 0.8; 
-                const randomRotate = Math.floor(Math.random() * 360); 
-                magicCircle.style.top = `${randomTop}%`;
-                magicCircle.style.left = `${randomLeft}%`;
-                magicCircle.style.transform = `translate(-50%, -50%) scale(${randomScale}) rotate(${randomRotate}deg)`;
-            }
-
-            const rareInventory = {};
-            history.forEach(item => { if(item.rank === 'SSR' || item.rank === 'SR') { if (rareInventory[item.id]) rareInventory[item.id].totalCount += item.qty; else rareInventory[item.id] = { ...item, totalCount: item.qty }; } });
+            document.getElementById('tpl-ssr-count').innerText = `SSR: ${currentLuckData.ssrCount.toLocaleString()}`;
+            const mc = document.getElementById('share-magic-circle'); if (mc) { mc.style.top = `${Math.floor(Math.random() * 40) + 30}%`; mc.style.left = `${Math.floor(Math.random() * 40) + 30}%`; mc.style.transform = `translate(-50%, -50%) scale(${Math.random() * 0.7 + 0.8}) rotate(${Math.floor(Math.random() * 360)}deg)`; }
+            const rareInventory = {}; history.forEach(item => { if(item.rank === 'SSR' || item.rank === 'SR') { if (rareInventory[item.id]) rareInventory[item.id].totalCount += item.qty; else rareInventory[item.id] = { ...item, totalCount: item.qty }; } });
             const sortedRares = Object.values(rareInventory).sort((a, b) => (a.rank === 'SSR' ? 1 : 2) - (b.rank === 'SSR' ? 1 : 2));
-            const rareGrid = document.getElementById('tpl-rare-grid');
-            
-            if (sortedRares.length === 0) {
-                rareGrid.innerHTML = `<div class="col-span-3 flex flex-col items-center justify-center py-12"><div class="text-[60px] mb-4 drop-shadow-lg transform -rotate-12">🧂</div><div class="text-white font-black text-2xl drop-shadow-md tracking-wider">เกลือล้วนๆ ไม่มีของแรร์ผสม!</div></div>`;
-            } else {
-                let rareHtml = '';
-                sortedRares.slice(0, 9).forEach((item) => { 
-                    const s = RANK_STYLES[item.rank];
-                    const textHex = item.rank === 'SSR' ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]';
-                    const imgGlow = item.rank === 'SSR' ? 'drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]';
-                    // 🎯 ถอดกรอบตัวเลขไอเทมออกตามต้องการ
-                    rareHtml += `<div class="${s.shareBg} p-3 rounded-xl flex flex-col items-center text-center relative z-10 shadow-sm min-h-[130px]"><div class="absolute top-1.5 right-2 text-[14px] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,1)] z-20">x${item.totalCount}</div><div class="w-14 h-14 mb-2 flex items-center justify-center relative z-10"><img src="${item.imgSrc}" alt="${item.name}" class="w-full h-full object-contain ${imgGlow}" crossorigin="anonymous" /></div><div class="text-[11px] font-bold text-white leading-tight px-1 drop-shadow-md w-full break-words flex-1 flex items-start justify-center">${item.name}</div><div class="text-[12px] ${textHex} font-black mt-1 uppercase tracking-widest drop-shadow-[0_0_5px_currentColor]">${item.rank}</div></div>`;
-                });
-                if (sortedRares.length > 9) rareHtml += `<div class="col-span-3 text-center pt-6 text-slate-300 text-sm font-bold drop-shadow-md">และของแรร์อื่นๆ อีก ${sortedRares.length - 9} รายการ...</div>`;
-                rareGrid.innerHTML = rareHtml;
-            }
-
-            const targetEl = document.getElementById('share-template');
-            const images = Array.from(targetEl.querySelectorAll('img'));
-            Promise.all(images.map(img => { if (img.complete) return Promise.resolve(); return new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; }); })).then(() => {
-                setTimeout(() => {
-                    html2canvas(targetEl, { scale: 2, backgroundColor: '#090314', useCORS: true, logging: false }).then(canvas => {
-                        resultImg.src = canvas.toDataURL("image/png");
-                        loading.classList.add('hidden'); resultImg.classList.remove('hidden');
-                    }).catch(err => { console.error(err); loading.innerHTML = `<p class="text-red-400 text-sm">Error generating image</p>`; });
-                }, 300);
+            const rg = document.getElementById('tpl-rare-grid'); if (sortedRares.length === 0) rg.innerHTML = `<div class="col-span-3 flex flex-col items-center justify-center py-12 text-6xl">🧂<p class="text-white text-xl font-bold mt-4">เกลือล้วนๆ!</p></div>`;
+            else { let html = ''; sortedRares.slice(0, 9).forEach(item => { const s = RANK_STYLES[item.rank]; const glow = item.rank === 'SSR' ? 'drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]' : 'drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]'; html += `<div class="${s.shareBg} p-3 rounded-xl flex flex-col items-center text-center relative z-10 shadow-sm min-h-[130px]"><div class="absolute top-1 right-2 text-[20px] font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] z-20">x${item.totalCount}</div><img src="${item.imgSrc}" class="w-14 h-14 mb-2 object-contain ${glow}" crossorigin="anonymous" /><p class="text-[11px] font-bold text-white flex-1 leading-tight">${item.name}</p><p class="text-[12px] font-black uppercase ${s.hex}">${item.rank}</p></div>`; }); rg.innerHTML = html; }
+            const target = document.getElementById('share-template'); const imgs = Array.from(target.querySelectorAll('img'));
+            Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; }))).then(() => {
+                setTimeout(() => html2canvas(target, { scale: 2, backgroundColor: '#090314', useCORS: true, logging: false }).then(canvas => { resultImg.src = canvas.toDataURL("image/png"); loading.classList.add('hidden'); resultImg.classList.remove('hidden'); }), 400);
             });
         }
 
-        function closeShareModal() { const modal = document.getElementById('share-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
-        function generateRandomItem() { const rand = Math.random() * 100; let cum = 0; for (const [rank, rate] of Object.entries(RATES)) { cum += rate; if (rand <= cum) { const pos = ITEMS.filter(item => item.rank === rank); return pos[Math.floor(Math.random() * pos.length)]; } } return ITEMS[ITEMS.length - 1]; }
-        function startPullAnimation(pulls) {
-            currentPullsToAnimate = pulls; isOverlayAnimating = true;
-            const overlay = document.getElementById('pull-overlay'), container = document.getElementById('overlay-items-container'), actions = document.getElementById('overlay-actions'), skip = document.getElementById('overlay-skip-text');
-            container.innerHTML = ''; actions.classList.add('hidden'); skip.classList.remove('hidden'); overlay.classList.remove('hidden'); overlay.classList.add('flex');
-            let idx = 0; if (currentAnimationInterval) clearInterval(currentAnimationInterval);
-            container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); idx++;
-            if (idx >= pulls.length) setTimeout(endAnimation, 300);
-            else { currentAnimationInterval = setInterval(() => { if (idx >= pulls.length) { endAnimation(); return; } container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); idx++; }, 200); }
-        }
-
-        function endAnimation() {
-            isOverlayAnimating = false; clearInterval(currentAnimationInterval);
-            document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-actions').classList.add('flex'); document.getElementById('overlay-skip-text').classList.add('hidden');
-            if (isAutoPulling || currentPullsToAnimate.some(p => p.rank === 'SSR')) {
-                const spk = document.getElementById('sparkle-overlay'); spk.classList.remove('hidden'); spk.classList.add('flex');
-                setTimeout(() => { spk.classList.add('hidden'); spk.classList.remove('flex'); }, 1500);
-            }
-        }
-
+        function closeShareModal() { document.getElementById('share-modal').classList.add('hidden'); }
+        function generateRandomItem() { const rand = Math.random() * 100; let cum = 0; for (const [rank, rate] of Object.entries(RATES)) { cum += rate; if (rand <= cum) { const pos = ITEMS.filter(i => i.rank === rank); return pos[Math.floor(Math.random() * pos.length)]; } } return ITEMS[ITEMS.length - 1]; }
+        
         function finishAutoPull(gS) {
-            if (pullTimeout) clearTimeout(pullTimeout);
-            if (currentAnimationInterval) clearInterval(currentAnimationInterval); 
-            isSpinning = false; isOverlayAnimating = false; isAutoPulling = false;
+            isAutoPulling = false; isSpinning = false; isOverlayAnimating = false; if (pullTimeout) clearTimeout(pullTimeout); if (currentAnimationInterval) clearInterval(currentAnimationInterval);
             document.getElementById('egg-img').classList.remove('animate-bounce');
             ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false);
-            document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
-            updateCost(); renderInventory(); updateLuckMeter();
-            const ct = document.getElementById('overlay-pull-count-text'); 
-            const price = parseFloat(document.getElementById('price-per-pull').value) || 0;
-            const totalCost = (autoPullCount * price).toLocaleString();
-            ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-2xl ml-1 mr-1">${autoPullCount}</span><br><span class="text-xs text-fuchsia-200 font-normal">ใช้เงินไป ${totalCost} ฿</span>`;
-            document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-actions').classList.add('flex'); document.getElementById('overlay-skip-text').classList.add('hidden');
-            if (gS) { const spk = document.getElementById('sparkle-overlay'); spk.classList.remove('hidden'); spk.classList.add('flex'); setTimeout(() => { spk.classList.add('hidden'); spk.classList.remove('flex'); }, 1500); }
+            document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString(); updateCost(); updateLuckMeter();
+            const ct = document.getElementById('overlay-pull-count-text'); const pr = (autoPullCount * (parseFloat(document.getElementById('price-per-pull').value) || 0)).toLocaleString();
+            ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-2xl mx-1">${autoPullCount}</span><br><span class="text-xs font-normal text-slate-400">ใช้เงินไป ${pr} ฿</span>`;
+            document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-skip-text').classList.add('hidden');
+            if (gS) { const s = document.getElementById('sparkle-overlay'); s.classList.remove('hidden'); s.classList.add('flex'); setTimeout(() => s.classList.add('hidden'), 1500); }
         }
 
         function handleOverlayClick(e) {
-            if (e.target.closest('button') || e.target.closest('input')) return;
-            const ov = document.getElementById('pull-overlay'), cn = document.getElementById('overlay-items-container');
-            if (isAutoPulling) {
-                if (pullTimeout) clearTimeout(pullTimeout);
-                if (currentAnimationInterval) clearInterval(currentAnimationInterval); 
-                let gS = false;
-                while (!gS && autoPullCount < 5000) {
-                    autoPullCount++; const sI = generateRandomItem(); const nI = { ...sI, timestamp: Date.now() + autoPullCount }; history.push(nI); totalPulls++;
-                    if (nI.rank === 'SSR') { gS = true; }
+            if (e.target.closest('button')) return;
+            if (isAutoPulling) { 
+                let gS = false; 
+                if (currentAnimationInterval) clearInterval(currentAnimationInterval);
+                while (!gS && autoPullCount < 5000) { 
+                    autoPullCount++; const nI = generateRandomItem(); history.push(nI); totalPulls++; if (nI.rank === 'SSR') gS = true; 
                 }
-                const maxItemsPerPage = window.innerWidth < 640 ? 12 : 15;
-                const itemsOnLastPage = autoPullCount % maxItemsPerPage || maxItemsPerPage;
-                const lastPageItems = history.slice(-itemsOnLastPage);
-                cn.innerHTML = ''; lastPageItems.forEach(item => { cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(item)); });
-                ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); finishAutoPull(gS);
-            } else if (isOverlayAnimating) {
-                if (currentAnimationInterval) clearInterval(currentAnimationInterval); 
-                for (let i = cn.children.length; i < currentPullsToAnimate.length; i++) { cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(currentPullsToAnimate[i])); }
-                endAnimation();
-            } else { if (!isSpinning) closeOverlay(); }
+                const lp = history.slice(-15); const cn = document.getElementById('overlay-items-container'); cn.innerHTML = ''; lp.forEach(i => cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(i)));
+                finishAutoPull(gS);
+            } else if (isOverlayAnimating) { clearInterval(currentAnimationInterval); finishAutoPull(false); }
+            else { if (!isSpinning) document.getElementById('pull-overlay').classList.add('hidden'); }
         }
 
-        function closeOverlay() { const overlay = document.getElementById('pull-overlay'); overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
-
         function pull(c, fO = false) {
-            if (isSpinning) return; isSpinning = true;
-            document.getElementById('overlay-pull-count-text').classList.add('hidden');
+            if (isSpinning) return; isSpinning = true; document.getElementById('overlay-pull-count-text').classList.add('hidden');
             if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('egg-img').classList.add('animate-bounce'); }
-            else { document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); document.getElementById('overlay-items-container').innerHTML = ''; }
-            const nP = []; for (let i = 0; i < c; i++) nP.push({ ...generateRandomItem(), timestamp: Date.now() + i });
+            const nP = []; for (let i = 0; i < c; i++) nP.push(generateRandomItem());
             pullTimeout = setTimeout(() => {
                 history = [...nP, ...history]; totalPulls += c; isSpinning = false;
                 if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
-                document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
-                updateCost(); renderInventory(); updateLuckMeter(); startPullAnimation(nP);
+                const ov = document.getElementById('pull-overlay'); ov.classList.remove('hidden'); ov.classList.add('flex');
+                const cn = document.getElementById('overlay-items-container'); cn.innerHTML = ''; nP.forEach(i => cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(i)));
+                document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-skip-text').classList.add('hidden');
+                updateCost(); updateLuckMeter(); renderInventory();
+                if (nP.some(i => i.rank === 'SSR')) { const s = document.getElementById('sparkle-overlay'); s.classList.remove('hidden'); s.classList.add('flex'); setTimeout(() => s.classList.add('hidden'), 1500); }
             }, fO ? 50 : 600);
         }
 
-        function pullUntilSSR(fO = false) {
-            if (isSpinning) return; isSpinning = true; isOverlayAnimating = true; isAutoPulling = true; autoPullCount = 0;
+        function pullUntilSSR() {
+            if (isSpinning) return; isSpinning = true; isAutoPulling = true; autoPullCount = 0;
             const ov = document.getElementById('pull-overlay'), cn = document.getElementById('overlay-items-container'), ct = document.getElementById('overlay-pull-count-text');
-            if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('egg-img').classList.add('animate-bounce'); }
-            document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); ct.classList.remove('hidden'); 
-            ct.innerHTML = `กำลังสุ่มครั้งที่ <span class="text-white text-xl ml-1 mr-1">0</span>`; 
-            cn.innerHTML = ''; ov.classList.remove('hidden'); ov.classList.add('flex');
-            
-            pullTimeout = setTimeout(() => {
-                if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
-                
-                currentAnimationInterval = setInterval(() => { 
-                    if (!isAutoPulling) return; // Guard เพื่อความชัวร์
-                    autoPullCount++; 
-                    const nI = generateRandomItem(); 
-                    const itemWithTs = { ...nI, timestamp: Date.now() }; 
-                    history.push(itemWithTs); totalPulls++; 
-                    const maxItemsPerPage = window.innerWidth < 640 ? 12 : 15;
-                    if (cn.children.length >= maxItemsPerPage) cn.innerHTML = '';
-                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(itemWithTs)); 
-                    ct.innerHTML = `กำลังสุ่มครั้งที่ <span class="text-white text-xl ml-1 mr-1">${autoPullCount}</span>`; 
-                    updateCost();
-                    // 🎯 หยุดทันทีเมื่อเจอ SSR
-                    if (itemWithTs.rank === 'SSR' || autoPullCount >= 5000) finishAutoPull(itemWithTs.rank === 'SSR'); 
-                }, 150); 
-            }, fO ? 50 : 600);
+            ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('egg-img').classList.add('animate-bounce');
+            document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); 
+            ct.classList.remove('hidden'); cn.innerHTML = ''; ov.classList.remove('hidden'); ov.classList.add('flex');
+            currentAnimationInterval = setInterval(() => {
+                if (!isAutoPulling) { clearInterval(currentAnimationInterval); return; }
+                autoPullCount++; const nI = generateRandomItem(); history.push(nI); totalPulls++;
+                if (cn.children.length >= 15) cn.innerHTML = ''; cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(nI));
+                ct.innerHTML = `กำลังสุ่มครั้งที่ <span class="text-white text-xl mx-1">${autoPullCount}</span>`; updateCost();
+                if (nI.rank === 'SSR' || autoPullCount >= 5000) { 
+                    const isSSR = nI.rank === 'SSR';
+                    clearInterval(currentAnimationInterval); 
+                    finishAutoPull(isSSR); 
+                }
+            }, 150);
         }
 
-        function resetData() { history = []; totalPulls = 0; document.getElementById('total-pulls-text').innerText = '0'; updateCost(); renderInventory(); updateLuckMeter(); }
-        window.onload = () => { preloadImages(); renderStars(); renderRates(); renderInventory(); updateLuckMeter(); updateCost(); };
+        function renderInventory() {
+            const section = document.getElementById('inventory-section'), container = document.getElementById('inventory-container'), emptyState = document.getElementById('empty-inventory-state');
+            if (history.length === 0) { section.classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); return; }
+            section.classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
+            const inventory = {}; history.forEach(item => { if (inventory[item.id]) inventory[item.id].totalCount += item.qty; else inventory[item.id] = { ...item, totalCount: item.qty }; });
+            const rankOrder = { 'SSR': 1, 'SR': 2, 'R': 3, 'A': 4, 'B': 5, 'C': 6, 'E': 7 };
+            const sortedItems = Object.values(inventory).sort((a, b) => rankOrder[a.rank] - rankOrder[b.rank]);
+            let html = ''; sortedItems.forEach(item => {
+                const style = RANK_STYLES[item.rank];
+                let bgEffect = item.rank === 'SSR' ? `<div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none"></div>` : '';
+                html += `<div class="${style.bg} border ${style.border} p-1.5 rounded-xl text-center flex flex-col items-center justify-between min-h-[90px] relative overflow-hidden shadow-sm">${bgEffect}<div class="absolute top-0.5 right-0.5 text-[8px] font-black px-1 py-0.5 rounded-md text-white bg-slate-900/80 shadow border border-slate-600 z-20">x${item.totalCount.toLocaleString()}</div><img src="${item.imgSrc}" alt="${item.name}" class="w-10 h-10 mt-3 z-10 object-contain mix-blend-multiply" crossorigin="anonymous" /><div class="z-10 w-full pb-0.5 relative"><p class="text-[8px] leading-tight line-clamp-2 ${style.text}">${item.name}</p></div></div>`;
+            }); container.innerHTML = html;
+        }
+
+        function resetData() { history = []; totalPulls = 0; document.getElementById('total-pulls-text').innerText = '0'; updateCost(); updateLuckMeter(); renderInventory(); }
+        window.onload = () => { preloadImages(); renderRates(); updateCost(); };
     </script>
 </body>
 </html>
