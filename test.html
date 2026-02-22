@@ -47,7 +47,6 @@
         .magic-circle { animation: spin-slow 20s linear infinite; }
         .magic-circle-reverse { animation: spin-slow-reverse 15s linear infinite; }
 
-        /* 🎯 แอนิเมชันใหม่: ยืดหด (Scale) และหมุนทวนเข็มไปพร้อมๆ กันแบบสมูทๆ */
         @keyframes inner-breathe-spin {
             0% { transform: rotate(0deg) scale(0.85); }
             50% { transform: rotate(-180deg) scale(1.05); }
@@ -57,30 +56,21 @@
             animation: inner-breathe-spin 12s ease-in-out infinite; 
         }
 
-        /* 🎯 แอนิเมชันใหม่: รูปทรงสามเหลี่ยมบิดเปลี่ยนมุมและเรืองแสงวูบวาบ */
         @keyframes triangle-morph-up {
             0%, 100% { transform: scale(1, 1); }
-            50% { transform: scale(1.2, 0.85); } /* ฐานกว้างขึ้น มุมเปลี่ยน */
+            50% { transform: scale(1.2, 0.85); }
         }
         @keyframes triangle-morph-down {
             0%, 100% { transform: scale(1, 1); }
-            50% { transform: scale(0.85, 1.2); } /* ฐานแคบลง มุมเปลี่ยน */
+            50% { transform: scale(0.85, 1.2); }
         }
         @keyframes magic-glow {
             0%, 100% { filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3)); opacity: 0.4; }
             50% { filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9)); opacity: 0.9; }
         }
-        .triangle-up {
-            animation: triangle-morph-up 7s ease-in-out infinite;
-            transform-origin: 50px 50px;
-        }
-        .triangle-down {
-            animation: triangle-morph-down 7s ease-in-out infinite;
-            transform-origin: 50px 50px;
-        }
-        .magic-glow-effect {
-            animation: magic-glow 4s ease-in-out infinite;
-        }
+        .triangle-up { animation: triangle-morph-up 7s ease-in-out infinite; transform-origin: 50px 50px; }
+        .triangle-down { animation: triangle-morph-down 7s ease-in-out infinite; transform-origin: 50px 50px; }
+        .magic-glow-effect { animation: magic-glow 4s ease-in-out infinite; }
 
         @keyframes popUp {
             0% { transform: scale(0.5) translateY(20px); opacity: 0; }
@@ -126,10 +116,10 @@
 
     <div id="sparkle-overlay" class="fixed inset-0 pointer-events-none z-[999] hidden items-center justify-center">
         <div class="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
-        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/></svg>
     </div>
 
-    <!-- Sticky Header -->
+    <!-- Header หน้าหลัก -->
     <div class="fixed top-0 left-0 w-full app-header px-4 md:px-6 z-50 bg-[#05020a]/85 backdrop-blur-md border-b border-white/10 shadow-lg flex justify-between items-center">
         <div class="flex items-center gap-2 md:gap-3">
             <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-lg">
@@ -224,20 +214,20 @@
             
             <div class="relative z-10 w-full flex flex-col items-center">
                 
-                <!-- 🎯 Header: เพิ่ม translate-y-3 ดันไข่ลงมาประมาณ 12px ให้กึ่งกลางภาพทาบกับกึ่งกลางข้อความพอดี -->
-                <div class="w-full flex items-center justify-center gap-5 mb-6 mt-4 z-10 relative">
-                    <div class="w-24 h-24 shrink-0 flex items-center justify-center transform translate-y-3">
+                <!-- 🎯 Header: ปรับเยื้องรูปไข่ขึ้นตามเงื่อนไข (เลยบน Aquarius แต่ไม่ถึงล่าง Diadem) -->
+                <div class="w-full flex items-center justify-center gap-5 mb-8 mt-4 z-10 relative">
+                    <div class="w-28 h-28 shrink-0 flex items-center justify-center transform -translate-y-4">
                         <img src="images/egg.png" class="max-w-full max-h-full object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]" crossorigin="anonymous" />
                     </div>
-                    <h1 class="text-[52px] font-black leading-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font text-left tracking-wide">
-                        <span class="text-yellow-400 block mb-1">AQUARIUS</span>
+                    <h1 class="text-[52px] font-black leading-tight drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font text-left tracking-wide">
+                        <span class="text-yellow-400 block -mb-2">AQUARIUS</span>
                         <span class="text-cyan-400 block">DIADEM</span>
                     </h1>
                 </div>
 
-                <!-- 🎯 สรุปดวง: ลดขนาดฟอนต์ลงให้สมดุลขึ้น -->
+                <!-- 🎯 สรุปดวง: ลดขนาดฟอนต์ลงตามต้องการ -->
                 <div class="w-full text-center relative mb-12">
-                    <div id="tpl-luck-name" class="text-[42px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-3">👑 ลูกรัก GM</div>
+                    <div id="tpl-luck-name" class="text-[38px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4">👑 ลูกรัก GM</div>
                     <div id="tpl-fun-quote" class="text-yellow-300 font-bold text-xl italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                         "ชาตินี้ใช้ดวงหมดแล้ว!"
                     </div>
@@ -283,7 +273,7 @@
     </div>
 
 
-    <!-- Main Layout หลัก (เว็บ) -->
+    <!-- Main Layout หลัก -->
     <div class="relative z-10 max-w-[1400px] mx-auto min-h-screen flex flex-col lg:flex-row main-content">
         <div class="w-full lg:w-5/12 flex flex-col items-center justify-center p-6 mt-4 lg:mt-0">
             <div class="text-center mb-8">
@@ -294,19 +284,15 @@
                 <p class="text-indigo-200/80 font-bold tracking-[0.3em] uppercase text-[10px] md:text-xs">Scroll Simulator</p>
             </div>
             <div id="egg-container" class="relative flex items-center justify-center w-full max-w-[280px] aspect-square transition-all duration-300">
-                <!-- 🎯 เปลี่ยนมาใช้คลาส magic-glow-effect ควบคุมทั้งแสงและความโปร่งใสแทน -->
                 <div class="absolute inset-0 flex items-center justify-center text-blue-400 scale-[1.4] magic-glow-effect">
                     <svg class="w-full h-full" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.5">
-                        <!-- วงแหวนรอบนอก (หมุนปกติ) -->
                         <g class="magic-circle" style="transform-origin: 50px 50px;">
                             <circle cx="50" cy="50" r="48" stroke-dasharray="4 4"/>
                             <circle cx="50" cy="50" r="46" stroke-width="0.1" opacity="0.5" />
                         </g>
-                        <!-- ลวดลายด้านใน (ยืดหดและหมุนทวนเข็ม) -->
                         <g class="magic-inner-dynamic" style="transform-origin: 50px 50px;">
                             <circle cx="50" cy="50" r="40"/>
                             <circle cx="50" cy="50" r="30" stroke-dasharray="8 4" opacity="0.8"/>
-                            <!-- 🎯 ใส่คลาสแอนิเมชันใหม่ให้สามเหลี่ยมทั้ง 2 อันยืดหดขยับฐานได้ -->
                             <polygon class="triangle-up" points="50,15 80,67 20,67" stroke-width="0.3" />
                             <polygon class="triangle-down" points="50,85 20,33 80,33" stroke-width="0.3" />
                             <circle cx="50" cy="50" r="10" stroke-width="0.2" />
@@ -404,8 +390,6 @@
         ];
 
         const RATES = { SSR: 0.35, SR: 1.5, R: 10.0, A: 15.0, B: 31.0, C: 21.0, E: 21.15 };
-
-        // ใช้เฉพาะสำหรับการแสดงผลหน้าเว็บปกติ
         const RANK_STYLES = {
             'SSR': { bg: 'bg-gradient-to-br from-yellow-100 to-amber-200 ssr-glow', border: 'border-yellow-400', text: 'text-amber-900 font-extrabold', grad: 'from-amber-400 to-yellow-600', hex: 'text-yellow-400', shareBg: 'bg-yellow-500/10 border border-yellow-500/30' },
             'SR': { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-900 font-bold', grad: 'from-purple-400 to-purple-600', hex: 'text-purple-400', shareBg: 'bg-purple-500/10 border border-purple-500/30' },
@@ -419,54 +403,25 @@
         const RANK_POINTS = { 'SSR': 500, 'SR': 100, 'R': 20, 'A': 15, 'B': 5, 'C': 2, 'E': 1 };
         const EXPECTED_SCORE_PER_PULL = 9.6815;
 
-        // 🎯 เพิ่มตัวแปร pullTimeout เข้ามาจัดการเรื่อง Race Condition
         let history = [], totalPulls = 0, isSpinning = false, currentAnimationInterval = null, pullTimeout = null, currentPullsToAnimate = [], isOverlayAnimating = false, isAutoPulling = false, autoPullCount = 0;
         let currentLuckData = { tN: '', tD: '', tC: '', luckPercent: 0, ssrCount: 0, funQuote: '' };
 
-        function preloadImages() {
-            const allImages = ['images/egg.png', ...ITEMS.map(i => i.imgSrc)];
-            allImages.forEach(src => { const img = new Image(); img.src = src; });
-        }
-
-        function updateCost() {
-            const price = parseFloat(document.getElementById('price-per-pull').value) || 0;
-            const totalCost = totalPulls * price;
-            document.getElementById('total-cost-text').innerText = totalCost.toLocaleString();
-            return totalCost;
-        }
-
-        function renderStars() {
-            const container = document.getElementById('stars-container');
-            let starsHTML = '';
-            for(let i=0; i<60; i++) starsHTML += `<circle cx="${Math.random() * 100}%" cy="${Math.random() * 100}%" r="${Math.random() * 1.5 + 0.5}" fill="#cbd5e1" opacity="${Math.random() * 0.8 + 0.2}" />`;
-            container.innerHTML = starsHTML;
-        }
-
-        function renderRates() {
-            const container = document.getElementById('rates-container');
-            let html = '';
-            for (const [rank, rate] of Object.entries(RATES)) {
-                const style = RANK_STYLES[rank];
-                html += `<div class="flex justify-between items-center text-[10px] font-medium"><span class="w-8 font-black text-transparent bg-clip-text bg-gradient-to-b ${style.grad}">${rank}</span><div class="flex-1 mx-3 h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r ${style.grad}" style="width: ${rate}%"></div></div><span class="text-slate-400 w-10 text-right">${rate}%</span></div>`;
-            }
-            container.innerHTML = html;
-        }
-
+        function preloadImages() { const allImages = ['images/egg.png', ...ITEMS.map(i => i.imgSrc)]; allImages.forEach(src => { const img = new Image(); img.src = src; }); }
+        function updateCost() { const price = parseFloat(document.getElementById('price-per-pull').value) || 0; const totalCost = totalPulls * price; document.getElementById('total-cost-text').innerText = totalCost.toLocaleString(); return totalCost; }
+        function renderStars() { const container = document.getElementById('stars-container'); let starsHTML = ''; for(let i=0; i<60; i++) starsHTML += `<circle cx="${Math.random() * 100}%" cy="${Math.random() * 100}%" r="${Math.random() * 1.5 + 0.5}" fill="#cbd5e1" opacity="${Math.random() * 0.8 + 0.2}" />`; container.innerHTML = starsHTML; }
+        function renderRates() { const container = document.getElementById('rates-container'); let html = ''; for (const [rank, rate] of Object.entries(RATES)) { const style = RANK_STYLES[rank]; html += `<div class="flex justify-between items-center text-[10px] font-medium"><span class="w-8 font-black text-transparent bg-clip-text bg-gradient-to-b ${style.grad}">${rank}</span><div class="flex-1 mx-3 h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r ${style.grad}" style="width: ${rate}%"></div></div><span class="text-slate-400 w-10 text-right">${rate}%</span></div>`; } container.innerHTML = html; }
         function renderInventory() {
             const section = document.getElementById('inventory-section'), container = document.getElementById('inventory-container'), emptyState = document.getElementById('empty-inventory-state');
             if (history.length === 0) { section.classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); return; }
             section.classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
-            const inventory = {};
-            history.forEach(item => { if (inventory[item.id]) inventory[item.id].totalCount += item.qty; else inventory[item.id] = { ...item, totalCount: item.qty }; });
+            const inventory = {}; history.forEach(item => { if (inventory[item.id]) inventory[item.id].totalCount += item.qty; else inventory[item.id] = { ...item, totalCount: item.qty }; });
             const rankOrder = { 'SSR': 1, 'SR': 2, 'R': 3, 'A': 4, 'B': 5, 'C': 6, 'E': 7 };
             const sortedItems = Object.values(inventory).sort((a, b) => rankOrder[a.rank] - rankOrder[b.rank]);
-            let html = '';
-            sortedItems.forEach(item => {
+            let html = ''; sortedItems.forEach(item => {
                 const style = RANK_STYLES[item.rank];
                 let bgEffect = item.rank === 'SSR' ? `<div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none"></div>` : '';
                 html += `<div class="${style.bg} border ${style.border} p-1.5 rounded-xl text-center flex flex-col items-center justify-between min-h-[90px] relative overflow-hidden shadow-sm">${bgEffect}<div class="absolute top-0.5 right-0.5 text-[8px] font-black px-1 py-0.5 rounded-md text-white bg-slate-900/80 shadow border border-slate-600 z-20">x${item.totalCount.toLocaleString()}</div><img src="${item.imgSrc}" alt="${item.name}" class="w-10 h-10 mt-3 z-10 object-contain mix-blend-multiply" crossorigin="anonymous" /><div class="z-10 w-full pb-0.5 relative"><p class="text-[8px] leading-tight line-clamp-2 ${style.text}">${item.name}</p></div></div>`;
-            });
-            container.innerHTML = html;
+            }); container.innerHTML = html;
         }
 
         function updateLuckMeter() {
@@ -477,48 +432,17 @@
             history.forEach(item => { totalPoints += RANK_POINTS[item.rank] || 0; if (item.rank === 'SSR') ssrCount++; });
             const luckRatio = (totalPoints / totalPulls) / EXPECTED_SCORE_PER_PULL;
             const luckPercent = (luckRatio * 100).toFixed(0);
-            
             let tN, tD, tC, funQuote;
-            if (luckRatio >= 3.0) { 
-                tN = '👼 จุติมาเกิด'; tD = 'GOD TIER!'; tC = 'text-amber-400'; 
-                funQuote = '"หล่อเท่กว่านี้ก็เทพเจ้าแล้ว!"'; 
-            } 
-            else if (luckRatio >= 2.0) { 
-                tN = '👑 ลูกรัก GM'; tD = 'GM PICKET!'; tC = 'text-purple-400'; 
-                funQuote = '"ระวังสิบล้อตอนเดินข้ามถนนด้วยนะเพื่อน!"'; 
-            } 
-            else if (luckRatio >= 1.5) { 
-                tN = '🌟 โคตรเฮง'; tD = 'SUPER LUCKY!'; tC = 'text-pink-400'; 
-                funQuote = '"ของมันแรง แข่งบุญวาสนามันไม่ได้จริงๆ"'; 
-            } 
-            else if (luckRatio >= 1.2) { 
-                tN = '✨ ดวงดี'; tD = 'LUCKY!'; tC = 'text-blue-400'; 
-                funQuote = '"แหมมม ทำมาเป็นขิง!"'; 
-            } 
-            else if (luckRatio >= 1.0) { 
-                tN = '😏 คุ้มทุน'; tD = 'PROFIT!'; tC = 'text-cyan-400'; 
-                funQuote = '"กำไรเน้นๆ ไม่ขาดทุนก็บุญแล้ว"'; 
-            } 
-            else if (luckRatio >= 0.85) { 
-                tN = '😐 ปกติชน'; tD = 'AVERAGE'; tC = 'text-green-400'; 
-                funQuote = '"เรื่อยๆ มาเรียงๆ ตามมาตรฐานสถิติ"'; 
-            } 
-            else if (luckRatio >= 0.7) { 
-                tN = '🤏 แอบเกลือ'; tD = 'SLIGHTLY SALTY'; tC = 'text-yellow-500'; 
-                funQuote = '"ได้กลิ่นเกลือโชยมาแต่ไกล..."'; 
-            } 
-            else if (luckRatio >= 0.5) { 
-                tN = '🧂 เกลือ'; tD = 'SALTY'; tC = 'text-orange-400'; 
-                funQuote = '"เค็มปี๋เลยลูกพี่ ไตจะพังแล้ว!"'; 
-            } 
-            else if (luckRatio >= 0.3) { 
-                tN = '🏜️ โคตรเกลือ'; tD = 'VERY SALTY'; tC = 'text-orange-600'; 
-                funQuote = '"แห้งแล้งเหลือเกิน ถอนตัวตอนนี้ยังทัน"'; 
-            } 
-            else { 
-                tN = '💀 ทะเลเดดซี'; tD = 'EXTREME SALT'; tC = 'text-red-500'; 
-                funQuote = '"สวดอภิธรรมศพกระเป๋าตังค์ ลบเกมทิ้งเถอะ"'; 
-            }
+            if (luckRatio >= 3.0) { tN = '👼 จุติมาเกิด'; tD = 'GOD TIER!'; tC = 'text-amber-400'; funQuote = '"หล่อเท่กว่านี้ก็เทพเจ้าแล้ว!"'; } 
+            else if (luckRatio >= 2.0) { tN = '👑 ลูกรัก GM'; tD = 'GM PICKET!'; tC = 'text-purple-400'; funQuote = '"ระวังสิบล้อตอนเดินข้ามถนนด้วยนะเพื่อน!"'; } 
+            else if (luckRatio >= 1.5) { tN = '🌟 โคตรเฮง'; tD = 'SUPER LUCKY!'; tC = 'text-pink-400'; funQuote = '"ของมันแรง แข่งบุญวาสนามันไม่ได้จริงๆ"'; } 
+            else if (luckRatio >= 1.2) { tN = '✨ ดวงดี'; tD = 'LUCKY!'; tC = 'text-blue-400'; funQuote = '"แหมมม ทำมาเป็นขิง!"'; } 
+            else if (luckRatio >= 1.0) { tN = '😏 คุ้มทุน'; tD = 'PROFIT!'; tC = 'text-cyan-400'; funQuote = '"กำไรเน้นๆ ไม่ขาดทุนก็บุญแล้ว"'; } 
+            else if (luckRatio >= 0.85) { tN = '😐 ปกติชน'; tD = 'AVERAGE'; tC = 'text-green-400'; funQuote = '"เรื่อยๆ มาเรียงๆ ตามมาตรฐานสถิติ"'; } 
+            else if (luckRatio >= 0.7) { tN = '🤏 แอบเกลือ'; tD = 'SLIGHTLY SALTY'; tC = 'text-yellow-500'; funQuote = '"ได้กลิ่นเกลือโชยมาแต่ไกล..."'; } 
+            else if (luckRatio >= 0.5) { tN = '🧂 เกลือ'; tD = 'SALTY'; tC = 'text-orange-400'; funQuote = '"เค็มปี๋เลยลูกพี่ ไตจะพังแล้ว!"'; } 
+            else if (luckRatio >= 0.3) { tN = '🏜️ โคตรเกลือ'; tD = 'VERY SALTY'; tC = 'text-orange-600'; funQuote = '"แห้งแล้งเหลือเกิน ถอนตัวตอนนี้ยังทัน"'; } 
+            else { tN = '💀 ทะเลเดดซี'; tD = 'EXTREME SALT'; tC = 'text-red-500'; funQuote = '"สวดอภิธรรมศพกระเป๋าตังค์ ลบเกมทิ้งเถอะ"'; }
             
             document.getElementById('luck-tier-name').innerText = tN;
             document.getElementById('luck-tier-name').className = `text-xl font-black mb-1 ${tC}`;
@@ -526,7 +450,6 @@
             document.getElementById('luck-score-text').innerText = `${luckPercent}%`;
             document.getElementById('luck-ssr-actual').innerText = ssrCount.toLocaleString();
             document.getElementById('luck-ssr-expected').innerText = (totalPulls * 0.0035).toFixed(2);
-
             currentLuckData = { tN, tD, tC, luckPercent, ssrCount, funQuote };
         }
 
@@ -537,75 +460,49 @@
             return `<div class="${style.bg} border ${style.border} p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md">${bgEffect}<img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 mt-2 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full mt-1 pb-1 relative"><p class="text-[9px] leading-tight line-clamp-2 ${style.text}">${item.name}</p>${q}</div></div>`;
         }
 
+        // ==========================================
+        // ระบบสร้างรูปภาพแชร์
+        // ==========================================
         function openShareModal() {
             if (totalPulls === 0) return;
-            const modal = document.getElementById('share-modal');
-            const loading = document.getElementById('share-loading');
-            const resultImg = document.getElementById('share-result-img');
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            loading.classList.remove('hidden');
-            resultImg.classList.add('hidden');
+            const modal = document.getElementById('share-modal'), loading = document.getElementById('share-loading'), resultImg = document.getElementById('share-result-img');
+            modal.classList.remove('hidden'); modal.classList.add('flex'); loading.classList.remove('hidden'); resultImg.classList.add('hidden');
 
             const totalCost = updateCost();
             document.getElementById('tpl-luck-name').innerText = currentLuckData.tN;
-            document.getElementById('tpl-luck-name').className = `text-[42px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-3 ${currentLuckData.tC}`;
+            document.getElementById('tpl-luck-name').className = `text-[38px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 ${currentLuckData.tC}`;
             document.getElementById('tpl-fun-quote').innerText = currentLuckData.funQuote;
             document.getElementById('tpl-cost').innerText = totalCost.toLocaleString() + ' ฿';
             document.getElementById('tpl-pulls').innerText = totalPulls.toLocaleString() + ' โรล';
             document.getElementById('tpl-ssr-count').innerText = `ได้ SSR: ${currentLuckData.ssrCount.toLocaleString()} ชิ้น`;
 
-            // 🎯 สุ่มตำแหน่ง ขนาด และองศาของวงเวทมนตร์ ในหน้าแชร์
+            // 🎯 สุ่มตำแหน่ง ขนาด และองศาของวงเวทมนตร์ (Randomized Patterns)
             const magicCircle = document.getElementById('share-magic-circle');
             if (magicCircle) {
-                const randomTop = Math.floor(Math.random() * 60) + 20; 
-                const randomLeft = Math.floor(Math.random() * 60) + 20; 
-                const randomScale = (Math.random() * 0.6) + 0.8; 
+                const randomTop = Math.floor(Math.random() * 50) + 25; 
+                const randomLeft = Math.floor(Math.random() * 50) + 25; 
+                const randomScale = (Math.random() * 0.8) + 0.8; 
                 const randomRotate = Math.floor(Math.random() * 360); 
-                
                 magicCircle.style.top = `${randomTop}%`;
                 magicCircle.style.left = `${randomLeft}%`;
                 magicCircle.style.transform = `translate(-50%, -50%) scale(${randomScale}) rotate(${randomRotate}deg)`;
             }
 
             const rareInventory = {};
-            history.forEach(item => {
-                if(item.rank === 'SSR' || item.rank === 'SR') {
-                    if (rareInventory[item.id]) rareInventory[item.id].totalCount += item.qty; 
-                    else rareInventory[item.id] = { ...item, totalCount: item.qty };
-                }
-            });
-
-            const rankOrder = { 'SSR': 1, 'SR': 2 };
-            const sortedRares = Object.values(rareInventory).sort((a, b) => rankOrder[a.rank] - rankOrder[b.rank]);
+            history.forEach(item => { if(item.rank === 'SSR' || item.rank === 'SR') { if (rareInventory[item.id]) rareInventory[item.id].totalCount += item.qty; else rareInventory[item.id] = { ...item, totalCount: item.qty }; } });
+            const sortedRares = Object.values(rareInventory).sort((a, b) => (a.rank === 'SSR' ? 1 : 2) - (b.rank === 'SSR' ? 1 : 2));
             const rareGrid = document.getElementById('tpl-rare-grid');
             
             if (sortedRares.length === 0) {
-                rareGrid.innerHTML = `
-                    <div class="col-span-3 flex flex-col items-center justify-center py-12">
-                        <div class="text-[60px] mb-4 drop-shadow-lg transform -rotate-12">🧂</div>
-                        <div class="text-white font-black text-2xl drop-shadow-md tracking-wider">เกลือล้วนๆ ไม่มีของแรร์ผสม!</div>
-                    </div>`;
+                rareGrid.innerHTML = `<div class="col-span-3 flex flex-col items-center justify-center py-12"><div class="text-[60px] mb-4 drop-shadow-lg transform -rotate-12">🧂</div><div class="text-white font-black text-2xl drop-shadow-md tracking-wider">เกลือล้วนๆ ไม่มีของแรร์ผสม!</div></div>`;
             } else {
                 let rareHtml = '';
-                sortedRares.slice(0, 9).forEach((item, i) => { 
+                sortedRares.slice(0, 9).forEach((item) => { 
                     const s = RANK_STYLES[item.rank];
                     const textHex = item.rank === 'SSR' ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]';
                     const imgGlow = item.rank === 'SSR' ? 'drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]';
-                    
-                    // 🎯 ถอดกรอบตัวเลขไอเทมออกให้เหลือแต่ตัวหนังสือลอยๆ
-                    rareHtml += `
-                    <div class="${s.shareBg} p-3 rounded-xl flex flex-col items-center text-center relative z-10 shadow-sm min-h-[130px]">
-                        <div class="absolute top-1.5 right-2 text-[14px] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,1)] z-20">x${item.totalCount}</div>
-                        
-                        <div class="w-14 h-14 mb-2 flex items-center justify-center relative z-10">
-                            <img src="${item.imgSrc}" alt="${item.name}" class="w-full h-full object-contain ${imgGlow}" crossorigin="anonymous" />
-                        </div>
-                        
-                        <div class="text-[11px] font-bold text-white leading-tight px-1 drop-shadow-md w-full break-words flex-1 flex items-start justify-center">${item.name}</div>
-                        <div class="text-[12px] ${textHex} font-black mt-1 uppercase tracking-widest drop-shadow-[0_0_5px_currentColor]">${item.rank}</div>
-                    </div>`;
+                    // 🎯 ถอดกรอบตัวเลขไอเทมออกตามต้องการ
+                    rareHtml += `<div class="${s.shareBg} p-3 rounded-xl flex flex-col items-center text-center relative z-10 shadow-sm min-h-[130px]"><div class="absolute top-1.5 right-2 text-[14px] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,1)] z-20">x${item.totalCount}</div><div class="w-14 h-14 mb-2 flex items-center justify-center relative z-10"><img src="${item.imgSrc}" alt="${item.name}" class="w-full h-full object-contain ${imgGlow}" crossorigin="anonymous" /></div><div class="text-[11px] font-bold text-white leading-tight px-1 drop-shadow-md w-full break-words flex-1 flex items-start justify-center">${item.name}</div><div class="text-[12px] ${textHex} font-black mt-1 uppercase tracking-widest drop-shadow-[0_0_5px_currentColor]">${item.rank}</div></div>`;
                 });
                 if (sortedRares.length > 9) rareHtml += `<div class="col-span-3 text-center pt-6 text-slate-300 text-sm font-bold drop-shadow-md">และของแรร์อื่นๆ อีก ${sortedRares.length - 9} รายการ...</div>`;
                 rareGrid.innerHTML = rareHtml;
@@ -613,130 +510,74 @@
 
             const targetEl = document.getElementById('share-template');
             const images = Array.from(targetEl.querySelectorAll('img'));
-            
-            Promise.all(images.map(img => {
-                if (img.complete) return Promise.resolve();
-                return new Promise((resolve) => {
-                    img.onload = resolve;
-                    img.onerror = resolve; 
-                });
-            })).then(() => {
+            Promise.all(images.map(img => { if (img.complete) return Promise.resolve(); return new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; }); })).then(() => {
                 setTimeout(() => {
-                    html2canvas(targetEl, {
-                        scale: 2, 
-                        backgroundColor: '#090314', 
-                        useCORS: true,
-                        logging: false
-                    }).then(canvas => {
-                        const imgData = canvas.toDataURL("image/png");
-                        resultImg.src = imgData;
-                        loading.classList.add('hidden');
-                        resultImg.classList.remove('hidden');
-                    }).catch(err => {
-                        console.error("Error generating image:", err);
-                        loading.innerHTML = `<p class="text-red-400 text-sm">เกิดข้อผิดพลาดในการสร้างรูป</p>`;
-                    });
+                    html2canvas(targetEl, { scale: 2, backgroundColor: '#090314', useCORS: true, logging: false }).then(canvas => {
+                        resultImg.src = canvas.toDataURL("image/png");
+                        loading.classList.add('hidden'); resultImg.classList.remove('hidden');
+                    }).catch(err => { console.error(err); loading.innerHTML = `<p class="text-red-400 text-sm">Error generating image</p>`; });
                 }, 300);
             });
         }
 
-        function closeShareModal() {
-            const modal = document.getElementById('share-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function generateRandomItem() {
-            const rand = Math.random() * 100;
-            let cum = 0;
-            for (const [rank, rate] of Object.entries(RATES)) {
-                cum += rate;
-                if (rand <= cum) {
-                    const pos = ITEMS.filter(item => item.rank === rank);
-                    return pos[Math.floor(Math.random() * pos.length)];
-                }
-            }
-            return ITEMS[ITEMS.length - 1];
-        }
-
+        function closeShareModal() { const modal = document.getElementById('share-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        function generateRandomItem() { const rand = Math.random() * 100; let cum = 0; for (const [rank, rate] of Object.entries(RATES)) { cum += rate; if (rand <= cum) { const pos = ITEMS.filter(item => item.rank === rank); return pos[Math.floor(Math.random() * pos.length)]; } } return ITEMS[ITEMS.length - 1]; }
         function startPullAnimation(pulls) {
             currentPullsToAnimate = pulls; isOverlayAnimating = true;
             const overlay = document.getElementById('pull-overlay'), container = document.getElementById('overlay-items-container'), actions = document.getElementById('overlay-actions'), skip = document.getElementById('overlay-skip-text');
             container.innerHTML = ''; actions.classList.add('hidden'); skip.classList.remove('hidden'); overlay.classList.remove('hidden'); overlay.classList.add('flex');
             let idx = 0; if (currentAnimationInterval) clearInterval(currentAnimationInterval);
-            
             container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); idx++;
             if (idx >= pulls.length) setTimeout(endAnimation, 300);
             else { currentAnimationInterval = setInterval(() => { if (idx >= pulls.length) { endAnimation(); return; } container.insertAdjacentHTML('beforeend', createOverlayItemHTML(pulls[idx])); idx++; }, 200); }
         }
 
-        // 🎯 เคลียร์ Animation และสถานะทุกอย่างให้จบเพื่อกันบักเบรกแตก
+        function endAnimation() {
+            isOverlayAnimating = false; clearInterval(currentAnimationInterval);
+            document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-actions').classList.add('flex'); document.getElementById('overlay-skip-text').classList.add('hidden');
+            if (isAutoPulling || currentPullsToAnimate.some(p => p.rank === 'SSR')) {
+                const spk = document.getElementById('sparkle-overlay'); spk.classList.remove('hidden'); spk.classList.add('flex');
+                setTimeout(() => { spk.classList.add('hidden'); spk.classList.remove('flex'); }, 1500);
+            }
+        }
+
         function finishAutoPull(gS) {
             if (pullTimeout) clearTimeout(pullTimeout);
             if (currentAnimationInterval) clearInterval(currentAnimationInterval); 
             isSpinning = false; isOverlayAnimating = false; isAutoPulling = false;
-            
             document.getElementById('egg-img').classList.remove('animate-bounce');
             ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false);
-
             document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
-            updateCost();
-            renderInventory(); updateLuckMeter();
-            
+            updateCost(); renderInventory(); updateLuckMeter();
             const ct = document.getElementById('overlay-pull-count-text'); 
             const price = parseFloat(document.getElementById('price-per-pull').value) || 0;
             const totalCost = (autoPullCount * price).toLocaleString();
-            
             ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-2xl ml-1 mr-1">${autoPullCount}</span><br><span class="text-xs text-fuchsia-200 font-normal">ใช้เงินไป ${totalCost} ฿</span>`;
-            
             document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-actions').classList.add('flex'); document.getElementById('overlay-skip-text').classList.add('hidden');
             if (gS) { const spk = document.getElementById('sparkle-overlay'); spk.classList.remove('hidden'); spk.classList.add('flex'); setTimeout(() => { spk.classList.add('hidden'); spk.classList.remove('flex'); }, 1500); }
         }
 
-        // 🎯 จัดการบักกดรัวๆ (Race Condition)
         function handleOverlayClick(e) {
             if (e.target.closest('button') || e.target.closest('input')) return;
             const ov = document.getElementById('pull-overlay'), cn = document.getElementById('overlay-items-container');
-            
             if (isAutoPulling) {
                 if (pullTimeout) clearTimeout(pullTimeout);
                 if (currentAnimationInterval) clearInterval(currentAnimationInterval); 
                 let gS = false;
-                
                 while (!gS && autoPullCount < 5000) {
-                    autoPullCount++; 
-                    const sI = generateRandomItem(); 
-                    const nI = { ...sI, timestamp: Date.now() + autoPullCount };
-                    history.push(nI); 
-                    totalPulls++;
-                    if (nI.rank === 'SSR') { 
-                        gS = true; 
-                    }
+                    autoPullCount++; const sI = generateRandomItem(); const nI = { ...sI, timestamp: Date.now() + autoPullCount }; history.push(nI); totalPulls++;
+                    if (nI.rank === 'SSR') { gS = true; }
                 }
-                
                 const maxItemsPerPage = window.innerWidth < 640 ? 12 : 15;
                 const itemsOnLastPage = autoPullCount % maxItemsPerPage || maxItemsPerPage;
                 const lastPageItems = history.slice(-itemsOnLastPage);
-                
-                cn.innerHTML = '';
-                lastPageItems.forEach(item => {
-                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(item)); 
-                });
-                
-                ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' });
-                finishAutoPull(gS);
-                
+                cn.innerHTML = ''; lastPageItems.forEach(item => { cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(item)); });
+                ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' }); finishAutoPull(gS);
             } else if (isOverlayAnimating) {
                 if (currentAnimationInterval) clearInterval(currentAnimationInterval); 
-                for (let i = cn.children.length; i < currentPullsToAnimate.length; i++) {
-                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(currentPullsToAnimate[i]));
-                }
+                for (let i = cn.children.length; i < currentPullsToAnimate.length; i++) { cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(currentPullsToAnimate[i])); }
                 endAnimation();
-            } else {
-                if (!isSpinning) {
-                    closeOverlay();
-                }
-            }
+            } else { if (!isSpinning) closeOverlay(); }
         }
 
         function closeOverlay() { const overlay = document.getElementById('pull-overlay'); overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
@@ -747,13 +588,11 @@
             if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('egg-img').classList.add('animate-bounce'); }
             else { document.getElementById('overlay-actions').classList.add('hidden'); document.getElementById('overlay-skip-text').classList.remove('hidden'); document.getElementById('overlay-items-container').innerHTML = ''; }
             const nP = []; for (let i = 0; i < c; i++) nP.push({ ...generateRandomItem(), timestamp: Date.now() + i });
-            
             pullTimeout = setTimeout(() => {
                 history = [...nP, ...history]; totalPulls += c; isSpinning = false;
                 if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
                 document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString();
-                updateCost();
-                renderInventory(); updateLuckMeter(); startPullAnimation(nP);
+                updateCost(); renderInventory(); updateLuckMeter(); startPullAnimation(nP);
             }, fO ? 50 : 600);
         }
 
@@ -769,27 +608,23 @@
                 if (!fO) { ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('egg-img').classList.remove('animate-bounce'); }
                 
                 currentAnimationInterval = setInterval(() => { 
+                    if (!isAutoPulling) return; // Guard เพื่อความชัวร์
                     autoPullCount++; 
-                    const nI = { ...generateRandomItem(), timestamp: Date.now() }; 
-                    history.push(nI); totalPulls++; 
-                    
+                    const nI = generateRandomItem(); 
+                    const itemWithTs = { ...nI, timestamp: Date.now() }; 
+                    history.push(itemWithTs); totalPulls++; 
                     const maxItemsPerPage = window.innerWidth < 640 ? 12 : 15;
-                    
-                    if (cn.children.length >= maxItemsPerPage) {
-                        cn.innerHTML = '';
-                    }
-                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(nI)); 
-                    
+                    if (cn.children.length >= maxItemsPerPage) cn.innerHTML = '';
+                    cn.insertAdjacentHTML('beforeend', createOverlayItemHTML(itemWithTs)); 
                     ct.innerHTML = `กำลังสุ่มครั้งที่ <span class="text-white text-xl ml-1 mr-1">${autoPullCount}</span>`; 
                     updateCost();
-                    
-                    if (nI.rank === 'SSR' || autoPullCount >= 5000) finishAutoPull(nI.rank === 'SSR'); 
+                    // 🎯 หยุดทันทีเมื่อเจอ SSR
+                    if (itemWithTs.rank === 'SSR' || autoPullCount >= 5000) finishAutoPull(itemWithTs.rank === 'SSR'); 
                 }, 150); 
             }, fO ? 50 : 600);
         }
 
         function resetData() { history = []; totalPulls = 0; document.getElementById('total-pulls-text').innerText = '0'; updateCost(); renderInventory(); updateLuckMeter(); }
-
         window.onload = () => { preloadImages(); renderStars(); renderRates(); renderInventory(); updateLuckMeter(); updateCost(); };
     </script>
 </body>
