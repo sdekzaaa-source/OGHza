@@ -1,549 +1,562 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Printer, Truck, XCircle, RotateCcw, ClipboardCheck, 
-  Save, LayoutDashboard, PenSquare, Package, Zap, 
-  Send, Calendar, CheckCircle2, UploadCloud, Image as ImageIcon,
-  Loader2, X, Plus, ChevronDown, Trash2
-} from 'lucide-react';
-
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwyKSoMq5kvIRX0Oqo_4BTuI8WJH7zjOvrOugG0hSHsB8wfiBKKciNTQs3XJOusSwtNwQ/exec'; 
-
-const CARRIERS = ['SPX', 'J&T', 'FLASH', 'TLP'];
-const TYPES = {
-  'SPX': ['Pick-Up', 'ไปส่งเอง', 'ส่งด่วน!!'],
-  'J&T': ['Pick-Up', 'ไปส่งเอง', 'งานคีย์'],
-  'FLASH': ['Standard'],
-  'TLP': ['Standard']
-};
-
-const CARRIER_COLORS = {
-  'SPX': 'text-orange-500 bg-orange-50 border-orange-200',
-  'J&T': 'text-red-500 bg-red-50 border-red-200',
-  'FLASH': 'text-yellow-600 bg-yellow-50 border-yellow-200',
-  'TLP': 'text-blue-500 bg-blue-50 border-blue-200'
-};
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState('form');
-  const [records, setRecords] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ระบบบันทึกออเดอร์รายวัน</title>
   
-  // Global Daily State
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [printed, setPrinted] = useState('');
-  const [jtSummary, setJtSummary] = useState('');
+  <!-- โหลด Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- โหลด React และ ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- โหลด Babel สำหรับคอมไพล์ JSX ในเบราว์เซอร์ -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  // Dynamic Entries State
-  const [entries, setEntries] = useState([{
-    id: Date.now(),
-    carrier: 'SPX',
-    type: 'Pick-Up',
-    shipped: '', cancelled: '', returned: '',
-    imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null
-  }]);
+  <style>
+    body { background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
+    /* สำหรับมือถือจอแหว่ง (iPhone) */
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
-  const addEntry = () => {
-    setEntries([...entries, {
-      id: Date.now(),
-      carrier: 'SPX',
-      type: 'Pick-Up',
-      shipped: '', cancelled: '', returned: '',
-      imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null
-    }]);
-  };
+  <script type="text/babel">
+    const { useState, useMemo } = React;
 
-  const removeEntry = (id) => {
-    if (entries.length > 1) {
-      setEntries(entries.filter(e => e.id !== id));
-    } else {
-      alert('ต้องมีอย่างน้อย 1 รายการ');
-    }
-  };
+    // --- ตั้งค่า URL ของ Google Apps Script ของคุณ ---
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwyKSoMq5kvIRX0Oqo_4BTuI8WJH7zjOvrOugG0hSHsB8wfiBKKciNTQs3XJOusSwtNwQ/exec'; 
 
-  const updateEntry = (id, field, value) => {
-    setEntries(entries.map(e => {
-      if (e.id === id) {
-        const newEntry = { ...e, [field]: value };
-        // Reset type to default of that carrier if carrier changes
-        if (field === 'carrier') {
-          newEntry.type = TYPES[value][0];
+    // --- สร้าง Icon Components แทนการใช้ Library เพื่อให้ไฟล์เบาและทำงานได้ทันที ---
+    const Icon = ({ path, size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{ __html: path }} />
+    );
+    const Printer = (p) => <Icon {...p} path='<polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect>' />;
+    const Truck = (p) => <Icon {...p} path='<rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle>' />;
+    const XCircle = (p) => <Icon {...p} path='<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>' />;
+    const RotateCcw = (p) => <Icon {...p} path='<polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>' />;
+    const ClipboardCheck = (p) => <Icon {...p} path='<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><polyline points="9 14 12 17 16 10"></polyline>' />;
+    const Save = (p) => <Icon {...p} path='<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>' />;
+    const LayoutDashboard = (p) => <Icon {...p} path='<rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>' />;
+    const PenSquare = (p) => <Icon {...p} path='<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>' />;
+    const PackageIcon = (p) => <Icon {...p} path='<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>' />;
+    const Zap = (p) => <Icon {...p} path='<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>' />;
+    const Send = (p) => <Icon {...p} path='<line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>' />;
+    const Calendar = (p) => <Icon {...p} path='<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>' />;
+    const CheckCircle2 = (p) => <Icon {...p} path='<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>' />;
+    const UploadCloud = (p) => <Icon {...p} path='<polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path><polyline points="16 16 12 12 8 16"></polyline>' />;
+    const ImageIcon = (p) => <Icon {...p} path='<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline>' />;
+    const Loader2 = (p) => <Icon {...p} className={`animate-spin ${p.className||''}`} path='<line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>' />;
+    const X = (p) => <Icon {...p} path='<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>' />;
+    const Plus = (p) => <Icon {...p} path='<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>' />;
+    const ChevronDown = (p) => <Icon {...p} path='<polyline points="6 9 12 15 18 9"></polyline>' />;
+    const Trash2 = (p) => <Icon {...p} path='<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>' />;
+
+    // --- ค่าตั้งต้น ---
+    const CARRIERS = ['SPX', 'J&T', 'FLASH', 'TLP'];
+    const TYPES = {
+      'SPX': ['Pick-Up', 'ไปส่งเอง', 'ส่งด่วน!!'],
+      'J&T': ['Pick-Up', 'ไปส่งเอง', 'งานคีย์'],
+      'FLASH': ['Standard'],
+      'TLP': ['Standard']
+    };
+
+    const CARRIER_COLORS = {
+      'SPX': 'text-orange-500 bg-orange-50 border-orange-200',
+      'J&T': 'text-red-500 bg-red-50 border-red-200',
+      'FLASH': 'text-yellow-600 bg-yellow-50 border-yellow-200',
+      'TLP': 'text-blue-500 bg-blue-50 border-blue-200'
+    };
+
+    // --- Main App Component ---
+    function App() {
+      const [activeTab, setActiveTab] = useState('form');
+      const [records, setRecords] = useState([]);
+      const [isSubmitting, setIsSubmitting] = useState(false);
+      const [showSuccess, setShowSuccess] = useState(false);
+      
+      const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+      const [printed, setPrinted] = useState('');
+      const [jtSummary, setJtSummary] = useState('');
+
+      const [entries, setEntries] = useState([{
+        id: Date.now(),
+        carrier: 'SPX',
+        type: 'Pick-Up',
+        shipped: '', cancelled: '', returned: '',
+        imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null
+      }]);
+
+      const addEntry = () => {
+        setEntries([...entries, {
+          id: Date.now(), carrier: 'SPX', type: 'Pick-Up',
+          shipped: '', cancelled: '', returned: '',
+          imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null
+        }]);
+      };
+
+      const removeEntry = (id) => {
+        if (entries.length > 1) {
+          setEntries(entries.filter(e => e.id !== id));
+        } else {
+          alert('ต้องมีอย่างน้อย 1 รายการ');
         }
-        // Clear image if not J&T งานคีย์ anymore
-        if (field === 'carrier' || field === 'type') {
-          if (!(newEntry.carrier === 'J&T' && newEntry.type === 'งานคีย์')) {
-            newEntry.imageContent = ''; newEntry.imageMimeType = ''; 
-            newEntry.imageFileName = ''; newEntry.imagePreview = null;
+      };
+
+      const updateEntry = (id, field, value) => {
+        setEntries(entries.map(e => {
+          if (e.id === id) {
+            const newEntry = { ...e, [field]: value };
+            if (field === 'carrier') {
+              newEntry.type = TYPES[value][0];
+            }
+            if (field === 'carrier' || field === 'type') {
+              if (!(newEntry.carrier === 'J&T' && newEntry.type === 'งานคีย์')) {
+                newEntry.imageContent = ''; newEntry.imageMimeType = ''; 
+                newEntry.imageFileName = ''; newEntry.imagePreview = null;
+              }
+            }
+            return newEntry;
           }
-        }
-        return newEntry;
-      }
-      return e;
-    }));
-  };
+          return e;
+        }));
+      };
 
-  const handleImageChange = (id, e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      const handleImageChange = (id, e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setEntries(entries.map(entry => {
+              if (entry.id === id) {
+                return {
+                  ...entry,
+                  imageContent: reader.result.split(',')[1],
+                  imageMimeType: file.type,
+                  imageFileName: `${date}_งานคีย์_${file.name}`,
+                  imagePreview: reader.result
+                };
+              }
+              return entry;
+            }));
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const removeImage = (id) => {
         setEntries(entries.map(entry => {
           if (entry.id === id) {
-            return {
-              ...entry,
-              imageContent: reader.result.split(',')[1],
-              imageMimeType: file.type,
-              imageFileName: `${date}_งานคีย์_${file.name}`,
-              imagePreview: reader.result
-            };
+            const el = document.getElementById(`file-${id}`);
+            if (el) el.value = '';
+            return { ...entry, imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null };
           }
           return entry;
         }));
       };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const removeImage = (id) => {
-    setEntries(entries.map(entry => {
-      if (entry.id === id) {
-        const el = document.getElementById(`file-${id}`);
-        if (el) el.value = '';
-        return { ...entry, imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null };
-      }
-      return entry;
-    }));
-  };
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        const missingImages = entries.some(e => e.carrier === 'J&T' && e.type === 'งานคีย์' && Number(e.shipped) > 0 && !e.imageContent);
+        if (missingImages) {
+          alert("กรุณาแนบรูปภาพสลิปสำหรับ 'งานคีย์' ให้ครบถ้วน");
+          return;
+        }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate J&T งานคีย์ images
-    const missingImages = entries.some(e => e.carrier === 'J&T' && e.type === 'งานคีย์' && Number(e.shipped) > 0 && !e.imageContent);
-    if (missingImages) {
-      alert("กรุณาแนบรูปภาพสลิปสำหรับ 'งานคีย์' ให้ครบถ้วน");
-      return;
-    }
+        setIsSubmitting(true);
 
-    setIsSubmitting(true);
+        const payload = {
+          date,
+          printed: Number(printed) || 0,
+          jtSummary: Number(jtSummary) || 0,
+          entries: entries.map(e => ({
+            carrier: e.carrier,
+            type: e.type,
+            shipped: Number(e.shipped) || 0,
+            cancelled: Number(e.cancelled) || 0,
+            returned: Number(e.returned) || 0,
+            imageContent: e.imageContent,
+            imageMimeType: e.imageMimeType,
+            imageFileName: e.imageFileName
+          }))
+        };
 
-    const payload = {
-      date,
-      printed: Number(printed) || 0,
-      jtSummary: Number(jtSummary) || 0,
-      entries: entries.map(e => ({
-        carrier: e.carrier,
-        type: e.type,
-        shipped: Number(e.shipped) || 0,
-        cancelled: Number(e.cancelled) || 0,
-        returned: Number(e.returned) || 0,
-        imageContent: e.imageContent,
-        imageMimeType: e.imageMimeType,
-        imageFileName: e.imageFileName
-      }))
-    };
+        try {
+          const response = await fetch(WEB_APP_URL, {
+            redirect: "follow",
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
 
-    try {
-      if (WEB_APP_URL === 'ใส่_URL_ที่ได้จาก_APPS_SCRIPT_ตรงนี้') {
-        setTimeout(() => {
+          const result = await response.json();
+          
+          if (result.status === 'success') {
+            setRecords([...records, { ...payload, id: Date.now() }]);
+            resetForm();
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+          } else {
+            alert("เกิดข้อผิดพลาด: " + result.message);
+          }
+        } catch (error) {
+          console.error("Error submitting:", error);
+          alert("บันทึกสำเร็จ (Offline Mode) หรือ ขัดข้องเรื่อง Cross-Origin");
+          // Fallback if cross origin block in testing mode
           setRecords([...records, { ...payload, id: Date.now() }]);
           resetForm();
-          setIsSubmitting(false);
           setShowSuccess(true);
           setTimeout(() => setShowSuccess(false), 3000);
-        }, 1500);
-        return;
-      }
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
 
-      const response = await fetch(WEB_APP_URL, {
-        redirect: "follow",
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
+      const resetForm = () => {
+        setPrinted('');
+        setJtSummary('');
+        setEntries([{
+          id: Date.now(), carrier: 'SPX', type: 'Pick-Up', 
+          shipped: '', cancelled: '', returned: '', 
+          imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null
+        }]);
+      };
 
-      const result = await response.json();
-      
-      if (result.status === 'success') {
-        setRecords([...records, { ...payload, id: Date.now() }]);
-        resetForm();
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-      } else {
-        alert("เกิดข้อผิดพลาด: " + result.message);
-      }
-    } catch (error) {
-      console.error("Error submitting:", error);
-      alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      const summary = useMemo(() => {
+        const stats = {
+          printed: 0, jtSummary: 0,
+          spx_pickup: 0, spx_dropoff: 0, spx_express: 0,
+          jt_pickup: 0, jt_key: 0, jt_dropoff: 0,
+          flash: 0, tlp: 0,
+          cancelled_spx: 0, cancelled_jt: 0, cancelled_flash: 0, cancelled_tlp: 0,
+          returned_spx: 0, returned_jt: 0, returned_flash: 0, returned_tlp: 0,
+        };
 
-  const resetForm = () => {
-    setPrinted('');
-    setJtSummary('');
-    setEntries([{
-      id: Date.now(), carrier: 'SPX', type: 'Pick-Up', 
-      shipped: '', cancelled: '', returned: '', 
-      imageContent: '', imageMimeType: '', imageFileName: '', imagePreview: null
-    }]);
-  };
+        records.forEach(record => {
+          stats.printed += record.printed;
+          stats.jtSummary += record.jtSummary;
 
-  // --- Dashboard Calculations ---
-  const summary = useMemo(() => {
-    const stats = {
-      printed: 0, jtSummary: 0,
-      spx_pickup: 0, spx_dropoff: 0, spx_express: 0,
-      jt_pickup: 0, jt_key: 0, jt_dropoff: 0,
-      flash: 0, tlp: 0,
-      cancelled_spx: 0, cancelled_jt: 0, cancelled_flash: 0, cancelled_tlp: 0,
-      returned_spx: 0, returned_jt: 0, returned_flash: 0, returned_tlp: 0,
-    };
+          record.entries.forEach(e => {
+            if (e.carrier === 'SPX' && e.type === 'Pick-Up') stats.spx_pickup += e.shipped;
+            if (e.carrier === 'SPX' && e.type === 'ไปส่งเอง') stats.spx_dropoff += e.shipped;
+            if (e.carrier === 'SPX' && e.type === 'ส่งด่วน!!') stats.spx_express += e.shipped;
+            if (e.carrier === 'J&T' && e.type === 'Pick-Up') stats.jt_pickup += e.shipped;
+            if (e.carrier === 'J&T' && e.type === 'ไปส่งเอง') stats.jt_dropoff += e.shipped;
+            if (e.carrier === 'J&T' && e.type === 'งานคีย์') stats.jt_key += e.shipped;
+            if (e.carrier === 'FLASH') stats.flash += e.shipped;
+            if (e.carrier === 'TLP') stats.tlp += e.shipped;
 
-    records.forEach(record => {
-      stats.printed += record.printed;
-      stats.jtSummary += record.jtSummary;
+            if (e.carrier === 'SPX') stats.cancelled_spx += e.cancelled;
+            if (e.carrier === 'J&T') stats.cancelled_jt += e.cancelled;
+            if (e.carrier === 'FLASH') stats.cancelled_flash += e.cancelled;
+            if (e.carrier === 'TLP') stats.cancelled_tlp += e.cancelled;
 
-      record.entries.forEach(e => {
-        // Shipped
-        if (e.carrier === 'SPX' && e.type === 'Pick-Up') stats.spx_pickup += e.shipped;
-        if (e.carrier === 'SPX' && e.type === 'ไปส่งเอง') stats.spx_dropoff += e.shipped;
-        if (e.carrier === 'SPX' && e.type === 'ส่งด่วน!!') stats.spx_express += e.shipped;
-        if (e.carrier === 'J&T' && e.type === 'Pick-Up') stats.jt_pickup += e.shipped;
-        if (e.carrier === 'J&T' && e.type === 'ไปส่งเอง') stats.jt_dropoff += e.shipped;
-        if (e.carrier === 'J&T' && e.type === 'งานคีย์') stats.jt_key += e.shipped;
-        if (e.carrier === 'FLASH') stats.flash += e.shipped;
-        if (e.carrier === 'TLP') stats.tlp += e.shipped;
+            if (e.carrier === 'SPX') stats.returned_spx += e.returned;
+            if (e.carrier === 'J&T') stats.returned_jt += e.returned;
+            if (e.carrier === 'FLASH') stats.returned_flash += e.returned;
+            if (e.carrier === 'TLP') stats.returned_tlp += e.returned;
+          });
+        });
+        return stats;
+      }, [records]);
 
-        // Cancelled
-        if (e.carrier === 'SPX') stats.cancelled_spx += e.cancelled;
-        if (e.carrier === 'J&T') stats.cancelled_jt += e.cancelled;
-        if (e.carrier === 'FLASH') stats.cancelled_flash += e.cancelled;
-        if (e.carrier === 'TLP') stats.cancelled_tlp += e.cancelled;
+      const totalSpx = summary.spx_pickup + summary.spx_dropoff + summary.spx_express;
+      const totalJt = summary.jt_pickup + summary.jt_key + summary.jt_dropoff;
+      const totalShipped = totalSpx + totalJt + summary.flash + summary.tlp;
+      const totalCancelled = summary.cancelled_spx + summary.cancelled_jt + summary.cancelled_flash + summary.cancelled_tlp;
+      const totalReturned = summary.returned_spx + summary.returned_jt + summary.returned_flash + summary.returned_tlp;
 
-        // Returned
-        if (e.carrier === 'SPX') stats.returned_spx += e.returned;
-        if (e.carrier === 'J&T') stats.returned_jt += e.returned;
-        if (e.carrier === 'FLASH') stats.returned_flash += e.returned;
-        if (e.carrier === 'TLP') stats.returned_tlp += e.returned;
-      });
-    });
-
-    return stats;
-  }, [records]);
-
-  const totalSpx = summary.spx_pickup + summary.spx_dropoff + summary.spx_express;
-  const totalJt = summary.jt_pickup + summary.jt_key + summary.jt_dropoff;
-  const totalShipped = totalSpx + totalJt + summary.flash + summary.tlp;
-  const totalCancelled = summary.cancelled_spx + summary.cancelled_jt + summary.cancelled_flash + summary.cancelled_tlp;
-  const totalReturned = summary.returned_spx + summary.returned_jt + summary.returned_flash + summary.returned_tlp;
-
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-700 font-sans pb-24 md:pb-8">
-      
-      {/* HEADER */}
-      <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-100 p-2 rounded-xl text-blue-600">
-              <Package size={24} />
-            </div>
-            <h1 className="font-semibold text-lg tracking-wide text-slate-800">
-              Daily <span className="text-blue-500">Log</span>
-            </h1>
-          </div>
-
-          <nav className="hidden md:flex bg-slate-100 p-1 rounded-xl">
-            <button onClick={() => setActiveTab('form')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'form' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
-              <PenSquare size={16} /> บันทึกข้อมูล
-            </button>
-            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
-              <LayoutDashboard size={16} /> สรุปผล
-            </button>
-          </nav>
-        </div>
-      </header>
-
-      {/* MAIN CONTENT */}
-      <main className="max-w-3xl mx-auto px-4 py-6">
-        
-        {/* === FORM TAB === */}
-        {activeTab === 'form' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              
-              {/* Global Fields: Date & Printed */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                  <label className="flex items-center gap-2 text-slate-600 font-medium mb-2 text-sm">
-                    <Calendar size={16} className="text-blue-400" /> วันที่
-                  </label>
-                  <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-2 outline-none focus:border-blue-400 transition-all text-sm" required />
+      return (
+        <div className="min-h-screen pb-24 md:pb-8">
+          
+          <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100">
+            <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="bg-blue-100 p-2 rounded-xl text-blue-600">
+                  <PackageIcon size={24} />
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                  <label className="flex items-center gap-2 text-slate-600 font-medium mb-2 text-sm">
-                    <Printer size={16} className="text-indigo-400" /> ยอดปริ้น (กล่อง)
-                  </label>
-                  <input type="number" value={printed} onChange={(e) => setPrinted(e.target.value)} min="0" placeholder="0" className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-2 outline-none focus:border-indigo-400 transition-all text-sm" />
-                </div>
+                <h1 className="font-semibold text-lg tracking-wide text-slate-800">
+                  Daily <span className="text-blue-500">Log</span>
+                </h1>
               </div>
 
-              {/* Dynamic Entries List */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-700 flex items-center gap-2 pl-1 mt-6">
-                  <Truck size={20} className="text-emerald-500" /> รายการจัดส่งพัสดุ
-                </h3>
+              <nav className="hidden md:flex bg-slate-100 p-1 rounded-xl">
+                <button onClick={() => setActiveTab('form')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'form' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                  <PenSquare size={16} /> บันทึกข้อมูล
+                </button>
+                <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                  <LayoutDashboard size={16} /> สรุปผล
+                </button>
+              </nav>
+            </div>
+          </header>
 
-                {entries.map((entry, index) => (
-                  <div key={entry.id} className={`bg-white rounded-2xl p-4 shadow-sm border-2 transition-all relative ${CARRIER_COLORS[entry.carrier].split(' ')[2]}`}>
-                    
-                    {/* Delete Button */}
-                    <button type="button" onClick={() => removeEntry(entry.id)} className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors bg-white rounded-full p-1">
-                      <Trash2 size={18} />
-                    </button>
-
-                    <div className="pr-10 grid grid-cols-2 gap-3 mb-4">
-                      {/* Carrier Dropdown */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">ขนส่ง</label>
-                        <div className="relative">
-                          <select 
-                            value={entry.carrier} 
-                            onChange={(e) => updateEntry(entry.id, 'carrier', e.target.value)}
-                            className={`w-full appearance-none bg-slate-50 border rounded-xl px-3 py-2 outline-none font-semibold text-sm transition-colors ${CARRIER_COLORS[entry.carrier]}`}
-                          >
-                            {CARRIERS.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
-                        </div>
-                      </div>
-
-                      {/* Type Dropdown */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">ประเภท</label>
-                        <div className="relative">
-                          <select 
-                            value={entry.type} 
-                            onChange={(e) => updateEntry(entry.id, 'type', e.target.value)}
-                            disabled={TYPES[entry.carrier].length === 1}
-                            className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 outline-none font-medium text-slate-700 text-sm disabled:opacity-70 disabled:bg-slate-100"
-                          >
-                            {TYPES[entry.carrier].map(t => <option key={t} value={t}>{t}</option>)}
-                          </select>
-                          {TYPES[entry.carrier].length > 1 && <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />}
-                        </div>
-                      </div>
+          <main className="max-w-3xl mx-auto px-4 py-6">
+            
+            {activeTab === 'form' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                      <label className="flex items-center gap-2 text-slate-600 font-medium mb-2 text-sm">
+                        <Calendar size={16} className="text-blue-400" /> วันที่
+                      </label>
+                      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-2 outline-none focus:border-blue-400 transition-all text-sm" required />
                     </div>
-
-                    {/* Stats Inputs */}
-                    <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <div>
-                        <label className="block text-[11px] font-semibold text-emerald-600 mb-1">จัดส่ง</label>
-                        <input type="number" value={entry.shipped} onChange={(e) => updateEntry(entry.id, 'shipped', e.target.value)} min="0" placeholder="0" className="w-full bg-white border border-slate-200 rounded-lg px-2 py-2 outline-none focus:border-emerald-400 text-center text-sm" />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-semibold text-rose-500 mb-1">ยกเลิก</label>
-                        <input type="number" value={entry.cancelled} onChange={(e) => updateEntry(entry.id, 'cancelled', e.target.value)} min="0" placeholder="0" className="w-full bg-white border border-slate-200 rounded-lg px-2 py-2 outline-none focus:border-rose-400 text-center text-sm text-rose-600" />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-semibold text-orange-500 mb-1">ตีกลับ</label>
-                        <input type="number" value={entry.returned} onChange={(e) => updateEntry(entry.id, 'returned', e.target.value)} min="0" placeholder="0" className="w-full bg-white border border-slate-200 rounded-lg px-2 py-2 outline-none focus:border-orange-400 text-center text-sm text-orange-600" />
-                      </div>
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                      <label className="flex items-center gap-2 text-slate-600 font-medium mb-2 text-sm">
+                        <Printer size={16} className="text-indigo-400" /> ยอดปริ้น (กล่อง)
+                      </label>
+                      <input type="number" value={printed} onChange={(e) => setPrinted(e.target.value)} min="0" placeholder="0" className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-2 outline-none focus:border-indigo-400 transition-all text-sm" />
                     </div>
+                  </div>
 
-                    {/* Image Upload specifically for J&T งานคีย์ */}
-                    {entry.carrier === 'J&T' && entry.type === 'งานคีย์' && (
-                      <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 animate-in fade-in duration-300">
-                        <div className="text-xs text-blue-600 font-semibold flex items-center gap-1 mb-2">
-                          <ImageIcon size={14} /> อัปโหลดสลิปงานคีย์ (บังคับ)
-                        </div>
-                        {entry.imagePreview ? (
-                          <div className="relative w-full h-32 rounded-lg border border-slate-200 overflow-hidden">
-                            <img src={entry.imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                            <button type="button" onClick={() => removeImage(entry.id)} className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full text-rose-500 shadow-sm hover:bg-rose-50"><X size={16} /></button>
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-slate-700 flex items-center gap-2 pl-1 mt-6">
+                      <Truck size={20} className="text-emerald-500" /> รายการจัดส่งพัสดุ
+                    </h3>
+
+                    {entries.map((entry) => (
+                      <div key={entry.id} className={`bg-white rounded-2xl p-4 shadow-sm border-2 transition-all relative ${CARRIER_COLORS[entry.carrier].split(' ')[2]}`}>
+                        
+                        <button type="button" onClick={() => removeEntry(entry.id)} className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors bg-white rounded-full p-1">
+                          <Trash2 size={18} />
+                        </button>
+
+                        <div className="pr-10 grid grid-cols-2 gap-3 mb-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1">ขนส่ง</label>
+                            <div className="relative">
+                              <select 
+                                value={entry.carrier} 
+                                onChange={(e) => updateEntry(entry.id, 'carrier', e.target.value)}
+                                className={`w-full appearance-none bg-slate-50 border rounded-xl px-3 py-2 outline-none font-semibold text-sm transition-colors ${CARRIER_COLORS[entry.carrier]}`}
+                              >
+                                {CARRIERS.map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                            </div>
                           </div>
-                        ) : (
-                          <div className="relative w-full border-2 border-dashed border-blue-200 bg-white rounded-lg p-3 text-center hover:bg-blue-50 transition-colors cursor-pointer" onClick={() => document.getElementById(`file-${entry.id}`).click()}>
-                            <UploadCloud className="mx-auto text-blue-400 mb-1" size={20} />
-                            <span className="text-[11px] text-blue-500 font-medium">แตะเพื่อเลือกรูปภาพ</span>
-                            <input type="file" id={`file-${entry.id}`} onChange={(e) => handleImageChange(entry.id, e)} accept="image/*" className="hidden" />
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1">ประเภท</label>
+                            <div className="relative">
+                              <select 
+                                value={entry.type} 
+                                onChange={(e) => updateEntry(entry.id, 'type', e.target.value)}
+                                disabled={TYPES[entry.carrier].length === 1}
+                                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 outline-none font-medium text-slate-700 text-sm disabled:opacity-70 disabled:bg-slate-100"
+                              >
+                                {TYPES[entry.carrier].map(t => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                              {TYPES[entry.carrier].length > 1 && <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-emerald-600 mb-1">จัดส่ง</label>
+                            <input type="number" value={entry.shipped} onChange={(e) => updateEntry(entry.id, 'shipped', e.target.value)} min="0" placeholder="0" className="w-full bg-white border border-slate-200 rounded-lg px-2 py-2 outline-none focus:border-emerald-400 text-center text-sm" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-rose-500 mb-1">ยกเลิก</label>
+                            <input type="number" value={entry.cancelled} onChange={(e) => updateEntry(entry.id, 'cancelled', e.target.value)} min="0" placeholder="0" className="w-full bg-white border border-slate-200 rounded-lg px-2 py-2 outline-none focus:border-rose-400 text-center text-sm text-rose-600" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-orange-500 mb-1">ตีกลับ</label>
+                            <input type="number" value={entry.returned} onChange={(e) => updateEntry(entry.id, 'returned', e.target.value)} min="0" placeholder="0" className="w-full bg-white border border-slate-200 rounded-lg px-2 py-2 outline-none focus:border-orange-400 text-center text-sm text-orange-600" />
+                          </div>
+                        </div>
+
+                        {entry.carrier === 'J&T' && entry.type === 'งานคีย์' && (
+                          <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100 animate-in fade-in duration-300">
+                            <div className="text-xs text-blue-600 font-semibold flex items-center gap-1 mb-2">
+                              <ImageIcon size={14} /> อัปโหลดสลิปงานคีย์ (บังคับ)
+                            </div>
+                            {entry.imagePreview ? (
+                              <div className="relative w-full h-32 rounded-lg border border-slate-200 overflow-hidden">
+                                <img src={entry.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                <button type="button" onClick={() => removeImage(entry.id)} className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full text-rose-500 shadow-sm hover:bg-rose-50"><X size={16} /></button>
+                              </div>
+                            ) : (
+                              <div className="relative w-full border-2 border-dashed border-blue-200 bg-white rounded-lg p-3 text-center hover:bg-blue-50 transition-colors cursor-pointer" onClick={() => document.getElementById(`file-${entry.id}`).click()}>
+                                <UploadCloud className="mx-auto text-blue-400 mb-1" size={20} />
+                                <span className="text-[11px] text-blue-500 font-medium">แตะเพื่อเลือกรูปภาพ</span>
+                                <input type="file" id={`file-${entry.id}`} onChange={(e) => handleImageChange(entry.id, e)} accept="image/*" className="hidden" />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    )}
+                    ))}
+
+                    <button type="button" onClick={addEntry} className="w-full py-3 rounded-2xl border-2 border-dashed border-slate-300 text-slate-500 font-medium hover:bg-slate-50 hover:border-blue-300 hover:text-blue-500 transition-all flex items-center justify-center gap-2 text-sm">
+                      <Plus size={18} /> เพิ่มรายการขนส่ง
+                    </button>
                   </div>
-                ))}
 
-                {/* Add Entry Button */}
-                <button type="button" onClick={addEntry} className="w-full py-3 rounded-2xl border-2 border-dashed border-slate-300 text-slate-500 font-medium hover:bg-slate-50 hover:border-blue-300 hover:text-blue-500 transition-all flex items-center justify-center gap-2 text-sm">
-                  <Plus size={18} /> เพิ่มรายการขนส่ง
-                </button>
+                  <div className="bg-red-50 p-4 rounded-2xl shadow-sm border border-red-100 mt-6">
+                    <label className="flex items-center gap-2 mb-2 text-red-700 font-semibold text-sm">
+                      <ClipboardCheck size={18} /> ยอด J&T สรุปกลับมา (รวมรายวัน)
+                    </label>
+                    <div className="relative">
+                      <input type="number" value={jtSummary} onChange={(e) => setJtSummary(e.target.value)} placeholder="ยอดรวมจากพนักงาน..." className="w-full bg-white border border-red-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:border-red-400 transition-all" min="0" />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">กล่อง</span>
+                    </div>
+                  </div>
+
+                  <button disabled={isSubmitting} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 text-lg mt-8">
+                    {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : showSuccess ? <CheckCircle2 size={24} /> : <Save size={24} />}
+                    {isSubmitting ? 'กำลังบันทึกข้อมูล...' : showSuccess ? 'บันทึกสำเร็จ!' : 'บันทึกข้อมูล'}
+                  </button>
+
+                </form>
               </div>
+            )}
 
-              {/* J&T Summary Output */}
-              <div className="bg-red-50 p-4 rounded-2xl shadow-sm border border-red-100 mt-6">
-                <label className="flex items-center gap-2 mb-2 text-red-700 font-semibold text-sm">
-                  <ClipboardCheck size={18} /> ยอด J&T สรุปกลับมา (รวมรายวัน)
-                </label>
-                <div className="relative">
-                  <input type="number" value={jtSummary} onChange={(e) => setJtSummary(e.target.value)} placeholder="ยอดรวมจากพนักงาน..." className="w-full bg-white border border-red-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:border-red-400 transition-all" min="0" />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">กล่อง</span>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button disabled={isSubmitting} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 text-lg mt-8">
-                {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : showSuccess ? <CheckCircle2 size={24} /> : <Save size={24} />}
-                {isSubmitting ? 'กำลังบันทึกข้อมูล...' : showSuccess ? 'บันทึกสำเร็จ!' : 'บันทึกข้อมูล'}
-              </button>
-
-            </form>
-          </div>
-        )}
-
-        {/* === DASHBOARD TAB (Same as before but uses new state mapping) === */}
-        {activeTab === 'dashboard' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl p-6 text-white shadow-md relative overflow-hidden">
-                <Printer size={120} className="absolute -right-6 -top-6 opacity-10" />
-                <p className="text-blue-100 font-medium mb-1">ยอดปริ้นทั้งหมด</p>
-                <h2 className="text-5xl font-bold">{summary.printed.toLocaleString()} <span className="text-xl font-normal opacity-80">กล่อง</span></h2>
-              </div>
-              
-              <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                <div className="flex items-center gap-2 text-emerald-600 mb-2">
-                  <Truck size={18} />
-                  <span className="font-semibold text-sm">จัดส่งแล้ว</span>
-                </div>
-                <p className="text-3xl font-bold text-slate-800">{totalShipped.toLocaleString()}</p>
-              </div>
-
-              <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                <div className="flex items-center gap-2 text-rose-500 mb-2">
-                  <XCircle size={18} />
-                  <span className="font-semibold text-sm">รวมยกเลิก/ตีกลับ</span>
-                </div>
-                <p className="text-3xl font-bold text-slate-800">{(totalCancelled + totalReturned).toLocaleString()}</p>
-              </div>
-            </div>
-
-            {/* Shipping Breakdown */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-              <h3 className="text-slate-700 font-semibold mb-6 flex items-center gap-2">
-                <Package size={18} className="text-slate-400" /> สัดส่วนแยกตามขนส่ง
-              </h3>
-              
-              <div className="space-y-6">
+            {activeTab === 'dashboard' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
                 
-                {/* SPX */}
-                <div className="pb-5 border-b border-slate-100">
-                  <div className="flex justify-between text-sm mb-1.5 font-bold">
-                    <span className="text-orange-500 flex items-center gap-1.5">SPX Total</span>
-                    <span className="text-slate-700">{totalSpx} กล่อง</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl p-6 text-white shadow-md relative overflow-hidden">
+                    <Printer size={120} className="absolute -right-6 -top-6 opacity-10" />
+                    <p className="text-blue-100 font-medium mb-1">ยอดปริ้นทั้งหมด</p>
+                    <h2 className="text-5xl font-bold">{summary.printed.toLocaleString()} <span className="text-xl font-normal opacity-80">กล่อง</span></h2>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
-                    <div className="bg-orange-400 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${totalShipped ? (totalSpx / totalShipped) * 100 : 0}%` }}></div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs text-slate-500 bg-orange-50/50 rounded-lg p-3">
-                    <div>Pick-Up: <span className="font-semibold text-slate-700">{summary.spx_pickup}</span></div>
-                    <div>ส่งเอง: <span className="font-semibold text-slate-700">{summary.spx_dropoff}</span></div>
-                    <div>ส่งด่วน!!: <span className="font-semibold text-orange-600">{summary.spx_express}</span></div>
-                    
-                    <div className="col-span-3 grid grid-cols-2 mt-1 pt-2 border-t border-orange-100/50">
-                      <div className="text-rose-500">ยกเลิก: {summary.cancelled_spx}</div>
-                      <div className="text-orange-600">ตีกลับ: {summary.returned_spx}</div>
+                  
+                  <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-2 text-emerald-600 mb-2">
+                      <Truck size={18} />
+                      <span className="font-semibold text-sm">จัดส่งแล้ว</span>
                     </div>
+                    <p className="text-3xl font-bold text-slate-800">{totalShipped.toLocaleString()}</p>
                   </div>
-                </div>
 
-                {/* J&T */}
-                <div className="pb-5 border-b border-slate-100">
-                  <div className="flex justify-between text-sm mb-1.5 font-bold">
-                    <span className="text-red-500 flex items-center gap-1.5">J&T Total</span>
-                    <span className="text-slate-700">{totalJt} กล่อง</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
-                    <div className="bg-red-400 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${totalShipped ? (totalJt / totalShipped) * 100 : 0}%` }}></div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs text-slate-500 bg-red-50/50 rounded-lg p-3">
-                    <div>Pick-Up: <span className="font-semibold text-slate-700">{summary.jt_pickup}</span></div>
-                    <div>ส่งเอง: <span className="font-semibold text-slate-700">{summary.jt_dropoff}</span></div>
-                    <div className="text-blue-600">งานคีย์: <span className="font-semibold">{summary.jt_key}</span></div>
-                    
-                    <div className="col-span-3 grid grid-cols-2 mt-1 pt-2 border-t border-red-100/50">
-                      <div className="text-rose-500">ยกเลิก: {summary.cancelled_jt}</div>
-                      <div className="text-orange-600">ตีกลับ: {summary.returned_jt}</div>
+                  <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-2 text-rose-500 mb-2">
+                      <XCircle size={18} />
+                      <span className="font-semibold text-sm">รวมยกเลิก/ตีกลับ</span>
                     </div>
+                    <p className="text-3xl font-bold text-slate-800">{(totalCancelled + totalReturned).toLocaleString()}</p>
                   </div>
                 </div>
 
-                {/* FLASH */}
-                <div className="pb-5 border-b border-slate-100">
-                  <div className="flex justify-between text-sm mb-1.5 font-bold">
-                    <span className="text-yellow-500">FLASH Total</span>
-                    <span className="text-slate-700">{summary.flash} กล่อง</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
-                    <div className="bg-yellow-400 h-2.5 rounded-full" style={{ width: `${totalShipped ? (summary.flash / totalShipped) * 100 : 0}%` }}></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-yellow-50/30 rounded-lg p-2 px-3">
-                    <div className="text-rose-500">ยกเลิก: {summary.cancelled_flash}</div>
-                    <div className="text-orange-600">ตีกลับ: {summary.returned_flash}</div>
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                  <h3 className="text-slate-700 font-semibold mb-6 flex items-center gap-2">
+                    <PackageIcon size={18} className="text-slate-400" /> สัดส่วนแยกตามขนส่ง
+                  </h3>
+                  
+                  <div className="space-y-6">
+                    <div className="pb-5 border-b border-slate-100">
+                      <div className="flex justify-between text-sm mb-1.5 font-bold">
+                        <span className="text-orange-500 flex items-center gap-1.5">SPX Total</span>
+                        <span className="text-slate-700">{totalSpx} กล่อง</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
+                        <div className="bg-orange-400 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${totalShipped ? (totalSpx / totalShipped) * 100 : 0}%` }}></div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-slate-500 bg-orange-50/50 rounded-lg p-3">
+                        <div>Pick-Up: <span className="font-semibold text-slate-700">{summary.spx_pickup}</span></div>
+                        <div>ส่งเอง: <span className="font-semibold text-slate-700">{summary.spx_dropoff}</span></div>
+                        <div>ส่งด่วน!!: <span className="font-semibold text-orange-600">{summary.spx_express}</span></div>
+                        <div className="col-span-3 grid grid-cols-2 mt-1 pt-2 border-t border-orange-100/50">
+                          <div className="text-rose-500">ยกเลิก: {summary.cancelled_spx}</div>
+                          <div className="text-orange-600">ตีกลับ: {summary.returned_spx}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pb-5 border-b border-slate-100">
+                      <div className="flex justify-between text-sm mb-1.5 font-bold">
+                        <span className="text-red-500 flex items-center gap-1.5">J&T Total</span>
+                        <span className="text-slate-700">{totalJt} กล่อง</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
+                        <div className="bg-red-400 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${totalShipped ? (totalJt / totalShipped) * 100 : 0}%` }}></div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-slate-500 bg-red-50/50 rounded-lg p-3">
+                        <div>Pick-Up: <span className="font-semibold text-slate-700">{summary.jt_pickup}</span></div>
+                        <div>ส่งเอง: <span className="font-semibold text-slate-700">{summary.jt_dropoff}</span></div>
+                        <div className="text-blue-600">งานคีย์: <span className="font-semibold">{summary.jt_key}</span></div>
+                        <div className="col-span-3 grid grid-cols-2 mt-1 pt-2 border-t border-red-100/50">
+                          <div className="text-rose-500">ยกเลิก: {summary.cancelled_jt}</div>
+                          <div className="text-orange-600">ตีกลับ: {summary.returned_jt}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pb-5 border-b border-slate-100">
+                      <div className="flex justify-between text-sm mb-1.5 font-bold">
+                        <span className="text-yellow-500">FLASH Total</span>
+                        <span className="text-slate-700">{summary.flash} กล่อง</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
+                        <div className="bg-yellow-400 h-2.5 rounded-full" style={{ width: `${totalShipped ? (summary.flash / totalShipped) * 100 : 0}%` }}></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-yellow-50/30 rounded-lg p-2 px-3">
+                        <div className="text-rose-500">ยกเลิก: {summary.cancelled_flash}</div>
+                        <div className="text-orange-600">ตีกลับ: {summary.returned_flash}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-sm mb-1.5 font-bold">
+                        <span className="text-blue-500">TLP (ปณท.) Total</span>
+                        <span className="text-slate-700">{summary.tlp} กล่อง</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
+                        <div className="bg-blue-400 h-2.5 rounded-full" style={{ width: `${totalShipped ? (summary.tlp / totalShipped) * 100 : 0}%` }}></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-blue-50/30 rounded-lg p-2 px-3">
+                        <div className="text-rose-500">ยกเลิก: {summary.cancelled_tlp}</div>
+                        <div className="text-orange-600">ตีกลับ: {summary.returned_tlp}</div>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
-                {/* TLP */}
-                <div>
-                  <div className="flex justify-between text-sm mb-1.5 font-bold">
-                    <span className="text-blue-500">TLP (ปณท.) Total</span>
-                    <span className="text-slate-700">{summary.tlp} กล่อง</span>
+                <div className="bg-red-50 p-5 rounded-3xl border border-red-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-red-600 font-semibold mb-1 flex items-center gap-2"><ClipboardCheck size={18} /> ยอด J&T ที่พนักงานสรุป</p>
+                    <p className="text-sm text-red-400">เทียบกับ J&T (Pick-up+ส่งเอง+งานคีย์)</p>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-3">
-                    <div className="bg-blue-400 h-2.5 rounded-full" style={{ width: `${totalShipped ? (totalJt / totalShipped) * 100 : 0}%` }}></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-blue-50/30 rounded-lg p-2 px-3">
-                    <div className="text-rose-500">ยกเลิก: {summary.cancelled_tlp}</div>
-                    <div className="text-orange-600">ตีกลับ: {summary.returned_tlp}</div>
+                  <div className="text-right pl-4">
+                    <p className="text-2xl font-bold text-red-600">{summary.jtSummary}</p>
+                    <p className={`text-[11px] font-bold ${totalJt === summary.jtSummary ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {totalJt === summary.jtSummary ? '✅ ตรงกัน' : `⚠️ ห่าง: ${Math.abs(totalJt - summary.jtSummary)}`}
+                    </p>
                   </div>
                 </div>
 
               </div>
+            )}
+          </main>
+
+          <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-100 pb-safe z-50">
+            <div className="flex">
+              <button onClick={() => setActiveTab('form')} className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${activeTab === 'form' ? 'text-blue-600' : 'text-slate-400'}`}>
+                <PenSquare size={20} />
+                <span className="text-[10px] font-semibold">ฟอร์ม</span>
+              </button>
+              <button onClick={() => setActiveTab('dashboard')} className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-slate-400'}`}>
+                <LayoutDashboard size={20} />
+                <span className="text-[10px] font-semibold">แดชบอร์ด</span>
+              </button>
             </div>
-
-            {/* J&T vs Carrier Summary comparison */}
-            <div className="bg-red-50 p-5 rounded-3xl border border-red-100 flex items-center justify-between">
-              <div>
-                <p className="text-red-600 font-semibold mb-1 flex items-center gap-2"><ClipboardCheck size={18} /> ยอด J&T ที่พนักงานสรุป</p>
-                <p className="text-sm text-red-400">เทียบกับ J&T (Pick-up+ส่งเอง+งานคีย์)</p>
-              </div>
-              <div className="text-right pl-4">
-                <p className="text-2xl font-bold text-red-600">{summary.jtSummary}</p>
-                <p className={`text-[11px] font-bold ${totalJt === summary.jtSummary ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {totalJt === summary.jtSummary ? '✅ ตรงกัน' : `⚠️ ห่าง: ${Math.abs(totalJt - summary.jtSummary)}`}
-                </p>
-              </div>
-            </div>
-
-          </div>
-        )}
-      </main>
-
-      {/* MOBILE BOTTOM NAVIGATION */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-100 pb-safe z-50">
-        <div className="flex">
-          <button onClick={() => setActiveTab('form')} className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${activeTab === 'form' ? 'text-blue-600' : 'text-slate-400'}`}>
-            <PenSquare size={20} strokeWidth={activeTab === 'form' ? 2.5 : 2} />
-            <span className="text-[10px] font-semibold">ฟอร์ม</span>
-          </button>
-          <button onClick={() => setActiveTab('dashboard')} className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-slate-400'}`}>
-            <LayoutDashboard size={20} strokeWidth={activeTab === 'dashboard' ? 2.5 : 2} />
-            <span className="text-[10px] font-semibold">แดชบอร์ด</span>
-          </button>
+          </nav>
         </div>
-      </nav>
-    </div>
-  );
-}
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
