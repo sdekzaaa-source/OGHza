@@ -1105,6 +1105,17 @@
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
+                            {/* ✅ ปุ่มลิงก์ไปหน้า Express (ซ่อนสำหรับ Guest) */}
+                            {currentUserRank !== 'Guest' && (
+                                <button 
+                                    onClick={() => window.location.href = 'express.html'} 
+                                    className="w-8 h-8 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 active:scale-90 transition-all hover:bg-amber-100 shadow-sm"
+                                    title="ไปที่หน้า Express"
+                                >
+                                    <LucideIcon name="truck" size={16} />
+                                </button>
+                            )}
+
                             <button onClick={handleGlobalRefresh} className={`w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 active:scale-90 transition-all ${isGlobalRefreshing ? 'animate-spin text-indigo-600' : ''}`}>
                                 <LucideIcon name="refresh-cw" size={16} />
                             </button>
@@ -1812,5 +1823,3 @@
     </script>
 </body>
 </html>
-
-
