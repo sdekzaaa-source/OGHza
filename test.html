@@ -76,10 +76,9 @@
 </head>
 <body class="relative min-h-screen overflow-x-hidden selection:bg-indigo-500/30">
 
-    <!-- เอฟเฟกต์ SSR Overlay -->
     <div id="sparkle-overlay" class="fixed inset-0 pointer-events-none z-[999] hidden items-center justify-center">
         <div class="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
-        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+        <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
     </div>
 
     <!-- Header หน้าหลัก -->
@@ -160,23 +159,22 @@
             
             <div class="relative z-10 w-full flex flex-col items-center">
                 
-                <!-- 🎯 Header: บังคับความสูงคงที่ 110px เพื่อให้ขอบบน-ล่างขนานกับตัวหนังสือพอดี -->
-                <div class="w-full flex items-center justify-center gap-7 mb-14 mt-6 z-10 relative h-[110px]">
+                <!-- 🎯 Header: จัดตำแหน่งเป๊ะ ขอบไข่บน=ขอบหนังสือบน / ขอบไข่ล่าง=ขอบหนังสือล่าง -->
+                <div class="w-full flex items-center justify-center gap-7 mb-14 mt-6 z-10 relative h-[120px]">
+                    <!-- รูปไข่ล็อคความสูง 120px -->
                     <div class="h-full shrink-0 flex items-center justify-center">
                         <img src="images/egg.png" class="h-full w-auto object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]" crossorigin="anonymous" />
                     </div>
-                    <!-- ชุดตัวหนังสือที่คำนวณความสูงให้ได้ 110px พอดีกับไข่ -->
-                    <div class="h-full flex flex-col justify-center items-start">
-                        <h1 class="text-[62px] font-black leading-[0.85] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font tracking-tighter">
-                            <span class="text-yellow-400 block">AQUARIUS</span>
-                            <span class="text-cyan-400 block">DIADEM</span>
-                        </h1>
+                    <!-- ชุดตัวหนังสือล็อคความสูง 120px และกระจายขอบบน-ล่าง -->
+                    <div class="h-full flex flex-col justify-between items-start py-1">
+                        <h1 class="text-[64px] font-black leading-[0.8] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font tracking-tighter text-yellow-400">AQUARIUS</h1>
+                        <h1 class="text-[64px] font-black leading-[0.8] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font tracking-tighter text-cyan-400">DIADEM</h1>
                     </div>
                 </div>
 
-                <!-- สรุปดวง -->
+                <!-- สรุปดวง: ลดขนาดฟอนต์ฉายาลงเพื่อให้ชื่อตู้เด่นที่สุด -->
                 <div class="w-full text-center relative mb-12">
-                    <div id="tpl-luck-name" class="text-[28px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 uppercase tracking-[0.25em]">👑 ลูกรัก GM</div>
+                    <div id="tpl-luck-name" class="text-2xl font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 uppercase tracking-[0.3em]">👑 ลูกรัก GM</div>
                     <div id="tpl-fun-quote" class="text-yellow-300 font-bold text-xl italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">"ชาตินี้ใช้ดวงหมดแล้ว!"</div>
                 </div>
 
@@ -184,12 +182,12 @@
                 <div class="w-full flex justify-center gap-16 mb-12">
                     <div class="flex flex-col items-center">
                         <span class="text-rose-400 text-[10px] font-black uppercase tracking-widest mb-2 opacity-80">💸 โดนสูบไปแล้ว</span>
-                        <span id="tpl-cost" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(225,29,72,0.8)]">15,000 ฿</span>
+                        <span id="tpl-cost" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(225,29,72,0.8)]">0 ฿</span>
                     </div>
                     <div class="w-[1px] h-16 bg-white/20 self-center"></div>
                     <div class="flex flex-col items-center">
                         <span class="text-cyan-400 text-[10px] font-black uppercase tracking-widest mb-2 opacity-80">🎰 กดไปทั้งหมด</span>
-                        <span id="tpl-pulls" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">300 โรล</span>
+                        <span id="tpl-pulls" class="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">0 โรล</span>
                     </div>
                 </div>
 
@@ -197,7 +195,7 @@
                 <div class="w-full flex flex-col mt-4">
                     <div class="flex justify-between items-end mb-6 border-b border-white/20 pb-3 px-4">
                         <h3 class="text-xl font-black text-white flex items-center gap-2">✨ สิ่งที่ตกถึงท้อง</h3>
-                        <span id="tpl-ssr-count" class="text-sm font-bold text-yellow-400">ได้ SSR: 1 ชิ้น</span>
+                        <span id="tpl-ssr-count" class="text-sm font-bold text-yellow-400">SSR: 0</span>
                     </div>
                     <div id="tpl-rare-grid" class="grid grid-cols-3 gap-y-6 gap-x-4 px-2"></div>
                 </div>
@@ -214,7 +212,7 @@
         </div>
     </div>
 
-    <!-- Main Layout หลัก (เว็บ) -->
+    <!-- UI หน้าหลัก -->
     <div class="relative z-10 max-w-[1400px] mx-auto min-h-screen flex flex-col lg:flex-row main-content">
         <div class="w-full lg:w-5/12 flex flex-col items-center justify-center p-6 mt-4 lg:mt-0">
             <div class="text-center mb-8">
@@ -222,7 +220,7 @@
                     <span class="bg-gradient-to-b from-yellow-100 via-yellow-400 to-amber-600 bg-clip-text text-transparent block uppercase">Aquarius</span>
                     <span class="bg-gradient-to-b from-blue-100 via-blue-400 to-indigo-600 bg-clip-text text-transparent block uppercase">Diadem</span>
                 </h1>
-                <p class="text-indigo-200/80 font-bold tracking-[0.3em] uppercase text-[10px] md:text-xs">Scroll Simulator</p>
+                <p class="text-indigo-200/80 font-bold tracking-[0.3em] uppercase text-[10px] md:text-xs text-center">Scroll Simulator</p>
             </div>
             <div id="egg-container" class="relative flex items-center justify-center w-full max-w-[280px] aspect-square">
                 <div class="absolute inset-0 flex items-center justify-center text-blue-400 scale-[1.4] magic-glow-effect">
@@ -239,19 +237,19 @@
             </div>
             <div class="flex flex-col gap-3 mt-10 w-full max-w-xs px-4">
                 <div class="flex gap-3">
-                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-3 md:py-4 font-bold flex flex-col items-center hover:bg-slate-700 transition-colors shadow-lg">
-                        <span class="text-[10px] text-slate-400 uppercase tracking-widest mb-0.5">สุ่ม</span><span class="text-base md:text-lg">x 1</span>
+                    <button id="btn-pull-1" onclick="pull(1)" class="flex-1 rounded-xl bg-slate-800/80 border border-slate-600/50 text-white py-4 font-bold hover:bg-slate-700 transition-colors shadow-lg">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-widest block mb-0.5">สุ่ม</span><span class="text-base">x 1</span>
                     </button>
-                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 border border-yellow-500/80 text-amber-950 py-3 md:py-4 font-black flex flex-col items-center hover:scale-105 transition-transform shadow-lg">
-                        <span class="text-[10px] text-amber-900/70 uppercase tracking-widest mb-0.5">สุ่ม</span><span class="text-base md:text-lg">x 10</span>
+                    <button id="btn-pull-10" onclick="pull(10)" class="flex-1 rounded-xl bg-gradient-to-b from-yellow-500 to-amber-600 border border-yellow-500/80 text-amber-950 py-4 font-black hover:scale-105 transition-transform shadow-lg">
+                        <span class="text-[10px] text-amber-900/70 uppercase tracking-widest block mb-0.5">สุ่ม</span><span class="text-base">x 10</span>
                     </button>
                 </div>
-                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 text-white py-3 font-black text-sm uppercase flex justify-center gap-2 items-center hover:scale-105 transition-transform shadow-lg shadow-fuchsia-900/30">สุ่มจนกว่าจะออก SSR</button>
+                <button id="btn-pull-until-ssr" onclick="pullUntilSSR()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-700 text-white py-4 font-black text-sm uppercase hover:scale-105 transition-transform shadow-lg shadow-fuchsia-900/30">สุ่มจนกว่าจะออก SSR</button>
             </div>
         </div>
 
         <div class="w-full lg:w-7/12 flex flex-col gap-6 p-4 md:p-8 lg:overflow-y-auto">
-            <div class="glass-panel rounded-3xl p-6 relative overflow-hidden min-h-[300px]">
+            <div class="glass-panel rounded-3xl p-6 min-h-[300px]">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <h3 class="text-lg font-bold text-white uppercase tracking-widest">Inventory</h3>
                     <button onclick="resetData()" class="px-4 py-2 text-[10px] font-bold uppercase text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg hover:bg-red-900/60 transition-colors">Clear</button>
@@ -261,18 +259,16 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                <div id="luck-meter-container" class="glass-panel rounded-3xl p-6 hidden">
+                <div id="luck-meter-container" class="glass-panel rounded-3xl p-6 hidden text-center">
                     <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Luck Meter</h3>
-                    <div class="text-center bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-4">
-                        <div id="luck-tier-name" class="text-xl font-black mb-1">👑 ลูกรัก GM</div>
-                        <div id="luck-tier-desc" class="text-[10px] font-medium text-slate-400 uppercase tracking-tighter">Lucky! Let's pull more!</div>
-                    </div>
-                    <div class="space-y-3 text-[10px] font-medium text-slate-300 mb-6">
+                    <div id="luck-tier-name" class="text-xl font-black mb-1">👑 ลูกรัก GM</div>
+                    <div id="luck-tier-desc" class="text-[10px] font-medium text-slate-400 uppercase mb-4">Lucky! Let's pull more!</div>
+                    <div class="space-y-3 text-[10px] font-medium text-slate-300 mb-6 text-left">
                         <div class="flex justify-between items-center bg-slate-800/40 p-2 rounded-lg"><span>Luck Score:</span> <span id="luck-score-text" class="font-black text-white">120%</span></div>
                         <div class="flex justify-between px-2"><span>SSR Acquired:</span> <span id="luck-ssr-actual" class="font-bold text-yellow-400">0</span></div>
                         <div class="flex justify-between px-2 text-slate-500"><span>Expected:</span> <span id="luck-ssr-expected">0.00</span></div>
                     </div>
-                    <button onclick="openShareModal()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white py-3 font-black text-sm uppercase shadow-lg shadow-fuchsia-900/30 hover:scale-[1.02] transition-all">แชร์ผลประกอบการ 📸</button>
+                    <button onclick="openShareModal()" class="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white py-3 font-black text-sm uppercase shadow-lg hover:scale-[1.02] transition-all">แชร์ผลประกอบการ 📸</button>
                 </div>
                 <div class="glass-panel rounded-3xl p-6">
                     <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Rates</h3>
@@ -358,8 +354,7 @@
 
         function createOverlayItemHTML(item) {
             const style = RANK_STYLES[item.rank];
-            let bgEffect = item.rank === 'SSR' ? `<div class="absolute inset-0 shimmer mix-blend-overlay pointer-events-none rounded-xl"></div>` : '';
-            return `<div class="${style.bg} border ${style.border} p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md">${bgEffect}<img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 mt-2 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full mt-1 pb-1 relative"><p class="text-[9px] leading-tight line-clamp-2 ${style.text}">${item.name}</p></div></div>`;
+            return `<div class="${style.bg} border ${style.border} p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md"><img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 mt-2 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full mt-1 pb-1 relative"><p class="text-[9px] leading-tight line-clamp-2 ${style.text}">${item.name}</p></div></div>`;
         }
 
         function openShareModal() {
@@ -368,16 +363,16 @@
             modal.classList.remove('hidden'); modal.classList.add('flex'); loading.classList.remove('hidden'); resultImg.classList.add('hidden');
             const totalCost = updateCost();
             document.getElementById('tpl-luck-name').innerText = currentLuckData.tN;
-            document.getElementById('tpl-luck-name').className = `text-[28px] leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 ${currentLuckData.tC} uppercase tracking-[0.25em]`;
+            document.getElementById('tpl-luck-name').className = `text-2xl leading-none font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,1)] mb-4 ${currentLuckData.tC} uppercase tracking-[0.3em]`;
             document.getElementById('tpl-fun-quote').innerText = currentLuckData.funQuote;
             document.getElementById('tpl-cost').innerText = totalCost.toLocaleString() + ' ฿';
             document.getElementById('tpl-pulls').innerText = totalPulls.toLocaleString() + ' โรล';
-            document.getElementById('tpl-ssr-count').innerText = `ได้ SSR: ${currentLuckData.ssrCount.toLocaleString()} ชิ้น`;
+            document.getElementById('tpl-ssr-count').innerText = `SSR: ${currentLuckData.ssrCount.toLocaleString()}`;
             const mc = document.getElementById('share-magic-circle'); if (mc) { mc.style.top = `${Math.floor(Math.random() * 40) + 30}%`; mc.style.left = `${Math.floor(Math.random() * 40) + 30}%`; mc.style.transform = `translate(-50%, -50%) scale(${Math.random() * 0.7 + 0.8}) rotate(${Math.floor(Math.random() * 360)}deg)`; }
             const rareInventory = {}; history.forEach(item => { if(item.rank === 'SSR' || item.rank === 'SR') { if (rareInventory[item.id]) rareInventory[item.id].totalCount += item.qty; else rareInventory[item.id] = { ...item, totalCount: item.qty }; } });
             const sortedRares = Object.values(rareInventory).sort((a, b) => (a.rank === 'SSR' ? 1 : 2) - (b.rank === 'SSR' ? 1 : 2));
             const rg = document.getElementById('tpl-rare-grid'); if (sortedRares.length === 0) rg.innerHTML = `<div class="col-span-3 flex flex-col items-center justify-center py-12 text-6xl">🧂<p class="text-white text-xl font-bold mt-4">เกลือล้วนๆ!</p></div>`;
-            else { let html = ''; sortedRares.slice(0, 9).forEach(item => { const s = RANK_STYLES[item.rank]; const glow = item.rank === 'SSR' ? 'drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]' : 'drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]'; html += `<div class="${s.shareBg} p-3 rounded-xl flex flex-col items-center text-center relative z-10 shadow-sm min-h-[130px]"><div class="absolute top-1 right-2 text-[18px] font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] z-20">x${item.totalCount}</div><img src="${item.imgSrc}" class="w-14 h-14 mb-2 object-contain ${glow}" crossorigin="anonymous" /><p class="text-[11px] font-bold text-white flex-1 leading-tight">${item.name}</p><p class="text-[12px] font-black uppercase ${s.hex}">${item.rank}</p></div>`; }); rg.innerHTML = html; }
+            else { let html = ''; sortedRares.slice(0, 9).forEach(item => { const s = RANK_STYLES[item.rank]; const glow = item.rank === 'SSR' ? 'drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]' : 'drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]'; html += `<div class="${s.shareBg} p-3 rounded-xl flex flex-col items-center text-center relative z-10 shadow-sm min-h-[130px]"><div class="absolute top-1 right-2 text-[20px] font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] z-20">x${item.totalCount}</div><img src="${item.imgSrc}" class="w-14 h-14 mb-2 object-contain ${glow}" crossorigin="anonymous" /><p class="text-[11px] font-bold text-white flex-1 leading-tight">${item.name}</p><p class="text-[12px] font-black uppercase ${s.hex}">${item.rank}</p></div>`; }); rg.innerHTML = html; }
             const target = document.getElementById('share-template'); const imgs = Array.from(target.querySelectorAll('img'));
             Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; }))).then(() => {
                 setTimeout(() => html2canvas(target, { scale: 2, backgroundColor: '#090314', useCORS: true, logging: false }).then(canvas => { resultImg.src = canvas.toDataURL("image/png"); loading.classList.add('hidden'); resultImg.classList.remove('hidden'); }), 400);
@@ -393,7 +388,7 @@
             ['btn-pull-1', 'btn-pull-10', 'btn-pull-until-ssr'].forEach(id => document.getElementById(id).disabled = false);
             document.getElementById('total-pulls-text').innerText = totalPulls.toLocaleString(); updateCost(); updateLuckMeter();
             const ct = document.getElementById('overlay-pull-count-text'); const pr = (autoPullCount * (parseFloat(document.getElementById('price-per-pull').value) || 0)).toLocaleString();
-            ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-2xl mx-1">${autoPullCount}</span><br><span class="text-xs font-normal">ใช้เงินไป ${pr} ฿</span>`;
+            ct.innerHTML = `🎉 ออก SSR ในครั้งที่ <span class="text-white text-2xl mx-1">${autoPullCount}</span><br><span class="text-xs font-normal text-slate-400">ใช้เงินไป ${pr} ฿</span>`;
             document.getElementById('overlay-actions').classList.remove('hidden'); document.getElementById('overlay-skip-text').classList.add('hidden');
             if (gS) { const s = document.getElementById('sparkle-overlay'); s.classList.remove('hidden'); s.classList.add('flex'); setTimeout(() => s.classList.add('hidden'), 1500); }
         }
