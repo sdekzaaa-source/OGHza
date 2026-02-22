@@ -74,7 +74,6 @@
         }
         input[type="number"].hide-arrows { -moz-appearance: textfield; }
         
-        /* สไตล์สำหรับเทมเพลตรูปแชร์ */
         #share-template {
             width: 640px;
             height: auto;
@@ -95,6 +94,7 @@
         <svg class="text-yellow-300 w-40 h-40 animate-ping absolute drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
     </div>
 
+    <!-- Sticky Header -->
     <div class="fixed top-0 left-0 w-full app-header px-4 md:px-6 z-50 bg-[#05020a]/85 backdrop-blur-md border-b border-white/10 shadow-lg flex justify-between items-center">
         <div class="flex items-center gap-2 md:gap-3">
             <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-lg">
@@ -150,7 +150,6 @@
         <h3 class="text-white text-base md:text-lg font-bold mb-4 drop-shadow-md animate-pulse">📸 กดค้างที่รูปภาพเพื่อบันทึกหรือแชร์</h3>
         
         <div class="relative w-full max-w-[320px] md:max-w-sm max-h-[70vh] rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(79,70,229,0.4)] flex justify-center items-center bg-[#090314] border border-indigo-500/50">
-            <!-- Loading Spinner -->
             <div id="share-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-[#090314]/90 z-10">
                <div class="animate-spin w-10 h-10 border-4 border-fuchsia-500 border-t-transparent rounded-full mb-3"></div>
                <p class="text-fuchsia-300 text-xs font-bold mt-2 tracking-widest uppercase">GENERATING MEME...</p>
@@ -161,7 +160,7 @@
         <button onclick="closeShareModal()" class="mt-6 rounded-full bg-slate-800/80 border border-slate-500 text-white px-8 py-3 font-bold hover:bg-slate-700 transition-colors">ปิดหน้าต่าง</button>
     </div>
 
-    <!-- 🎯 Hidden Template สำหรับสร้างรูปภาพ Share (โละกรอบทิ้ง เน้นลอยๆ มินิมอล) -->
+    <!-- 🎯 Hidden Template สำหรับสร้างรูปภาพ Share -->
     <div class="fixed top-0" style="left: -9999px;">
         <div id="share-template" class="p-10 relative overflow-hidden flex flex-col items-center bg-[#090314]">
             
@@ -190,24 +189,23 @@
             
             <div class="relative z-10 w-full flex flex-col items-center">
                 
-                <!-- Header: ถอด bg-clip-text ออก ใช้สีทึบธรรมดาเพื่อแก้บักใน html2canvas -->
-                <div class="mb-4 flex items-center justify-center gap-3">
-                    <img src="images/egg.png" class="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]" crossorigin="anonymous" />
-                    <h1 class="text-[46px] font-black leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,1)] georgia-font">
+                <!-- 🎯 Header: เอาข้อความ Gacha Result และรูปไข่เล็กๆ ด้านบนออก เน้นชื่อตู้ให้เด่นๆ -->
+                <div class="w-full flex flex-col items-center justify-center mb-8 mt-4">
+                    <h1 class="text-[60px] font-black leading-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] georgia-font text-center w-full tracking-wide">
                         <span class="text-yellow-400">AQUARIUS</span>
                         <span class="text-cyan-400 ml-2">DIADEM</span>
                     </h1>
                 </div>
 
-                <!-- สรุปดวง (ข้อความลอยๆ ลบกรอบออก) -->
-                <div class="w-full text-center relative mb-12 mt-4">
-                    <div id="tpl-luck-name" class="text-[64px] leading-none font-black text-white drop-shadow-[0_5px_10px_rgba(0,0,0,1)] mb-4">👑 ลูกรัก GM</div>
+                <!-- สรุปดวง -->
+                <div class="w-full text-center relative mb-12">
+                    <div id="tpl-luck-name" class="text-[55px] leading-none font-black text-white drop-shadow-[0_5px_10px_rgba(0,0,0,1)] mb-4">👑 ลูกรัก GM</div>
                     <div id="tpl-fun-quote" class="text-yellow-300 font-bold text-2xl italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                         "ชาตินี้ใช้ดวงหมดแล้ว!"
                     </div>
                 </div>
 
-                <!-- สถิติ (เอาพื้นหลังออก ปล่อยโล่งๆ เน้นแสงเงา) -->
+                <!-- สถิติ -->
                 <div class="w-full flex justify-center gap-16 mb-12">
                     <div class="flex flex-col items-center">
                         <span class="text-rose-400 text-sm font-black uppercase tracking-wider mb-2 drop-shadow-md">💸 โดนสูบไปแล้ว</span>
@@ -220,17 +218,17 @@
                     </div>
                 </div>
 
-                <!-- Section ของแรร์ (เส้นแบ่งบางๆ สไตล์ Minimal) -->
+                <!-- Section ของแรร์ -->
                 <div class="w-full flex flex-col mt-4">
-                    <div class="flex justify-between items-end mb-8 border-b border-white/20 pb-3 px-4">
+                    <div class="flex justify-between items-end mb-6 border-b border-white/20 pb-3 px-4">
                         <h3 class="text-xl font-black text-white flex items-center gap-2 drop-shadow-md">
                             ✨ สิ่งที่ตกถึงท้อง
                         </h3>
                         <span id="tpl-ssr-count" class="text-base font-bold text-yellow-400 drop-shadow-md">ได้ SSR: 1 ชิ้น</span>
                     </div>
                     
-                    <!-- Grid ของไอเทม -->
-                    <div id="tpl-rare-grid" class="grid grid-cols-3 gap-y-10 gap-x-4 px-2">
+                    <!-- 🎯 Grid ของไอเทม (ใส่กรอบบางๆ จางๆ แบ่งสีตาม Rank) -->
+                    <div id="tpl-rare-grid" class="grid grid-cols-3 gap-y-6 gap-x-4 px-2">
                         <!-- JS fills this -->
                     </div>
                 </div>
@@ -351,10 +349,9 @@
 
         const RATES = { SSR: 0.5, SR: 2.0, R: 10.0, A: 15.0, B: 31.0, C: 21.0, E: 20.5 };
 
-        // ใช้เฉพาะสำหรับการแสดงผลหน้าเว็บปกติ
         const RANK_STYLES = {
-            'SSR': { bg: 'bg-gradient-to-br from-yellow-100 to-amber-200 ssr-glow', border: 'border-yellow-400', text: 'text-amber-900 font-extrabold', grad: 'from-amber-400 to-yellow-600', hex: 'text-yellow-400' },
-            'SR': { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-900 font-bold', grad: 'from-purple-400 to-purple-600', hex: 'text-purple-400' },
+            'SSR': { bg: 'bg-gradient-to-br from-yellow-100 to-amber-200 ssr-glow', border: 'border-yellow-400', text: 'text-amber-900 font-extrabold', grad: 'from-amber-400 to-yellow-600', hex: 'text-yellow-400', shareBg: 'bg-yellow-500/10 border border-yellow-500/30' },
+            'SR': { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-900 font-bold', grad: 'from-purple-400 to-purple-600', hex: 'text-purple-400', shareBg: 'bg-purple-500/10 border border-purple-500/30' },
             'R': { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-900 font-bold', grad: 'from-blue-400 to-blue-600' },
             'A': { bg: 'bg-emerald-100', border: 'border-emerald-300', text: 'text-emerald-900 font-bold', grad: 'from-emerald-400 to-emerald-600' },
             'B': { bg: 'bg-lime-100', border: 'border-lime-300', text: 'text-lime-900 font-bold', grad: 'from-lime-400 to-lime-600' },
@@ -462,9 +459,6 @@
             return `<div class="${style.bg} border ${style.border} p-2 rounded-xl text-center flex flex-col items-center justify-between min-h-[100px] relative overflow-hidden group animate-pop-up shadow-xl backdrop-blur-md">${bgEffect}<img src="${item.imgSrc}" alt="${item.name}" class="w-12 h-12 mt-2 z-10 object-contain mix-blend-multiply" /><div class="z-10 w-full mt-1 pb-1 relative"><p class="text-[9px] leading-tight line-clamp-2 ${style.text}">${item.name}</p>${q}</div></div>`;
         }
 
-        // ==========================================
-        // ระบบสร้างรูปภาพแชร์ (No Boxes, No Pills, Just Text & Glow)
-        // ==========================================
         function openShareModal() {
             if (totalPulls === 0) return;
             const modal = document.getElementById('share-modal');
@@ -501,28 +495,31 @@
             const rareGrid = document.getElementById('tpl-rare-grid');
             
             if (sortedRares.length === 0) {
+                // 🎯 ปรับหน้าตาตอนเกลือล้วนๆ ให้ขวดเกลือใหญ่ขึ้นและดูน่ารักขึ้น
                 rareGrid.innerHTML = `
-                    <div class="col-span-3 flex flex-col items-center justify-center py-10">
-                        <div class="text-white font-black text-2xl drop-shadow-md">เกลือล้วนๆ ไม่มีของแรร์ผสม!</div>
+                    <div class="col-span-3 flex flex-col items-center justify-center py-12">
+                        <div class="text-[60px] mb-4 drop-shadow-lg transform -rotate-12">🧂</div>
+                        <div class="text-white font-black text-2xl drop-shadow-md tracking-wider">เกลือล้วนๆ ไม่มีของแรร์ผสม!</div>
                     </div>`;
             } else {
                 let rareHtml = '';
                 sortedRares.slice(0, 9).forEach((item, i) => { 
-                    // 🎯 ถอดกรอบออกจากไอเทมให้เหลือแต่รูปเปล่าๆ เรืองแสง
+                    const s = RANK_STYLES[item.rank];
+                    // 🎯 ใส่กรอบจางๆ แบ่งสีตาม Rank เพื่อให้เป็นระเบียบ แต่ไม่แข็งทื่อเป็นตาราง
                     const textHex = item.rank === 'SSR' ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]';
                     const imgGlow = item.rank === 'SSR' ? 'drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]';
                     
                     rareHtml += `
-                    <div class="flex flex-col items-center text-center relative z-10">
-                        <div class="absolute -top-3 right-2 text-sm font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] z-20">x${item.totalCount}</div>
+                    <div class="${s.shareBg} p-3 rounded-xl flex flex-col items-center text-center relative z-10 shadow-sm min-h-[130px]">
+                        <div class="absolute top-1.5 right-1.5 text-[10px] font-black px-1.5 py-0.5 rounded-sm text-white bg-black/60 border border-white/20 z-20">x${item.totalCount}</div>
                         
-                        <div class="w-20 h-20 mb-3 flex items-center justify-center relative z-10">
-                            <!-- เอา bg สีขาวออก ปล่อยรูปภาพสดๆ -->
+                        <div class="w-14 h-14 mb-2 flex items-center justify-center relative z-10">
+                            <!-- 🎯 ลบกรอบสีขาวรอบรูปไอเทมออก ใช้แค่เรืองแสงรอบๆ -->
                             <img src="${item.imgSrc}" alt="${item.name}" class="w-full h-full object-contain ${imgGlow}" crossorigin="anonymous" />
                         </div>
                         
-                        <div class="text-[13px] font-bold text-white leading-tight px-1 drop-shadow-md w-full break-words">${item.name}</div>
-                        <div class="text-[14px] ${textHex} font-black mt-1 uppercase tracking-widest">${item.rank}</div>
+                        <div class="text-[11px] font-bold text-white leading-tight px-1 drop-shadow-md w-full break-words flex-1 flex items-start justify-center">${item.name}</div>
+                        <div class="text-[12px] ${textHex} font-black mt-1 uppercase tracking-widest drop-shadow-[0_0_5px_currentColor]">${item.rank}</div>
                     </div>`;
                 });
                 if (sortedRares.length > 9) rareHtml += `<div class="col-span-3 text-center pt-6 text-slate-300 text-sm font-bold drop-shadow-md">และของแรร์อื่นๆ อีก ${sortedRares.length - 9} รายการ...</div>`;
@@ -709,5 +706,6 @@
     </script>
 </body>
 </html>
+
 
 
