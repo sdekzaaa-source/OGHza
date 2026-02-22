@@ -199,7 +199,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
                 <div id="luck-meter-container" class="glass-panel rounded-3xl p-6 hidden">
                     <h3 class="text-[10px] font-bold tracking-widest uppercase mb-4 text-slate-400">Luck Meter</h3>
                     <div class="text-center bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-4">
@@ -421,8 +421,8 @@
                     }
                 }
                 
-                // ตรวจสอบขนาดหน้าจอว่าใช้ 12 หรือ 15 ไอเท็มใน 1 หน้า
-                const maxItemsPerPage = window.innerWidth < 768 ? 12 : 15;
+                // 🎯 เช็คขนาดจอว่าตัดที่ 12 หรือ 15 ไอเท็ม (ใช้ 640px ให้ตรงกับ Tailwind sm breakpoint)
+                const maxItemsPerPage = window.innerWidth < 640 ? 12 : 15;
                 const itemsOnLastPage = autoPullCount % maxItemsPerPage || maxItemsPerPage;
                 const lastPageItems = history.slice(-itemsOnLastPage);
                 
@@ -478,10 +478,9 @@
                     const nI = { ...generateRandomItem(), timestamp: Date.now() }; 
                     history.push(nI); totalPulls++; 
                     
-                    // เช็คขนาดหน้าจอว่าใช้ 12 หรือ 15 ไอเท็มในการขึ้นหน้าใหม่
-                    const maxItemsPerPage = window.innerWidth < 768 ? 12 : 15;
+                    // 🎯 เช็คขนาดหน้าจอ (ใช้ 640px ให้ตรงกับ Tailwind sm breakpoint)
+                    const maxItemsPerPage = window.innerWidth < 640 ? 12 : 15;
                     
-                    // เคลียร์หน้าจอเมื่อเต็ม เพื่อเริ่มวางที่สล็อตที่ 1 ใหม่
                     if (cn.children.length >= maxItemsPerPage) {
                         cn.innerHTML = '';
                     }
