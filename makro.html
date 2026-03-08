@@ -15,6 +15,9 @@
     <!-- Babel สำหรับรัน JSX ในเบราว์เซอร์ -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- html2canvas สำหรับเซฟบิลเป็นรูปภาพ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
         /* Animations */
         @keyframes bounce-short { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
@@ -29,13 +32,16 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ป้องกันไม่ให้ Slip ดั้งเดิมขยับตอนที่ Html2canvas เรนเดอร์ */
+        .offscreen-slip { position: fixed; top: -9999px; left: -9999px; z-index: -1; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans antialiased">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
+        const { useState, useMemo, useEffect, useRef } = React;
 
         // --- ไอคอนแบบ Inline SVG ---
         const IconBase = ({ children, className = "w-6 h-6" }) => (
@@ -62,6 +68,11 @@
         const ChevronUp = ({className}) => <IconBase className={className}><path d="m18 15-6-6-6 6"/></IconBase>;
         const ChevronLeft = ({className}) => <IconBase className={className}><path d="m15 18-6-6 6-6"/></IconBase>;
         const ChevronRight = ({className}) => <IconBase className={className}><path d="m9 18 6-6-6-6"/></IconBase>;
+        const Tag = ({className}) => <IconBase className={className}><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></IconBase>;
+        const Edit2 = ({className}) => <IconBase className={className}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></IconBase>;
+        const Camera = ({className}) => <IconBase className={className}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></IconBase>;
+        const X = ({className}) => <IconBase className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>;
+        const Download = ({className}) => <IconBase className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></IconBase>;
 
         // --- คอมโพเนนต์ปฏิทินแบบ Custom ---
         function CustomCalendar({ selectedDate, onChange, markedDates, onClose }) {
@@ -72,7 +83,6 @@
 
             const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
             const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-
             const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
             const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
@@ -83,9 +93,7 @@
                 const today = new Date();
                 const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
-                for (let i = 0; i < firstDayOfMonth; i++) {
-                    days.push(<div key={`empty-${i}`} className="w-10 h-10"></div>);
-                }
+                for (let i = 0; i < firstDayOfMonth; i++) days.push(<div key={`empty-${i}`} className="w-10 h-10"></div>);
                 
                 for (let i = 1; i <= daysInMonth; i++) {
                     const dStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
@@ -98,16 +106,9 @@
                             <button 
                                 onClick={() => { onChange(dStr); onClose(); }}
                                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors ${
-                                    isSelected 
-                                        ? 'bg-red-600 text-white font-bold shadow-md' 
-                                        : isToday 
-                                            ? 'bg-red-50 text-red-600 font-bold' 
-                                            : 'text-gray-700 hover:bg-gray-100'
+                                    isSelected ? 'bg-red-600 text-white font-bold shadow-md' : isToday ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-700 hover:bg-gray-100'
                                 }`}
-                            >
-                                {i}
-                            </button>
-                            {/* จุดมาร์คสีแดงใต้ตัวเลข */}
+                            >{i}</button>
                             {hasMark && !isSelected && <span className="absolute bottom-0 w-1.5 h-1.5 bg-red-400 rounded-full"></span>}
                             {hasMark && isSelected && <span className="absolute bottom-0 w-1.5 h-1.5 bg-white rounded-full shadow-sm"></span>}
                         </div>
@@ -126,9 +127,7 @@
                     <div className="grid grid-cols-7 gap-1 text-center mb-3">
                         {['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => <div key={d} className="text-xs font-semibold text-gray-400">{d}</div>)}
                     </div>
-                    <div className="grid grid-cols-7 gap-1 place-items-center">
-                        {renderDays()}
-                    </div>
+                    <div className="grid grid-cols-7 gap-1 place-items-center">{renderDays()}</div>
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center gap-4 text-xs text-gray-500">
                         <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400"></span> มีบันทึก</div>
                         <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-600"></span> วันที่เลือก</div>
@@ -141,7 +140,7 @@
         function App() {
             const [activeTab, setActiveTab] = useState('record');
             
-            const [scriptUrl, setScriptUrl] = useState(() => localStorage.getItem('macroAppScriptUrl') || 'https://script.google.com/macros/s/AKfycbyoz5XKPn8uE9pe-_tMghBWulg-nwIhz9zS_ZODDj-8wATZRTqBUQPa6wYk0HT5_xgF/exec');
+            const [scriptUrl, setScriptUrl] = useState(() => localStorage.getItem('macroAppScriptUrl') || 'https://script.google.com/macros/s/AKfycbwYBVs2aH2fG7e9SF2B9WUsewepen0ZbL1yhUDooWfit_QzjBk5DuOptC57trucv3Ly/exec');
             const [isSyncing, setIsSyncing] = useState(false);
             const [syncMessage, setSyncMessage] = useState('');
 
@@ -161,30 +160,37 @@
             useEffect(() => { localStorage.setItem('makroTransactions', JSON.stringify(transactions)); }, [transactions]);
             
             const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
-            const [showCalendar, setShowCalendar] = useState(false); // ควบคุมการแสดงปฏิทิน
+            const [showCalendar, setShowCalendar] = useState(false); 
             
             const [itemName, setItemName] = useState('');
             const [quantity, setQuantity] = useState('1'); 
             const [unitPrice, setUnitPrice] = useState(''); 
             const [payer, setPayer] = useState('all');
+            const [category, setCategory] = useState('อาหาร/ของสด'); 
 
             const [newUserName, setNewUserName] = useState('');
             const [isNewUserRegular, setIsNewUserRegular] = useState(true);
 
             const [customPayers, setCustomPayers] = useState([]);
             const [txToDelete, setTxToDelete] = useState(null);
+            const [editingTx, setEditingTx] = useState(null); 
 
             const [searchQuery, setSearchQuery] = useState('');
             const [historyData, setHistoryData] = useState([]);
             const [expandedUsers, setExpandedUsers] = useState({});
-            const [summaryView, setSummaryView] = useState('daily'); // เพิ่ม State ควบคุมหน้าสรุปยอด
+            const [summaryView, setSummaryView] = useState('daily'); 
 
-            // ดึงวันที่ที่มีการบันทึกข้อมูล (เพื่อส่งไปแสดงจุดสีแดงในปฏิทิน)
+            // ตัวแปรสำหรับระบบ Slip
+            const [slipData, setSlipData] = useState(null); // ข้อมูลคนที่จะทำสลิป
+            const [slipImageSrc, setSlipImageSrc] = useState(null); // รูปสลิปที่ได้มา
+            const [isGeneratingSlip, setIsGeneratingSlip] = useState(false);
+            const slipRef = useRef(null);
+
+            const categoriesList = ['อาหาร/ของสด', 'ของใช้ในบ้าน', 'เครื่องดื่ม/ขนม', 'อื่นๆ'];
+
             const markedDates = useMemo(() => {
                 const marks = new Set();
-                transactions.forEach(t => {
-                    if (t.status !== 'deleted') marks.add(t.date);
-                });
+                transactions.forEach(t => { if (t.status !== 'deleted') marks.add(t.date); });
                 return marks;
             }, [transactions]);
 
@@ -202,29 +208,19 @@
                 try {
                     const resUsers = await fetch(`${scriptUrl}?action=getUsers`);
                     const dataUsers = await resUsers.json();
-                    if (dataUsers.status === 'success' && dataUsers.users) {
-                        setUsers(dataUsers.users);
-                    }
+                    if (dataUsers.status === 'success' && dataUsers.users) setUsers(dataUsers.users);
 
                     const resHistory = await fetch(`${scriptUrl}?action=getHistory`);
                     const dataHistory = await resHistory.json();
                     if (dataHistory.status === 'success' && dataHistory.data) {
                         const sheetTxs = dataHistory.data.map((row, idx) => {
                             const d = new Date(row.date);
-                            const localDate = isNaN(d.getTime()) 
-                                ? row.date 
-                                : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                            
+                            const localDate = isNaN(d.getTime()) ? row.date : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                             return {
-                                id: `sheet-${idx}`,
-                                date: localDate,
-                                name: row.name,
-                                quantity: parseFloat(row.quantity) || 1,
-                                unitPrice: parseFloat(row.unitPrice) || 0,
-                                price: parseFloat(row.price) || 0,
-                                payerName: row.payerName ? String(row.payerName) : '',
-                                payerId: row.payerId ? String(row.payerId) : 'all',
-                                status: 'saved'
+                                id: `sheet-${idx}`, date: localDate, name: row.name,
+                                quantity: parseFloat(row.quantity) || 1, unitPrice: parseFloat(row.unitPrice) || 0, price: parseFloat(row.price) || 0,
+                                payerName: row.payerName ? String(row.payerName) : '', payerId: row.payerId ? String(row.payerId) : 'all',
+                                category: row.category || 'อื่นๆ', status: 'saved'
                             };
                         });
                         
@@ -239,7 +235,6 @@
                         });
                         setItemCatalog(newCatalog);
                     }
-
                     setSyncMessage('อัปเดตข้อมูลสำเร็จ!');
                     setTimeout(() => setSyncMessage(''), 3000);
                 } catch (error) {
@@ -250,9 +245,7 @@
                 }
             };
 
-            useEffect(() => {
-                if (scriptUrl) fetchAllDataFromSheet();
-            }, []);
+            useEffect(() => { if (scriptUrl) fetchAllDataFromSheet(); }, []);
 
             const dailySummary = useMemo(() => {
                 const summary = {};
@@ -294,7 +287,6 @@
                 return summary;
             }, [transactions, users, currentDate]);
 
-            // คำนวณยอดสะสมทั้งหมด (ทุกวันรวมกัน)
             const allTimeSummary = useMemo(() => {
                 const summary = {};
                 users.forEach(u => summary[u.id] = { name: u.name, total: 0 });
@@ -348,9 +340,7 @@
             const handleItemNameChange = (e) => {
                 const val = e.target.value;
                 setItemName(val);
-                if (itemCatalog[val]) {
-                    setUnitPrice(itemCatalog[val].lastPrice.toString());
-                }
+                if (itemCatalog[val]) setUnitPrice(itemCatalog[val].lastPrice.toString());
             };
 
             const handleAddTransactionLocal = (e) => {
@@ -358,69 +348,47 @@
                 if (!itemName || !unitPrice || isNaN(unitPrice) || !quantity || isNaN(quantity)) return;
 
                 if (payer === 'custom' && customPayers.length === 0) {
-                    alert('กรุณาเลือกผู้ที่ต้องหารอย่างน้อย 1 คน');
-                    return;
+                    alert('กรุณาเลือกผู้ที่ต้องหารอย่างน้อย 1 คน'); return;
                 }
 
                 let finalPayerId = payer;
                 let finalPayerName = getPayerName(payer, customPayers);
 
-                if (payer === 'custom') {
-                    finalPayerId = customPayers.join(',');
-                }
+                if (payer === 'custom') finalPayerId = customPayers.join(',');
 
                 const newTx = {
-                    id: Date.now().toString(),
-                    date: currentDate,
-                    name: itemName.trim(),
-                    quantity: parseFloat(quantity),
-                    unitPrice: parseFloat(unitPrice),
-                    price: calculatedTotal, 
-                    payerId: String(finalPayerId),
-                    payerName: String(finalPayerName),
-                    status: 'pending'
+                    id: Date.now().toString(), date: currentDate, name: itemName.trim(),
+                    quantity: parseFloat(quantity), unitPrice: parseFloat(unitPrice), price: calculatedTotal, 
+                    payerId: String(finalPayerId), payerName: String(finalPayerName), category: category, status: 'pending'
                 };
 
                 setTransactions([...transactions, newTx]);
                 setItemCatalog(prev => ({ ...prev, [newTx.name]: { lastPrice: newTx.unitPrice, lastDate: newTx.date } }));
-                setItemName('');
-                setQuantity('1');
-                setUnitPrice('');
-                setPayer('all');
-                setCustomPayers([]);
+                
+                setItemName(''); setQuantity('1'); setUnitPrice('');
+                setPayer('all'); setCategory('อาหาร/ของสด'); setCustomPayers([]);
             };
 
             const handleSaveAllToSheet = async () => {
                 const pendingTxs = transactions.filter(t => t.status === 'pending');
                 if (pendingTxs.length === 0 || !scriptUrl) return;
 
-                setIsSyncing(true);
-                setSyncMessage(`กำลังบันทึก ${pendingTxs.length} รายการ...`);
+                setIsSyncing(true); setSyncMessage(`กำลังบันทึก ${pendingTxs.length} รายการ...`);
 
                 try {
                     await fetch(scriptUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action: 'addMultipleTransactions', data: pendingTxs })
                     });
                     setTransactions(transactions.map(t => t.status === 'pending' ? { ...t, status: 'saved' } : t));
-                    setSyncMessage('บันทึกลง Sheet สำเร็จ');
-                    setTimeout(() => setSyncMessage(''), 3000);
+                    setSyncMessage('บันทึกลง Sheet สำเร็จ'); setTimeout(() => setSyncMessage(''), 3000);
                 } catch (error) {
-                    console.error("Save failed", error);
-                    setSyncMessage('❌ บันทึกลง Sheet ล้มเหลว');
-                } finally {
-                    setIsSyncing(false);
-                }
+                    console.error("Save failed", error); setSyncMessage('❌ บันทึกลง Sheet ล้มเหลว');
+                } finally { setIsSyncing(false); }
             };
 
-            const handleDeleteTransaction = (id) => {
-                setTransactions(transactions.filter(t => t.id !== id));
-            };
-
-            const confirmDeleteSavedTransaction = (tx) => {
-                setTxToDelete(tx);
-            };
+            const handleDeleteTransaction = (id) => setTransactions(transactions.filter(t => t.id !== id));
+            const confirmDeleteSavedTransaction = (tx) => setTxToDelete(tx);
 
             const executeDelete = async () => {
                 const txToDeleteRef = txToDelete;
@@ -428,24 +396,84 @@
                 setTransactions(transactions.filter(t => t.id !== txToDeleteRef.id));
 
                 if (!scriptUrl) return;
-
-                setIsSyncing(true);
-                setSyncMessage('กำลังลบรายการ...');
+                setIsSyncing(true); setSyncMessage('กำลังลบรายการ...');
 
                 try {
                     await fetch(scriptUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action: 'deleteTransaction', data: txToDeleteRef })
                     });
-                    setSyncMessage('ลบรายการสำเร็จ');
-                    setTimeout(() => setSyncMessage(''), 3000);
+                    setSyncMessage('ลบรายการสำเร็จ'); setTimeout(() => setSyncMessage(''), 3000);
                 } catch (error) {
-                    console.error("Delete failed", error);
-                    setSyncMessage('❌ ลบล้มเหลว โปรดซิงค์ใหม่');
-                } finally {
-                    setIsSyncing(false);
+                    console.error("Delete failed", error); setSyncMessage('❌ ลบล้มเหลว โปรดซิงค์ใหม่');
+                } finally { setIsSyncing(false); }
+            };
+
+            const executeEdit = async (e) => {
+                e.preventDefault();
+                if (!editingTx) return;
+
+                let finalPayerId = editingTx.payerId;
+                let finalPayerName = editingTx.payerName;
+                
+                if (finalPayerId === 'custom') {
+                    if (customPayers.length === 0) { alert('กรุณาเลือกผู้ที่ต้องหารอย่างน้อย 1 คน'); return; }
+                    finalPayerId = customPayers.join(',');
+                    finalPayerName = getPayerName('custom', customPayers);
+                } else {
+                    finalPayerName = getPayerName(finalPayerId);
                 }
+
+                const updatedTx = {
+                    ...editingTx,
+                    price: Math.round((parseFloat(editingTx.quantity) * parseFloat(editingTx.unitPrice)) * 4) / 4,
+                    payerId: finalPayerId, payerName: finalPayerName
+                };
+
+                const oldTx = transactions.find(t => t.id === updatedTx.id);
+
+                setTransactions(transactions.map(t => t.id === updatedTx.id ? updatedTx : t));
+                setEditingTx(null); setCustomPayers([]);
+
+                if (!scriptUrl || oldTx.status === 'pending') return; 
+
+                setIsSyncing(true); setSyncMessage('กำลังบันทึกการแก้ไข...');
+
+                try {
+                    await fetch(scriptUrl, {
+                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'editTransaction', oldData: oldTx, newData: updatedTx })
+                    });
+                    setSyncMessage('แก้ไขข้อมูลสำเร็จ'); setTimeout(() => setSyncMessage(''), 3000);
+                } catch (error) {
+                    console.error("Edit failed", error); setSyncMessage('❌ แก้ไขล้มเหลว โปรดซิงค์ใหม่');
+                } finally { setIsSyncing(false); }
+            };
+
+            // ฟังก์ชันสำหรับสร้างสลิป (เฉพาะบุคคล)
+            const handleGenerateSlip = (userSummary) => {
+                setIsGeneratingSlip(true);
+                setSlipData(userSummary);
+                
+                // ให้ React render หน้า slipRef ให้เสร็จก่อนจับภาพ (100ms)
+                setTimeout(async () => {
+                    if (slipRef.current) {
+                        try {
+                            const canvas = await html2canvas(slipRef.current, { 
+                                scale: 2.5, // ความละเอียดสูง
+                                backgroundColor: '#ffffff',
+                                windowWidth: 380 // จำลองให้กว้างเท่ามือถือ
+                            });
+                            setSlipImageSrc(canvas.toDataURL('image/png'));
+                        } catch (err) {
+                            console.error("Slip Generation Failed:", err);
+                            alert("ไม่สามารถสร้างรูปสลิปได้ โปรดลองอีกครั้ง");
+                        } finally {
+                            setIsGeneratingSlip(false);
+                            setSlipData(null); // ซ่อนต้นแบบ
+                        }
+                    }
+                }, 100);
             };
 
             const pendingCount = transactions.filter(t => t.status === 'pending').length;
@@ -457,9 +485,7 @@
             }, [searchQuery, transactions]);
 
             const selectHistoryItem = (name) => {
-                const itemHistory = transactions
-                    .filter(t => t.name === name && t.status !== 'pending')
-                    .sort((a, b) => new Date(a.date) - new Date(b.date)); 
+                const itemHistory = transactions.filter(t => t.name === name && t.status !== 'pending').sort((a, b) => new Date(a.date) - new Date(b.date)); 
                 setHistoryData(itemHistory);
             };
 
@@ -468,8 +494,7 @@
                 if (!newUserName) return;
                 const newUser = { id: Date.now().toString(), name: newUserName, isRegular: isNewUserRegular };
                 setUsers([...users, newUser]);
-                setNewUserName('');
-                setIsNewUserRegular(true);
+                setNewUserName(''); setIsNewUserRegular(true);
             };
 
             const handleDeleteUser = (id) => setUsers(users.filter(u => u.id !== id));
@@ -478,8 +503,7 @@
             const PriceChart = ({ data }) => {
                 if (data.length === 0) return <p className="text-gray-500 text-sm text-center">ไม่มีข้อมูลเพียงพอ</p>;
                 const prices = data.map(d => d.unitPrice);
-                const minPrice = Math.min(...prices) * 0.9; 
-                const maxPrice = Math.max(...prices) * 1.1; 
+                const minPrice = Math.min(...prices) * 0.9; const maxPrice = Math.max(...prices) * 1.1; 
                 const range = maxPrice - minPrice || 1;
 
                 return (
@@ -523,12 +547,8 @@
 
                     <main className="max-w-2xl mx-auto p-4 mt-2">
                         
-                        {/* Custom Date Selector Trigger */}
                         <div className="relative mb-4">
-                            <button 
-                                onClick={() => setShowCalendar(true)} 
-                                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between w-full hover:bg-gray-50 transition-colors"
-                            >
+                            <button onClick={() => setShowCalendar(true)} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between w-full hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <CalendarIcon className="text-gray-500 w-5 h-5" />
                                     <span className="text-lg font-medium text-gray-700">
@@ -539,16 +559,10 @@
                             </button>
                         </div>
 
-                        {/* Calendar Modal Overlay */}
                         {showCalendar && (
                             <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowCalendar(false)}>
                                 <div onClick={e => e.stopPropagation()} className="w-full">
-                                    <CustomCalendar 
-                                        selectedDate={currentDate} 
-                                        onChange={setCurrentDate} 
-                                        markedDates={markedDates} 
-                                        onClose={() => setShowCalendar(false)} 
-                                    />
+                                    <CustomCalendar selectedDate={currentDate} onChange={setCurrentDate} markedDates={markedDates} onClose={() => setShowCalendar(false)} />
                                 </div>
                             </div>
                         )}
@@ -579,20 +593,41 @@
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ</label>
-                                            <select 
-                                                value={payer}
-                                                onChange={(e) => {
-                                                    setPayer(e.target.value);
-                                                    if (e.target.value === 'custom' && customPayers.length === 0) setCustomPayers(users.filter(u => u.isRegular).map(u => String(u.id)));
-                                                }}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white"
-                                            >
-                                                <option value="all">หารเท่า (กองกลาง)</option>
-                                                <option value="custom">ระบุคนหารเอง...</option>
-                                                {users.map(u => <option key={u.id} value={u.id}>เฉพาะ: {u.name}</option>)}
-                                            </select>
+                                        {itemName && itemCatalog[itemName] && unitPrice && (
+                                            <div className="text-xs -mt-2 px-1 flex items-center gap-1">
+                                                {parseFloat(unitPrice) > itemCatalog[itemName].lastPrice ? (
+                                                    <span className="text-red-500 font-medium">🔺 แพงขึ้น (รอบก่อน ฿{itemCatalog[itemName].lastPrice})</span>
+                                                ) : parseFloat(unitPrice) < itemCatalog[itemName].lastPrice ? (
+                                                    <span className="text-green-600 font-medium">🔻 ถูกลง (รอบก่อน ฿{itemCatalog[itemName].lastPrice})</span>
+                                                ) : (
+                                                    <span className="text-gray-500">➖ ราคาเท่าเดิม</span>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+                                                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white text-sm">
+                                                    {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ</label>
+                                                <select 
+                                                    value={payer}
+                                                    onChange={(e) => {
+                                                        setPayer(e.target.value);
+                                                        if (e.target.value === 'custom' && customPayers.length === 0) setCustomPayers(users.filter(u => u.isRegular).map(u => String(u.id)));
+                                                    }}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white text-sm"
+                                                >
+                                                    <option value="all">หารเท่า</option>
+                                                    <option value="custom">ระบุเอง...</option>
+                                                    {users.map(u => <option key={u.id} value={u.id}>เฉพาะ: {u.name}</option>)}
+                                                </select>
+                                            </div>
                                         </div>
 
                                         {payer === 'custom' && (
@@ -617,7 +652,7 @@
                                             </div>
                                         )}
 
-                                        <button type="submit" className="w-full bg-red-50 hover:bg-red-100 text-red-700 font-medium p-3 rounded-lg border border-red-200 transition flex items-center justify-center gap-2">
+                                        <button type="submit" className="w-full bg-red-50 hover:bg-red-100 text-red-700 font-medium p-3 rounded-lg border border-red-200 transition flex items-center justify-center gap-2 mt-2">
                                             <Plus className="w-5 h-5" /> เพิ่มลงรายการด้านล่าง
                                         </button>
                                     </form>
@@ -638,6 +673,7 @@
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-2">
                                                             <p className="font-medium text-gray-800">{index + 1}. {t.name}</p>
+                                                            <span className="text-[10px] bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded">{t.category}</span>
                                                             <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">รอส่ง</span>
                                                         </div>
                                                         <p className="text-xs text-gray-500 mt-0.5">{t.quantity} x ฿{t.unitPrice.toFixed(2)} • จ่ายโดย: <span className="text-red-600 font-medium">{t.payerName}</span></p>
@@ -664,7 +700,6 @@
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 min-h-[400px] animate-fade-in">
                                 <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center gap-2"><Receipt className="w-5 h-5 text-red-600" /> ประวัติการซื้อวันที่เลือก</h2>
                                 {(() => {
-                                    // กรองเอาเฉพาะรายการที่บันทึกแล้วและตรงกับวันที่เลือก
                                     const savedTxs = transactions.filter(t => t.status === 'saved' && t.date === currentDate);
                                     if (savedTxs.length === 0) return <p className="text-center text-gray-500 py-4">ไม่มีประวัติบิลของวันที่ {new Date(currentDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>;
 
@@ -678,14 +713,24 @@
                                             </div>
                                             <div className="border border-t-0 border-gray-200 rounded-b-lg p-3 space-y-3 bg-white">
                                                 {savedTxs.map((t, idx) => (
-                                                    <div key={t.id || idx} className="flex justify-between items-center text-sm border-b border-gray-50 last:border-0 pb-2 last:pb-0">
-                                                        <div className="flex-1">
-                                                            <p className="font-medium text-gray-800">{t.name}</p>
-                                                            <p className="text-xs text-gray-500 mt-0.5">{t.quantity} x ฿{t.unitPrice.toFixed(2)} • <span className="text-red-600 font-medium">{t.payerName}</span></p>
-                                                        </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="font-semibold text-gray-700">฿{t.price.toFixed(2)}</span>
-                                                            <button onClick={() => confirmDeleteSavedTransaction(t)} className="text-gray-300 hover:text-red-500 p-1 transition" title="ลบรายการนี้ออกจาก Sheet"><Trash2 className="w-4 h-4" /></button>
+                                                    <div key={t.id || idx} className="flex flex-col gap-1 text-sm border-b border-gray-50 last:border-0 pb-2 last:pb-0">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="font-medium text-gray-800">{t.name}</p>
+                                                                    {t.category && <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{t.category}</span>}
+                                                                </div>
+                                                                <p className="text-xs text-gray-500 mt-0.5">{t.quantity} x ฿{t.unitPrice.toFixed(2)} • <span className="text-red-600 font-medium">{t.payerName}</span></p>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="font-semibold text-gray-700 mr-2">฿{t.price.toFixed(2)}</span>
+                                                                <button onClick={() => {
+                                                                    setEditingTx({...t});
+                                                                    if (t.payerId.includes(',')) setCustomPayers(t.payerId.split(','));
+                                                                    else if (t.payerId === 'all') setCustomPayers([]);
+                                                                }} className="text-blue-400 hover:text-blue-600 p-1 transition" title="แก้ไขรายการนี้"><Edit2 className="w-4 h-4" /></button>
+                                                                <button onClick={() => confirmDeleteSavedTransaction(t)} className="text-gray-300 hover:text-red-500 p-1 transition" title="ลบรายการนี้ออกจาก Sheet"><Trash2 className="w-4 h-4" /></button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -726,95 +771,99 @@
                         )}
 
                         {activeTab === 'summary' && (
-                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 animate-fade-in">
-                                <div className="flex justify-between items-center mb-4 border-b pb-2">
+                            <div className="bg-transparent animate-fade-in">
+                                <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                                     <h2 className="text-lg font-semibold text-gray-800">สรุปยอด</h2>
                                     <div className="flex bg-gray-100 rounded-lg p-1">
-                                        <button 
-                                            onClick={() => setSummaryView('daily')}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${summaryView === 'daily' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                        >
-                                            ประจำวัน
-                                        </button>
-                                        <button 
-                                            onClick={() => setSummaryView('allTime')}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${summaryView === 'allTime' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                        >
-                                            สะสมทั้งหมด
-                                        </button>
+                                        <button onClick={() => setSummaryView('daily')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${summaryView === 'daily' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>ประจำวัน</button>
+                                        <button onClick={() => setSummaryView('allTime')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${summaryView === 'allTime' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>สะสมทั้งหมด</button>
                                     </div>
                                 </div>
 
                                 {summaryView === 'daily' ? (
-                                    <div className="grid gap-4">
-                                        {Object.values(dailySummary).map(userSummary => (
-                                            <div key={userSummary.name} className="flex flex-col bg-red-50 rounded-lg border border-red-100 overflow-hidden transition-all">
-                                                <button 
-                                                    onClick={() => {
-                                                        if (userSummary.items.length > 0) setExpandedUsers(prev => ({ ...prev, [userSummary.name]: !prev[userSummary.name] }));
-                                                    }}
-                                                    className={`flex justify-between items-center p-4 w-full text-left focus:outline-none ${userSummary.items.length > 0 ? 'cursor-pointer hover:bg-red-100/50' : 'cursor-default'}`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="bg-white p-2 rounded-full shadow-sm"><Calculator className="text-red-600 w-5 h-5" /></div>
-                                                        <span className="font-medium text-lg text-gray-800">{userSummary.name}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="text-right">
-                                                            <p className="text-sm text-gray-500">ต้องจ่าย</p>
-                                                            <p className="font-bold text-xl text-red-600">฿{userSummary.total.toFixed(2)}</p>
-                                                        </div>
-                                                        {userSummary.items.length > 0 && (expandedUsers[userSummary.name] ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />)}
-                                                    </div>
-                                                </button>
-                                                
-                                                {userSummary.items.length > 0 && expandedUsers[userSummary.name] && (
-                                                    <div className="px-4 pb-4 animate-fade-in">
-                                                        <div className="pt-3 border-t border-red-200">
-                                                            <p className="text-xs font-semibold text-gray-600 mb-2">รายการที่รับผิดชอบ:</p>
-                                                            <ul className="space-y-1.5">
-                                                                {userSummary.items.map((item, idx) => (
-                                                                    <li key={idx} className="flex justify-between text-xs text-gray-600">
-                                                                        <span className="truncate pr-2">- {item.name}</span>
-                                                                        <span className="whitespace-nowrap">฿{item.amount.toFixed(2)}</span>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
+                                    <div className="space-y-4">
+                                        <div className="grid gap-4">
+                                            {Object.values(dailySummary).map(userSummary => (
+                                                <div key={userSummary.name} className="flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all">
+                                                    <div className="flex justify-between items-center p-4">
+                                                        <button 
+                                                            onClick={() => { if (userSummary.items.length > 0) setExpandedUsers(prev => ({ ...prev, [userSummary.name]: !prev[userSummary.name] })); }}
+                                                            className={`flex flex-1 items-center gap-3 text-left focus:outline-none ${userSummary.items.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                                                        >
+                                                            <div className="bg-red-50 p-2 rounded-full"><Calculator className="text-red-600 w-5 h-5" /></div>
+                                                            <div>
+                                                                <span className="font-medium text-lg text-gray-800">{userSummary.name}</span>
+                                                                <p className="text-sm font-bold text-red-600">฿{userSummary.total.toFixed(2)}</p>
+                                                            </div>
+                                                        </button>
+                                                        
+                                                        <div className="flex items-center gap-1 pl-2">
+                                                            {/* ปุ่มสร้างรูปสลิปของแต่ละบุคคล */}
+                                                            {userSummary.items.length > 0 && (
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleGenerateSlip(userSummary); }}
+                                                                    className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+                                                                    title="สร้างรูปสลิปสรุปยอด"
+                                                                >
+                                                                    {isGeneratingSlip && slipData?.name === userSummary.name ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+                                                                </button>
+                                                            )}
+                                                            
+                                                            <button onClick={() => { if (userSummary.items.length > 0) setExpandedUsers(prev => ({ ...prev, [userSummary.name]: !prev[userSummary.name] })); }} className="p-2 text-gray-400 hover:bg-gray-50 rounded-full transition-colors">
+                                                                {userSummary.items.length > 0 && (expandedUsers[userSummary.name] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />)}
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                )}
+                                                    
+                                                    {userSummary.items.length > 0 && expandedUsers[userSummary.name] && (
+                                                        <div className="px-4 pb-4 bg-gray-50/50 animate-fade-in">
+                                                            <div className="pt-3 border-t border-gray-100">
+                                                                <ul className="space-y-2">
+                                                                    {userSummary.items.map((item, idx) => (
+                                                                        <li key={idx} className="flex justify-between text-sm text-gray-600">
+                                                                            <span className="truncate pr-2">- {item.name}</span>
+                                                                            <span className="whitespace-nowrap font-medium text-gray-800">฿{item.amount.toFixed(2)}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            
+                                            <div className="mt-2 flex justify-between items-center bg-gray-800 text-white p-5 rounded-xl shadow-md">
+                                                <span className="font-medium">ยอดรวมบิลวันนี้</span>
+                                                <span className="font-bold text-2xl">
+                                                    ฿{transactions.filter(t => t.date === currentDate && t.status !== 'deleted').reduce((sum, t) => sum + t.price, 0).toFixed(2)}
+                                                </span>
                                             </div>
-                                        ))}
-                                        
-                                        <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                                            <span className="font-bold text-gray-800">ยอดรวมประจำวัน</span>
-                                            <span className="font-bold text-xl text-gray-800">
-                                                ฿{transactions.filter(t => t.date === currentDate && t.status !== 'deleted').reduce((sum, t) => sum + t.price, 0).toFixed(2)}
-                                            </span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="grid gap-4 animate-fade-in">
-                                        {Object.values(allTimeSummary).map(userSummary => (
-                                            <div key={userSummary.name} className="flex flex-col bg-red-50 rounded-lg border border-red-100 p-4">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="bg-white p-2 rounded-full shadow-sm"><Calculator className="text-red-600 w-5 h-5" /></div>
-                                                        <span className="font-medium text-lg text-gray-800">{userSummary.name}</span>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-sm text-gray-500">ยอดสะสมสุทธิ</p>
-                                                        <p className="font-bold text-xl text-red-600">฿{userSummary.total.toFixed(2)}</p>
+                                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                                        <div className="grid gap-4 animate-fade-in">
+                                            {Object.values(allTimeSummary).map(userSummary => (
+                                                <div key={userSummary.name} className="flex flex-col bg-gray-50 rounded-lg border border-gray-200 p-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="bg-white p-2 rounded-full shadow-sm"><Users className="text-gray-600 w-5 h-5" /></div>
+                                                            <span className="font-medium text-lg text-gray-800">{userSummary.name}</span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-gray-500">ยอดสะสมสุทธิ</p>
+                                                            <p className="font-bold text-xl text-gray-800">฿{userSummary.total.toFixed(2)}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            ))}
+                                            
+                                            <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                                                <span className="font-bold text-gray-800">ยอดรวมสะสมทั้งหมด</span>
+                                                <span className="font-bold text-xl text-red-600">
+                                                    ฿{transactions.filter(t => t.status !== 'deleted').reduce((sum, t) => sum + t.price, 0).toFixed(2)}
+                                                </span>
                                             </div>
-                                        ))}
-                                        
-                                        <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                                            <span className="font-bold text-gray-800">ยอดรวมสะสมทั้งหมด</span>
-                                            <span className="font-bold text-xl text-gray-800">
-                                                ฿{transactions.filter(t => t.status !== 'deleted').reduce((sum, t) => sum + t.price, 0).toFixed(2)}
-                                            </span>
                                         </div>
                                     </div>
                                 )}
@@ -867,6 +916,75 @@
                         )}
                     </main>
 
+                    {/* ซ่อน Template สลิปไว้เพื่อใช้ Html2canvas จับภาพ (จะแสดงผลตอนเรียกฟังก์ชันสร้างสลิป) */}
+                    {slipData && (
+                        <div className="offscreen-slip">
+                            <div ref={slipRef} className="bg-white p-6 w-[360px] font-sans text-gray-800 shadow-lg relative overflow-hidden" style={{ border: '1px solid #e5e7eb' }}>
+                                {/* พื้นหลังลายน้ำ / ตกแต่งใบเสร็จ */}
+                                <div className="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
+                                
+                                <div className="text-center border-b border-dashed border-gray-300 pb-4 mb-4 mt-2">
+                                    <h2 className="text-2xl font-bold text-gray-900 tracking-wider">MAKRO PAYER</h2>
+                                    <p className="text-sm text-gray-500 mt-1">สรุปยอดที่ต้องชำระ (บิลแชร์)</p>
+                                    <p className="text-sm font-medium text-gray-700">{new Date(currentDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                </div>
+                                
+                                <div className="mb-5 flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <span className="text-gray-500 text-sm">ผู้รับผิดชอบ:</span>
+                                    <span className="text-lg font-bold text-red-600">{slipData.name}</span>
+                                </div>
+
+                                <div className="space-y-2.5 mb-6">
+                                    <div className="flex justify-between text-xs font-bold text-gray-400 border-b pb-2 mb-2">
+                                        <span>รายการสินค้า</span>
+                                        <span>จำนวนเงิน (บาท)</span>
+                                    </div>
+                                    {slipData.items.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between text-sm">
+                                            <span className="truncate pr-4 text-gray-700">- {item.name}</span>
+                                            <span className="whitespace-nowrap font-medium text-gray-900">{item.amount.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="border-t border-dashed border-gray-300 pt-4 flex justify-between items-end">
+                                    <span className="text-gray-600 font-bold">ยอดรวมสุทธิ</span>
+                                    <span className="text-2xl font-bold text-red-600">฿{slipData.total.toFixed(2)}</span>
+                                </div>
+                                
+                                <div className="mt-8 text-center text-xs text-gray-400">
+                                    <p>สร้างอัตโนมัติโดยแอป Makro Payer</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal สำหรับแสดงรูปภาพสลิปที่สร้างเสร็จแล้ว */}
+                    {slipImageSrc && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
+                            <div className="relative max-w-sm w-full">
+                                <button 
+                                    onClick={() => setSlipImageSrc(null)}
+                                    className="absolute -top-12 right-0 text-white hover:text-gray-300 p-2"
+                                >
+                                    <X className="w-8 h-8" />
+                                </button>
+                                
+                                <div className="bg-white p-2 rounded-xl shadow-2xl animate-fade-in-scale">
+                                    <img src={slipImageSrc} alt="Slip" className="w-full rounded-lg" />
+                                </div>
+                                
+                                <div className="text-center mt-4 text-white">
+                                    <p className="font-medium flex items-center justify-center gap-2">
+                                        <Download className="w-5 h-5"/> กดค้างที่รูปภาพเพื่อบันทึก
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-1">(หรือแคปหน้าจอนี้เพื่อส่งต่อ)</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Popup ยืนยันการลบ */}
                     {txToDelete && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
                             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm animate-fade-in-scale">
@@ -879,6 +997,83 @@
                                     <button onClick={() => setTxToDelete(null)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition">ยกเลิก</button>
                                     <button onClick={executeDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">ยืนยันลบ</button>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Popup แก้ไขรายการ */}
+                    {editingTx && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
+                            <div className="bg-white rounded-xl shadow-xl p-5 w-full max-w-md animate-fade-in-scale max-h-[90vh] overflow-y-auto">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2"><Edit2 className="w-5 h-5"/> แก้ไขรายการบิล</h3>
+                                <form onSubmit={executeEdit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อสินค้า</label>
+                                        <input type="text" value={editingTx.name} onChange={(e) => setEditingTx({...editingTx, name: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">จำนวน</label>
+                                            <input type="number" value={editingTx.quantity} onChange={(e) => setEditingTx({...editingTx, quantity: e.target.value})} min="0.001" step="0.001" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">ราคา/หน่วย</label>
+                                            <input type="number" value={editingTx.unitPrice} onChange={(e) => setEditingTx({...editingTx, unitPrice: e.target.value})} min="0" step="0.01" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+                                            <select value={editingTx.category || 'อื่นๆ'} onChange={(e) => setEditingTx({...editingTx, category: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                                {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ</label>
+                                            <select 
+                                                value={editingTx.payerId.includes(',') ? 'custom' : editingTx.payerId}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === 'custom' && customPayers.length === 0) setCustomPayers(users.filter(u => u.isRegular).map(u => String(u.id)));
+                                                    setEditingTx({...editingTx, payerId: val});
+                                                }}
+                                                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                            >
+                                                <option value="all">หารเท่า</option>
+                                                <option value="custom">ระบุเอง...</option>
+                                                {users.map(u => <option key={u.id} value={u.id}>เฉพาะ: {u.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {(editingTx.payerId === 'custom' || editingTx.payerId.includes(',')) && (
+                                        <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">เลือกคนที่ต้องการนำมาหาร:</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {users.map(u => (
+                                                    <label key={u.id} className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm hover:bg-gray-50 transition">
+                                                        <input 
+                                                            type="checkbox" checked={customPayers.includes(String(u.id))}
+                                                            onChange={(e) => {
+                                                                const strId = String(u.id);
+                                                                if (e.target.checked) setCustomPayers([...customPayers, strId]);
+                                                                else setCustomPayers(customPayers.filter(id => id !== strId));
+                                                            }}
+                                                            className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                                        />
+                                                        <span className="text-sm text-gray-800">{u.name}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-3 pt-2 border-t mt-4">
+                                        <button type="button" onClick={() => setEditingTx(null)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition">ยกเลิก</button>
+                                        <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">บันทึกแก้ไข</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     )}
