@@ -19,8 +19,10 @@
         /* Animations */
         @keyframes bounce-short { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
         .animate-bounce-short { animation: bounce-short 2s ease-in-out infinite; }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.2s ease-out; }
+        @keyframes fade-in-scale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-fade-in-scale { animation: fade-in-scale 0.2s ease-out; }
         
         /* ซ่อน Scrollbar แต่ยังเลื่อนได้ */
         ::-webkit-scrollbar { width: 6px; }
@@ -46,7 +48,7 @@
         const Calculator = ({className}) => <IconBase className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></IconBase>;
         const Plus = ({className}) => <IconBase className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></IconBase>;
         const Trash2 = ({className}) => <IconBase className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></IconBase>;
-        const Calendar = ({className}) => <IconBase className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></IconBase>;
+        const CalendarIcon = ({className}) => <IconBase className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></IconBase>;
         const CheckCircle2 = ({className}) => <IconBase className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></IconBase>;
         const RefreshCw = ({className}) => <IconBase className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></IconBase>;
         const Save = ({className}) => <IconBase className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></IconBase>;
@@ -58,6 +60,82 @@
         const Receipt = ({className}) => <IconBase className={className}><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6"/><path d="M16 12h-8"/><path d="M16 16h-8"/></IconBase>;
         const ChevronDown = ({className}) => <IconBase className={className}><path d="m6 9 6 6 6-6"/></IconBase>;
         const ChevronUp = ({className}) => <IconBase className={className}><path d="m18 15-6-6-6 6"/></IconBase>;
+        const ChevronLeft = ({className}) => <IconBase className={className}><path d="m15 18-6-6 6-6"/></IconBase>;
+        const ChevronRight = ({className}) => <IconBase className={className}><path d="m9 18 6-6-6-6"/></IconBase>;
+
+        // --- คอมโพเนนต์ปฏิทินแบบ Custom ---
+        function CustomCalendar({ selectedDate, onChange, markedDates, onClose }) {
+            const [currentMonth, setCurrentMonth] = useState(() => {
+                const [y, m, d] = selectedDate.split('-');
+                return new Date(y, parseInt(m) - 1, 1);
+            });
+
+            const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+            const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+
+            const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+            const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+            const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+
+            const renderDays = () => {
+                const days = [];
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                    days.push(<div key={`empty-${i}`} className="w-10 h-10"></div>);
+                }
+                
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const dStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                    const isSelected = dStr === selectedDate;
+                    const hasMark = markedDates.has(dStr);
+                    const isToday = dStr === todayStr;
+
+                    days.push(
+                        <div key={i} className="flex justify-center items-center relative w-10 h-10">
+                            <button 
+                                onClick={() => { onChange(dStr); onClose(); }}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors ${
+                                    isSelected 
+                                        ? 'bg-red-600 text-white font-bold shadow-md' 
+                                        : isToday 
+                                            ? 'bg-red-50 text-red-600 font-bold' 
+                                            : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                {i}
+                            </button>
+                            {/* จุดมาร์คสีแดงใต้ตัวเลข */}
+                            {hasMark && !isSelected && <span className="absolute bottom-0 w-1.5 h-1.5 bg-red-400 rounded-full"></span>}
+                            {hasMark && isSelected && <span className="absolute bottom-0 w-1.5 h-1.5 bg-white rounded-full shadow-sm"></span>}
+                        </div>
+                    );
+                }
+                return days;
+            };
+
+            return (
+                <div className="bg-white p-5 rounded-2xl shadow-xl border border-gray-100 w-full max-w-[320px] mx-auto animate-fade-in-scale">
+                    <div className="flex justify-between items-center mb-4">
+                        <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600"><ChevronLeft className="w-5 h-5" /></button>
+                        <div className="font-bold text-lg text-gray-800">{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear() + 543}</div>
+                        <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600"><ChevronRight className="w-5 h-5" /></button>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 text-center mb-3">
+                        {['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => <div key={d} className="text-xs font-semibold text-gray-400">{d}</div>)}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 place-items-center">
+                        {renderDays()}
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400"></span> มีบันทึก</div>
+                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-600"></span> วันที่เลือก</div>
+                    </div>
+                </div>
+            );
+        }
 
         // --- App Component ---
         function App() {
@@ -83,6 +161,8 @@
             useEffect(() => { localStorage.setItem('makroTransactions', JSON.stringify(transactions)); }, [transactions]);
             
             const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+            const [showCalendar, setShowCalendar] = useState(false); // ควบคุมการแสดงปฏิทิน
+            
             const [itemName, setItemName] = useState('');
             const [quantity, setQuantity] = useState('1'); 
             const [unitPrice, setUnitPrice] = useState(''); 
@@ -97,6 +177,16 @@
             const [searchQuery, setSearchQuery] = useState('');
             const [historyData, setHistoryData] = useState([]);
             const [expandedUsers, setExpandedUsers] = useState({});
+            const [summaryView, setSummaryView] = useState('daily'); // เพิ่ม State ควบคุมหน้าสรุปยอด
+
+            // ดึงวันที่ที่มีการบันทึกข้อมูล (เพื่อส่งไปแสดงจุดสีแดงในปฏิทิน)
+            const markedDates = useMemo(() => {
+                const marks = new Set();
+                transactions.forEach(t => {
+                    if (t.status !== 'deleted') marks.add(t.date);
+                });
+                return marks;
+            }, [transactions]);
 
             const calculatedTotal = useMemo(() => {
                 const q = parseFloat(quantity) || 0;
@@ -203,6 +293,40 @@
                 });
                 return summary;
             }, [transactions, users, currentDate]);
+
+            // คำนวณยอดสะสมทั้งหมด (ทุกวันรวมกัน)
+            const allTimeSummary = useMemo(() => {
+                const summary = {};
+                users.forEach(u => summary[u.id] = { name: u.name, total: 0 });
+
+                const validTransactions = transactions.filter(t => t.status !== 'deleted');
+                const regularUsers = users.filter(u => u.isRegular);
+                const regularUserCount = regularUsers.length;
+
+                validTransactions.forEach(t => {
+                    const pId = String(t.payerId || 'all'); 
+                    if (pId === 'all') {
+                        if (regularUserCount > 0) {
+                            const splitAmount = t.price / regularUserCount;
+                            regularUsers.forEach(ru => {
+                                if (summary[ru.id]) summary[ru.id].total += splitAmount;
+                            });
+                        }
+                    } else if (pId.includes(',')) {
+                        const customIds = pId.split(',');
+                        const validIds = customIds.filter(id => summary[id]);
+                        if (validIds.length > 0) {
+                            const splitAmount = t.price / validIds.length;
+                            validIds.forEach(id => {
+                                if (summary[id]) summary[id].total += splitAmount;
+                            });
+                        }
+                    } else {
+                        if (summary[pId]) summary[pId].total += t.price;
+                    }
+                });
+                return summary;
+            }, [transactions, users]);
 
             const getPayerName = (id, customArr = []) => {
                 if (!id) return 'ไม่ทราบ';
@@ -398,16 +522,39 @@
                     </header>
 
                     <main className="max-w-2xl mx-auto p-4 mt-2">
-                        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4 flex items-center gap-3">
-                            <Calendar className="text-gray-500 w-5 h-5" />
-                            <input 
-                                type="date" value={currentDate} onChange={(e) => setCurrentDate(e.target.value)}
-                                className="border-none focus:ring-0 text-lg font-medium text-gray-700 p-0 w-full outline-none bg-transparent"
-                            />
+                        
+                        {/* Custom Date Selector Trigger */}
+                        <div className="relative mb-4">
+                            <button 
+                                onClick={() => setShowCalendar(true)} 
+                                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between w-full hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <CalendarIcon className="text-gray-500 w-5 h-5" />
+                                    <span className="text-lg font-medium text-gray-700">
+                                        {new Date(currentDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </span>
+                                </div>
+                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                            </button>
                         </div>
 
+                        {/* Calendar Modal Overlay */}
+                        {showCalendar && (
+                            <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowCalendar(false)}>
+                                <div onClick={e => e.stopPropagation()} className="w-full">
+                                    <CustomCalendar 
+                                        selectedDate={currentDate} 
+                                        onChange={setCurrentDate} 
+                                        markedDates={markedDates} 
+                                        onClose={() => setShowCalendar(false)} 
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         {activeTab === 'record' && (
-                            <div className="space-y-6">
+                            <div className="space-y-6 animate-fade-in">
                                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
                                     <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">เพิ่มรายการซื้อ</h2>
                                     <form onSubmit={handleAddTransactionLocal} className="space-y-4">
@@ -514,51 +661,43 @@
                         )}
 
                         {activeTab === 'bills' && (
-                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
-                                <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center gap-2"><Receipt className="w-5 h-5 text-red-600" /> ประวัติการซื้อทั้งหมด</h2>
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 min-h-[400px] animate-fade-in">
+                                <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center gap-2"><Receipt className="w-5 h-5 text-red-600" /> ประวัติการซื้อวันที่เลือก</h2>
                                 {(() => {
-                                    const savedTxs = transactions.filter(t => t.status === 'saved');
-                                    if (savedTxs.length === 0) return <p className="text-center text-gray-500 py-4">ยังไม่มีประวัติบิลที่บันทึกไว้</p>;
+                                    // กรองเอาเฉพาะรายการที่บันทึกแล้วและตรงกับวันที่เลือก
+                                    const savedTxs = transactions.filter(t => t.status === 'saved' && t.date === currentDate);
+                                    if (savedTxs.length === 0) return <p className="text-center text-gray-500 py-4">ไม่มีประวัติบิลของวันที่ {new Date(currentDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>;
 
-                                    const grouped = savedTxs.reduce((acc, tx) => {
-                                        if (!acc[tx.date]) acc[tx.date] = [];
-                                        acc[tx.date].push(tx);
-                                        return acc;
-                                    }, {});
+                                    const dailyTotal = savedTxs.reduce((sum, t) => sum + t.price, 0);
 
-                                    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
-
-                                    return sortedDates.map(date => {
-                                        const dailyTotal = grouped[date].reduce((sum, t) => sum + t.price, 0);
-                                        return (
-                                            <div key={date} className="mb-6">
-                                                <div className="flex justify-between items-center bg-red-50 p-3 rounded-t-lg border border-red-100">
-                                                    <span className="font-semibold text-gray-800">{new Date(date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                                    <span className="font-bold text-red-600">฿{dailyTotal.toFixed(2)}</span>
-                                                </div>
-                                                <div className="border border-t-0 border-gray-200 rounded-b-lg p-3 space-y-3 bg-white">
-                                                    {grouped[date].map((t, idx) => (
-                                                        <div key={t.id || idx} className="flex justify-between items-center text-sm border-b border-gray-50 last:border-0 pb-2 last:pb-0">
-                                                            <div className="flex-1">
-                                                                <p className="font-medium text-gray-800">{t.name}</p>
-                                                                <p className="text-xs text-gray-500 mt-0.5">{t.quantity} x ฿{t.unitPrice.toFixed(2)} • <span className="text-red-600 font-medium">{t.payerName}</span></p>
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="font-semibold text-gray-700">฿{t.price.toFixed(2)}</span>
-                                                                <button onClick={() => confirmDeleteSavedTransaction(t)} className="text-gray-300 hover:text-red-500 p-1 transition" title="ลบรายการนี้ออกจาก Sheet"><Trash2 className="w-4 h-4" /></button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                    return (
+                                        <div className="mb-6">
+                                            <div className="flex justify-between items-center bg-red-50 p-3 rounded-t-lg border border-red-100">
+                                                <span className="font-semibold text-gray-800">{new Date(currentDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                                <span className="font-bold text-red-600">฿{dailyTotal.toFixed(2)}</span>
                                             </div>
-                                        );
-                                    });
+                                            <div className="border border-t-0 border-gray-200 rounded-b-lg p-3 space-y-3 bg-white">
+                                                {savedTxs.map((t, idx) => (
+                                                    <div key={t.id || idx} className="flex justify-between items-center text-sm border-b border-gray-50 last:border-0 pb-2 last:pb-0">
+                                                        <div className="flex-1">
+                                                            <p className="font-medium text-gray-800">{t.name}</p>
+                                                            <p className="text-xs text-gray-500 mt-0.5">{t.quantity} x ฿{t.unitPrice.toFixed(2)} • <span className="text-red-600 font-medium">{t.payerName}</span></p>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="font-semibold text-gray-700">฿{t.price.toFixed(2)}</span>
+                                                            <button onClick={() => confirmDeleteSavedTransaction(t)} className="text-gray-300 hover:text-red-500 p-1 transition" title="ลบรายการนี้ออกจาก Sheet"><Trash2 className="w-4 h-4" /></button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
                                 })()}
                             </div>
                         )}
 
                         {activeTab === 'history' && (
-                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 min-h-[400px] animate-fade-in">
                                 <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center gap-2"><LineChart className="w-5 h-5 text-red-600" /> ประวัติราคาสินค้า</h2>
                                 <div className="relative mb-6">
                                     <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
@@ -587,60 +726,103 @@
                         )}
 
                         {activeTab === 'summary' && (
-                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                                <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">สรุปยอดประจำวัน</h2>
-                                <div className="grid gap-4">
-                                    {Object.values(dailySummary).map(userSummary => (
-                                        <div key={userSummary.name} className="flex flex-col bg-red-50 rounded-lg border border-red-100 overflow-hidden transition-all">
-                                            <button 
-                                                onClick={() => {
-                                                    if (userSummary.items.length > 0) setExpandedUsers(prev => ({ ...prev, [userSummary.name]: !prev[userSummary.name] }));
-                                                }}
-                                                className={`flex justify-between items-center p-4 w-full text-left focus:outline-none ${userSummary.items.length > 0 ? 'cursor-pointer hover:bg-red-100/50' : 'cursor-default'}`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="bg-white p-2 rounded-full shadow-sm"><Calculator className="text-red-600 w-5 h-5" /></div>
-                                                    <span className="font-medium text-lg text-gray-800">{userSummary.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="text-right">
-                                                        <p className="text-sm text-gray-500">ต้องจ่าย</p>
-                                                        <p className="font-bold text-xl text-red-600">฿{userSummary.total.toFixed(2)}</p>
-                                                    </div>
-                                                    {userSummary.items.length > 0 && (expandedUsers[userSummary.name] ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />)}
-                                                </div>
-                                            </button>
-                                            
-                                            {userSummary.items.length > 0 && expandedUsers[userSummary.name] && (
-                                                <div className="px-4 pb-4 animate-fade-in">
-                                                    <div className="pt-3 border-t border-red-200">
-                                                        <p className="text-xs font-semibold text-gray-600 mb-2">รายการที่รับผิดชอบ:</p>
-                                                        <ul className="space-y-1.5">
-                                                            {userSummary.items.map((item, idx) => (
-                                                                <li key={idx} className="flex justify-between text-xs text-gray-600">
-                                                                    <span className="truncate pr-2">- {item.name}</span>
-                                                                    <span className="whitespace-nowrap">฿{item.amount.toFixed(2)}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                    
-                                    <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                                        <span className="font-bold text-gray-800">ยอดรวมทั้งหมดวันนี้</span>
-                                        <span className="font-bold text-xl text-gray-800">
-                                            ฿{transactions.filter(t => t.date === currentDate && t.status !== 'deleted').reduce((sum, t) => sum + t.price, 0).toFixed(2)}
-                                        </span>
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+                                <div className="flex justify-between items-center mb-4 border-b pb-2">
+                                    <h2 className="text-lg font-semibold text-gray-800">สรุปยอด</h2>
+                                    <div className="flex bg-gray-100 rounded-lg p-1">
+                                        <button 
+                                            onClick={() => setSummaryView('daily')}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${summaryView === 'daily' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            ประจำวัน
+                                        </button>
+                                        <button 
+                                            onClick={() => setSummaryView('allTime')}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${summaryView === 'allTime' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            สะสมทั้งหมด
+                                        </button>
                                     </div>
                                 </div>
+
+                                {summaryView === 'daily' ? (
+                                    <div className="grid gap-4">
+                                        {Object.values(dailySummary).map(userSummary => (
+                                            <div key={userSummary.name} className="flex flex-col bg-red-50 rounded-lg border border-red-100 overflow-hidden transition-all">
+                                                <button 
+                                                    onClick={() => {
+                                                        if (userSummary.items.length > 0) setExpandedUsers(prev => ({ ...prev, [userSummary.name]: !prev[userSummary.name] }));
+                                                    }}
+                                                    className={`flex justify-between items-center p-4 w-full text-left focus:outline-none ${userSummary.items.length > 0 ? 'cursor-pointer hover:bg-red-100/50' : 'cursor-default'}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-white p-2 rounded-full shadow-sm"><Calculator className="text-red-600 w-5 h-5" /></div>
+                                                        <span className="font-medium text-lg text-gray-800">{userSummary.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-gray-500">ต้องจ่าย</p>
+                                                            <p className="font-bold text-xl text-red-600">฿{userSummary.total.toFixed(2)}</p>
+                                                        </div>
+                                                        {userSummary.items.length > 0 && (expandedUsers[userSummary.name] ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />)}
+                                                    </div>
+                                                </button>
+                                                
+                                                {userSummary.items.length > 0 && expandedUsers[userSummary.name] && (
+                                                    <div className="px-4 pb-4 animate-fade-in">
+                                                        <div className="pt-3 border-t border-red-200">
+                                                            <p className="text-xs font-semibold text-gray-600 mb-2">รายการที่รับผิดชอบ:</p>
+                                                            <ul className="space-y-1.5">
+                                                                {userSummary.items.map((item, idx) => (
+                                                                    <li key={idx} className="flex justify-between text-xs text-gray-600">
+                                                                        <span className="truncate pr-2">- {item.name}</span>
+                                                                        <span className="whitespace-nowrap">฿{item.amount.toFixed(2)}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                        
+                                        <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                                            <span className="font-bold text-gray-800">ยอดรวมประจำวัน</span>
+                                            <span className="font-bold text-xl text-gray-800">
+                                                ฿{transactions.filter(t => t.date === currentDate && t.status !== 'deleted').reduce((sum, t) => sum + t.price, 0).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-4 animate-fade-in">
+                                        {Object.values(allTimeSummary).map(userSummary => (
+                                            <div key={userSummary.name} className="flex flex-col bg-red-50 rounded-lg border border-red-100 p-4">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-white p-2 rounded-full shadow-sm"><Calculator className="text-red-600 w-5 h-5" /></div>
+                                                        <span className="font-medium text-lg text-gray-800">{userSummary.name}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-sm text-gray-500">ยอดสะสมสุทธิ</p>
+                                                        <p className="font-bold text-xl text-red-600">฿{userSummary.total.toFixed(2)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        
+                                        <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                                            <span className="font-bold text-gray-800">ยอดรวมสะสมทั้งหมด</span>
+                                            <span className="font-bold text-xl text-gray-800">
+                                                ฿{transactions.filter(t => t.status !== 'deleted').reduce((sum, t) => sum + t.price, 0).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
                         {activeTab === 'settings' && (
-                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-6 animate-fade-in">
                                 <div>
                                     <h2 className="text-lg font-semibold mb-2 text-blue-800 flex items-center gap-2"><Save className="w-5 h-5"/> เชื่อมต่อ Google Sheets</h2>
                                     <div className="flex flex-col gap-2">
@@ -686,8 +868,8 @@
                     </main>
 
                     {txToDelete && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
-                            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
+                            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm animate-fade-in-scale">
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">ยืนยันการลบรายการ</h3>
                                 <p className="text-sm text-gray-600 mb-6">
                                     คุณต้องการลบ <strong>"{txToDelete.name}"</strong> (฿{txToDelete.price.toFixed(2)}) ออกจากระบบใช่หรือไม่?<br/>
