@@ -165,28 +165,37 @@
             const [itemName, setItemName] = useState('');
             const [quantity, setQuantity] = useState('1'); 
             const [unitPrice, setUnitPrice] = useState(''); 
-            const [payer, setPayer] = useState('all');
+            
+            const [payerConfig, setPayerConfig] = useState({ isAll: true, payers: [] });
+            
             const [category, setCategory] = useState('อาหาร/ของสด'); 
 
             const [newUserName, setNewUserName] = useState('');
             const [isNewUserRegular, setIsNewUserRegular] = useState(true);
 
-            const [customPayers, setCustomPayers] = useState([]);
             const [txToDelete, setTxToDelete] = useState(null);
+            
             const [editingTx, setEditingTx] = useState(null); 
+            const [editPayerConfig, setEditPayerConfig] = useState({ isAll: true, payers: [] });
 
             const [searchQuery, setSearchQuery] = useState('');
             const [historyData, setHistoryData] = useState([]);
             const [expandedUsers, setExpandedUsers] = useState({});
             const [summaryView, setSummaryView] = useState('daily'); 
 
-            // ตัวแปรสำหรับระบบ Slip
             const [slipData, setSlipData] = useState(null);
             const [slipImageSrc, setSlipImageSrc] = useState(null); 
             const [isGeneratingSlip, setIsGeneratingSlip] = useState(false);
             const slipRef = useRef(null);
 
             const categoriesList = ['อาหาร/ของสด', 'ของใช้ในบ้าน', 'เครื่องดื่ม/ขนม', 'อื่นๆ'];
+
+            // อัปเดตรายชื่อ payers ใน payerConfig เมื่อ users เปลี่ยนแปลง
+            useEffect(() => {
+                if (payerConfig.isAll) {
+                   setPayerConfig({ isAll: true, payers: users.filter(u => u.isRegular).map(u => String(u.id)) });
+                }
+            }, [users]);
 
             const markedDates = useMemo(() => {
                 const marks = new Set();
@@ -208,7 +217,11 @@
                 try {
                     const resUsers = await fetch(`${scriptUrl}?action=getUsers`);
                     const dataUsers = await resUsers.json();
-                    if (dataUsers.status === 'success' && dataUsers.users) setUsers(dataUsers.users);
+                    if (dataUsers.status === 'success' && dataUsers.users) {
+                        setUsers(dataUsers.users);
+                        // รีเซ็ตคนหารให้ตรงกับข้อมูลใหม่
+                        setPayerConfig({ isAll: true, payers: dataUsers.users.filter(u => u.isRegular).map(u => String(u.id)) });
+                    }
 
                     const resHistory = await fetch(`${scriptUrl}?action=getHistory`);
                     const dataHistory = await resHistory.json();
@@ -337,6 +350,44 @@
                 return user ? user.name : 'ไม่ทราบ';
             };
 
+            // ฟังก์ชันสำหรับจัดการ Checkbox ของฟอร์มเพิ่มรายการ
+            const handleAddPayerChange = (id, checked) => {
+                let newPayers = [...payerConfig.payers];
+                if (checked) {
+                    newPayers.push(id);
+                } else {
+                    newPayers = newPayers.filter(pId => pId !== id);
+                }
+                setPayerConfig({ isAll: false, payers: newPayers });
+            };
+
+            const handleAddAllPayerChange = (checked) => {
+                if (checked) {
+                    setPayerConfig({ isAll: true, payers: users.filter(u => u.isRegular).map(u => String(u.id)) });
+                } else {
+                    setPayerConfig({ isAll: false, payers: [] });
+                }
+            };
+
+            // ฟังก์ชันสำหรับจัดการ Checkbox ของฟอร์มแก้ไขรายการ
+            const handleEditPayerChange = (id, checked) => {
+                let newPayers = [...editPayerConfig.payers];
+                if (checked) {
+                    newPayers.push(id);
+                } else {
+                    newPayers = newPayers.filter(pId => pId !== id);
+                }
+                setEditPayerConfig({ isAll: false, payers: newPayers });
+            };
+
+            const handleEditAllPayerChange = (checked) => {
+                if (checked) {
+                    setEditPayerConfig({ isAll: true, payers: users.filter(u => u.isRegular).map(u => String(u.id)) });
+                } else {
+                    setEditPayerConfig({ isAll: false, payers: [] });
+                }
+            };
+
             const handleItemNameChange = (e) => {
                 const val = e.target.value;
                 setItemName(val);
@@ -347,14 +398,22 @@
                 e.preventDefault();
                 if (!itemName || !unitPrice || isNaN(unitPrice) || !quantity || isNaN(quantity)) return;
 
-                if (payer === 'custom' && customPayers.length === 0) {
+                if (!payerConfig.isAll && payerConfig.payers.length === 0) {
                     alert('กรุณาเลือกผู้ที่ต้องหารอย่างน้อย 1 คน'); return;
                 }
 
-                let finalPayerId = payer;
-                let finalPayerName = getPayerName(payer, customPayers);
+                let finalPayerId = 'all';
+                let finalPayerName = getPayerName('all');
 
-                if (payer === 'custom') finalPayerId = customPayers.join(',');
+                if (!payerConfig.isAll) {
+                    if (payerConfig.payers.length === 1) {
+                        finalPayerId = payerConfig.payers[0];
+                        finalPayerName = getPayerName(finalPayerId);
+                    } else {
+                        finalPayerId = payerConfig.payers.join(',');
+                        finalPayerName = getPayerName('custom', payerConfig.payers);
+                    }
+                }
 
                 const newTx = {
                     id: Date.now().toString(), date: currentDate, name: itemName.trim(),
@@ -366,7 +425,9 @@
                 setItemCatalog(prev => ({ ...prev, [newTx.name]: { lastPrice: newTx.unitPrice, lastDate: newTx.date } }));
                 
                 setItemName(''); setQuantity('1'); setUnitPrice('');
-                setPayer('all'); setCategory('อาหาร/ของสด'); setCustomPayers([]);
+                setCategory('อาหาร/ของสด'); 
+                // รีเซ็ตเป็น All (ติ๊กเฉพาะ isRegular)
+                setPayerConfig({ isAll: true, payers: users.filter(u => u.isRegular).map(u => String(u.id)) });
             };
 
             const handleSaveAllToSheet = async () => {
@@ -409,31 +470,49 @@
                 } finally { setIsSyncing(false); }
             };
 
+            // เตรียมข้อมูลก่อนเปิดฟอร์มแก้ไข
+            const openEditModal = (tx) => {
+                setEditingTx({...tx});
+                if (tx.payerId === 'all') {
+                    setEditPayerConfig({ isAll: true, payers: users.filter(u => u.isRegular).map(u => String(u.id)) });
+                } else if (tx.payerId.includes(',')) {
+                    setEditPayerConfig({ isAll: false, payers: tx.payerId.split(',') });
+                } else {
+                    setEditPayerConfig({ isAll: false, payers: [tx.payerId] });
+                }
+            };
+
             const executeEdit = async (e) => {
                 e.preventDefault();
                 if (!editingTx) return;
 
-                let finalPayerId = editingTx.payerId;
-                let finalPayerName = editingTx.payerName;
-                
-                if (finalPayerId === 'custom') {
-                    if (customPayers.length === 0) { alert('กรุณาเลือกผู้ที่ต้องหารอย่างน้อย 1 คน'); return; }
-                    finalPayerId = customPayers.join(',');
-                    finalPayerName = getPayerName('custom', customPayers);
-                } else {
-                    finalPayerName = getPayerName(finalPayerId);
+                if (!editPayerConfig.isAll && editPayerConfig.payers.length === 0) {
+                    alert('กรุณาเลือกผู้ที่ต้องหารอย่างน้อย 1 คน'); return;
+                }
+
+                let finalPayerId = 'all';
+                let finalPayerName = getPayerName('all');
+
+                if (!editPayerConfig.isAll) {
+                    if (editPayerConfig.payers.length === 1) {
+                        finalPayerId = editPayerConfig.payers[0];
+                        finalPayerName = getPayerName(finalPayerId);
+                    } else {
+                        finalPayerId = editPayerConfig.payers.join(',');
+                        finalPayerName = getPayerName('custom', editPayerConfig.payers);
+                    }
                 }
 
                 const updatedTx = {
                     ...editingTx,
                     price: Math.round((parseFloat(editingTx.quantity) * parseFloat(editingTx.unitPrice)) * 4) / 4,
-                    payerId: finalPayerId, payerName: finalPayerName
+                    payerId: String(finalPayerId), payerName: String(finalPayerName)
                 };
 
                 const oldTx = transactions.find(t => t.id === updatedTx.id);
 
                 setTransactions(transactions.map(t => t.id === updatedTx.id ? updatedTx : t));
-                setEditingTx(null); setCustomPayers([]);
+                setEditingTx(null); 
 
                 if (!scriptUrl || oldTx.status === 'pending') return; 
 
@@ -604,52 +683,51 @@
                                             </div>
                                         )}
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
-                                                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white text-sm">
-                                                    {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
-                                                </select>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ</label>
-                                                <select 
-                                                    value={payer}
-                                                    onChange={(e) => {
-                                                        setPayer(e.target.value);
-                                                        if (e.target.value === 'custom' && customPayers.length === 0) setCustomPayers(users.filter(u => u.isRegular).map(u => String(u.id)));
-                                                    }}
-                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white text-sm"
-                                                >
-                                                    <option value="all">หารเท่า</option>
-                                                    <option value="custom">ระบุเอง...</option>
-                                                    {users.map(u => <option key={u.id} value={u.id}>เฉพาะ: {u.name}</option>)}
-                                                </select>
-                                            </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+                                            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white text-sm mb-4">
+                                                {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
                                         </div>
 
-                                        {payer === 'custom' && (
-                                            <div className="p-3 bg-red-50 border border-red-100 rounded-lg animate-fade-in">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">เลือกคนที่ต้องการนำมาหาร:</label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {users.map(u => (
-                                                        <label key={u.id} className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm hover:bg-gray-50 transition">
+                                        {/* ส่วนเลือกผู้รับผิดชอบแบบ Checkbox */}
+                                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
+                                                <label className="text-sm font-bold text-gray-800">ผู้รับผิดชอบ</label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={payerConfig.isAll}
+                                                        onChange={(e) => handleAddAllPayerChange(e.target.checked)}
+                                                        className="w-4 h-4 text-red-600 focus:ring-red-500 rounded border-gray-300 cursor-pointer"
+                                                    />
+                                                    <span className="text-sm font-medium text-gray-700">หารทุกคน (All)</span>
+                                                </label>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {users.map(u => {
+                                                    // ตรวจสอบว่าในโหมด All คนนี้โดนติ๊กไหม (เฉพาะ isRegular)
+                                                    const isCheckedInAllMode = payerConfig.isAll && u.isRegular;
+                                                    // ตรวจสอบว่าในโหมดระบุเอง คนนี้โดนติ๊กไหม
+                                                    const isCheckedInCustomMode = !payerConfig.isAll && payerConfig.payers.includes(String(u.id));
+                                                    const isChecked = isCheckedInAllMode || isCheckedInCustomMode;
+
+                                                    return (
+                                                        <label key={u.id} className={`flex items-center gap-2 p-2 rounded-md border transition-colors cursor-pointer ${payerConfig.isAll ? 'bg-gray-100 border-gray-200 opacity-60' : 'bg-white border-gray-300 hover:bg-gray-50 shadow-sm'}`}>
                                                             <input 
-                                                                type="checkbox" checked={customPayers.includes(String(u.id))}
-                                                                onChange={(e) => {
-                                                                    const strId = String(u.id);
-                                                                    if (e.target.checked) setCustomPayers([...customPayers, strId]);
-                                                                    else setCustomPayers(customPayers.filter(id => id !== strId));
-                                                                }}
-                                                                className="w-4 h-4 text-red-600 focus:ring-red-500 rounded border-gray-300 cursor-pointer"
+                                                                type="checkbox" 
+                                                                checked={isChecked}
+                                                                onChange={(e) => handleAddPayerChange(String(u.id), e.target.checked)}
+                                                                disabled={payerConfig.isAll}
+                                                                className="w-4 h-4 text-red-600 focus:ring-red-500 rounded border-gray-300 cursor-pointer disabled:bg-gray-200"
                                                             />
                                                             <span className="text-sm text-gray-800">{u.name}</span>
                                                         </label>
-                                                    ))}
-                                                </div>
+                                                    );
+                                                })}
                                             </div>
-                                        )}
+                                        </div>
 
                                         <button type="submit" className="w-full bg-red-50 hover:bg-red-100 text-red-700 font-medium p-3 rounded-lg border border-red-200 transition flex items-center justify-center gap-2 mt-2">
                                             <Plus className="w-5 h-5" /> เพิ่มลงรายการด้านล่าง
@@ -723,11 +801,7 @@
                                                             </div>
                                                             <div className="flex items-center gap-1">
                                                                 <span className="font-semibold text-gray-700 mr-2">฿{t.price.toFixed(2)}</span>
-                                                                <button onClick={() => {
-                                                                    setEditingTx({...t});
-                                                                    if (t.payerId.includes(',')) setCustomPayers(t.payerId.split(','));
-                                                                    else if (t.payerId === 'all') setCustomPayers([]);
-                                                                }} className="text-blue-400 hover:text-blue-600 p-1 transition" title="แก้ไขรายการนี้"><Edit2 className="w-4 h-4" /></button>
+                                                                <button onClick={() => openEditModal(t)} className="text-blue-400 hover:text-blue-600 p-1 transition" title="แก้ไขรายการนี้"><Edit2 className="w-4 h-4" /></button>
                                                                 <button onClick={() => confirmDeleteSavedTransaction(t)} className="text-gray-300 hover:text-red-500 p-1 transition" title="ลบรายการนี้ออกจาก Sheet"><Trash2 className="w-4 h-4" /></button>
                                                             </div>
                                                         </div>
@@ -940,7 +1014,6 @@
                                         const [intPart, decPart] = item.amount.toFixed(2).split('.');
                                         return (
                                             <div key={idx} className="flex justify-between text-sm gap-2 items-start mb-2">
-                                                {/* ปรับเป็น items-start และเพิ่ม padding-bottom (pb-2) ให้กล่องข้อความสูงขึ้นกันสระตกขอบ */}
                                                 <span className="truncate flex-1 text-gray-700 min-w-0 pb-2 leading-normal">- {item.name}</span>
                                                 <span className="whitespace-nowrap font-medium text-gray-900 shrink-0 pb-2 leading-normal">
                                                     {intPart}.<sup className="text-[10px] top-[-0.3em] relative">{decPart}</sup>
@@ -969,7 +1042,7 @@
                         </div>
                     )}
 
-                    {/* Modal แสดงสลิปที่แก้เรื่องล้นจอ (เพิ่มระบบ Scrollable) */}
+                    {/* Modal แสดงสลิป */}
                     {slipImageSrc && (
                         <div className="fixed inset-0 bg-black/80 z-[100] p-4 overflow-y-auto backdrop-blur-sm flex flex-col">
                             <div className="relative max-w-sm w-full m-auto py-10">
@@ -1032,52 +1105,48 @@
                                         </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
-                                            <select value={editingTx.category || 'อื่นๆ'} onChange={(e) => setEditingTx({...editingTx, category: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                                                {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ</label>
-                                            <select 
-                                                value={editingTx.payerId.includes(',') ? 'custom' : editingTx.payerId}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    if (val === 'custom' && customPayers.length === 0) setCustomPayers(users.filter(u => u.isRegular).map(u => String(u.id)));
-                                                    setEditingTx({...editingTx, payerId: val});
-                                                }}
-                                                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                            >
-                                                <option value="all">หารเท่า</option>
-                                                <option value="custom">ระบุเอง...</option>
-                                                {users.map(u => <option key={u.id} value={u.id}>เฉพาะ: {u.name}</option>)}
-                                            </select>
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+                                        <select value={editingTx.category || 'อื่นๆ'} onChange={(e) => setEditingTx({...editingTx, category: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                            {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
                                     </div>
+                                    
+                                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
+                                            <label className="text-sm font-bold text-gray-800">ผู้รับผิดชอบ</label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={editPayerConfig.isAll}
+                                                    onChange={(e) => handleEditAllPayerChange(e.target.checked)}
+                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded border-gray-300 cursor-pointer"
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">หารทุกคน (All)</span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {users.map(u => {
+                                                const isCheckedInAllMode = editPayerConfig.isAll && u.isRegular;
+                                                const isCheckedInCustomMode = !editPayerConfig.isAll && editPayerConfig.payers.includes(String(u.id));
+                                                const isChecked = isCheckedInAllMode || isCheckedInCustomMode;
 
-                                    {(editingTx.payerId === 'custom' || editingTx.payerId.includes(',')) && (
-                                        <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">เลือกคนที่ต้องการนำมาหาร:</label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {users.map(u => (
-                                                    <label key={u.id} className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm hover:bg-gray-50 transition">
+                                                return (
+                                                    <label key={u.id} className={`flex items-center gap-2 p-2 rounded-md border transition-colors cursor-pointer ${editPayerConfig.isAll ? 'bg-gray-100 border-gray-200 opacity-60' : 'bg-white border-gray-300 hover:bg-gray-50 shadow-sm'}`}>
                                                         <input 
-                                                            type="checkbox" checked={customPayers.includes(String(u.id))}
-                                                            onChange={(e) => {
-                                                                const strId = String(u.id);
-                                                                if (e.target.checked) setCustomPayers([...customPayers, strId]);
-                                                                else setCustomPayers(customPayers.filter(id => id !== strId));
-                                                            }}
-                                                            className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                                            type="checkbox" 
+                                                            checked={isChecked}
+                                                            onChange={(e) => handleEditPayerChange(String(u.id), e.target.checked)}
+                                                            disabled={editPayerConfig.isAll}
+                                                            className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded border-gray-300 cursor-pointer disabled:bg-gray-200"
                                                         />
                                                         <span className="text-sm text-gray-800">{u.name}</span>
                                                     </label>
-                                                ))}
-                                            </div>
+                                                );
+                                            })}
                                         </div>
-                                    )}
+                                    </div>
 
                                     <div className="flex gap-3 pt-2 border-t mt-4">
                                         <button type="button" onClick={() => setEditingTx(null)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition">ยกเลิก</button>
@@ -1116,5 +1185,3 @@
     </script>
 </body>
 </html>
-
-
