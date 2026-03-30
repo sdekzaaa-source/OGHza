@@ -144,7 +144,7 @@
         };
 
         const App = () => {
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnhILi2y19Uc6Q9zGq05Otowh9f_gRbJTqyLcIH09jHMx2G7jlsjWPk3nskMm4E94T/exec"; 
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2k5sbWJI52Psj6FlXTOqLY6uUqZmP6VeFsaY1Qhnl9Ky7dCuiS3zeKUS2cDN1n4w/exec"; 
             
             const SHEET_ID = "108d2PHlbqt5h6p6_O-6qRfGHqs2MNK6GBRjVYdpxAZM";
             const MASTER_GID = "519893714"; 
@@ -157,6 +157,9 @@
             const [categories, setCategories] = useState([]);
             const [savedItems, setSavedItems] = useState([]);
             const [announcement, setAnnouncement] = useState("");
+            
+            // ✅ State ใหม่ สำหรับเก็บคิวงานชั่วคราว (ตะกร้างาน)
+            const [draftItems, setDraftItems] = useState([]);
             
             const [loading, setLoading] = useState(true);
             const [errorMsg, setErrorMsg] = useState(null);
@@ -222,7 +225,6 @@
             const [toastMessage, setToastMessage] = useState(null);
             const [showUndo, setShowUndo] = useState(false);
             
-            // ✅ นำ State สำหรับ Custom Announcement Modal กลับมา
             const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
             const [announcementInput, setAnnouncementInput] = useState("");
 
@@ -429,7 +431,6 @@
                 });
             };
             
-            // ✅ นำฟังก์ชันเปิด Modal ประกาศกลับมา
             const handleEditAnnouncementClick = () => {
                 if (currentUserRank === 'Admin' || currentUserRank === 'Dev') {
                     setAnnouncementInput(announcement || "");
@@ -437,7 +438,6 @@
                 }
             };
 
-            // ✅ ฟังก์ชันบันทึกประกาศผ่าน Modal กลับมาเหมือนเดิม
             const handleSaveAnnouncement = async () => {
                 setAnnouncement(announcementInput);
                 setShowAnnouncementModal(false);
@@ -644,15 +644,15 @@
                 });
             };
 
-            const handleAddItem = async () => {
+            // ✅ เปลี่ยนฟังก์ชัน "บันทึก" เป็น "เพิ่มลงตะกร้า (Draft)"
+            const handleAddToDraft = () => {
                 if (currentUserRank === 'Guest') return;
                 if (!form.productName) return;
-                setIsSaving(true);
+                
                 const ts = new Date().toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const uuid = generateUUID(); 
                 
-                const payload = { 
-                    action: 'add', 
+                const newItem = { 
                     ...form, 
                     imageUrl: isCustomProduct ? '' : form.imageUrl, 
                     isDoing: false, 
@@ -663,17 +663,44 @@
                     isStock: form.isStock
                 };
 
+                setDraftItems(prev => [...prev, newItem]);
+                
+                // ล้างฟอร์มให้พร้อมกรอกชิ้นต่อไป
+                setForm({ ...form, productName: '', imageUrl: '', quantity: '1', memo: '', isUrgent: false, isStock: false }); 
+                setSearchTerm('');
+                setIsCustomProduct(false); 
+                showToast('เพิ่มลงคิวงานแล้ว', false);
+            };
+
+            // ✅ ลบรายการออกจากตะกร้า
+            const handleRemoveFromDraft = (index) => {
+                setDraftItems(prev => prev.filter((_, i) => i !== index));
+            };
+
+            // ✅ ฟังก์ชัน "บันทึกทั้งหมด" ส่งรวดเดียวเข้า Google Sheet
+            const handleSubmitBulk = async () => {
+                if (draftItems.length === 0) return;
+                setIsSaving(true);
+                
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { 
                         method: "POST", mode: "no-cors", 
-                        body: JSON.stringify(payload) 
+                        body: JSON.stringify({ action: 'add_bulk', items: draftItems, user: currentUser }) 
                     });
-                    setForm({ ...form, productName: '', imageUrl: '', quantity: '1', memo: '', isUrgent: false, isStock: false }); 
-                    setSearchTerm('');
-                    setIsCustomProduct(false); 
-                    showToast('บันทึกรายการสำเร็จ'); 
-                    setTimeout(() => { fetchSavedRecords(); setIsSaving(false); }, 1500);
-                } catch (e) { setIsSaving(false); }
+                    
+                    const count = draftItems.length;
+                    setDraftItems([]); // เคลียร์ตะกร้า
+                    showToast(`บันทึก ${count} รายการสำเร็จ!`, false); 
+                    
+                    setTimeout(() => { 
+                        fetchSavedRecords(); 
+                        setIsSaving(false); 
+                    }, 1500);
+                    
+                } catch (e) { 
+                    setIsSaving(false); 
+                    alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+                }
             };
 
             const handleCheckboxClick = (item) => {
@@ -1105,7 +1132,6 @@
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            {/* ✅ ปรับปรุงปุ่มลิงก์ไปหน้า Express (ใช้ tag a และ target="_self" เพื่อไม่ให้หลุดโหมด PWA) */}
                             {currentUserRank !== 'Guest' && (
                                 <a 
                                     href="express.html"
@@ -1128,7 +1154,6 @@
                         </div>
                     </nav>
 
-                    {/* ✅ Announcement Bar - กลับไปใช้ Custom Modal แบบเดิมที่สวยงามกว่า */}
                     {(announcement || currentUserRank === 'Admin' || currentUserRank === 'Dev') && (
                         <div 
                             className={`bg-indigo-600 text-white text-xs font-bold py-2 overflow-hidden relative shadow-sm ${(currentUserRank === 'Admin' || currentUserRank === 'Dev') ? 'cursor-pointer hover:bg-indigo-700' : ''}`} 
@@ -1155,9 +1180,10 @@
 
                         {activeTab === 'record' && currentUserRank !== 'Guest' && (
                             <div className="bg-white rounded-[2.5rem] p-6 md:p-10 border custom-shadow animate-modal relative overflow-hidden">
-                                {isSaving && <div className="absolute inset-0 bg-white/80 z-20 flex items-center justify-center flex-col gap-3 backdrop-blur-sm"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div><span className="font-bold text-indigo-600 animate-pulse font-bold">กำลังบันทึก...</span></div>}
+                                {isSaving && <div className="absolute inset-0 bg-white/80 z-20 flex items-center justify-center flex-col gap-3 backdrop-blur-sm"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div><span className="font-bold text-indigo-600 animate-pulse font-bold">กำลังบันทึกเข้าสู่ระบบ...</span></div>}
                                 <h2 className="text-xl font-black text-slate-800 mb-8 flex items-center justify-center md:justify-start gap-3 font-bold"><LucideIcon name="plus-square" size={24} className="text-indigo-600"/> ลงรายการงานใหม่</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left mb-6">
                                     <div className="space-y-6">
                                         <div className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest font-bold">หมวดหมู่</label>
                                             <select className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 font-bold text-slate-700 outline-none transition-all shadow-sm" value={form.type} onChange={(e) => setForm({...form, type: e.target.value})}>
@@ -1225,7 +1251,10 @@
                                             </button>
                                         </div>
 
-                                        <button onClick={handleAddItem} disabled={!form.productName || isSaving} className="w-full h-14 bg-indigo-600 disabled:bg-slate-200 text-white rounded-2xl font-black text-lg active:scale-95 transition-all shadow-lg font-bold mt-4">บันทึกรายการ</button>
+                                        {/* ✅ ปุ่มเพิ่มลงตะกร้า (แทนที่ปุ่มบันทึกเดิม) */}
+                                        <button onClick={handleAddToDraft} disabled={!form.productName} className="w-full h-14 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-2xl font-black text-lg active:scale-95 transition-all shadow-lg font-bold mt-2">
+                                            + เพิ่มลงคิวงาน
+                                        </button>
                                     </div>
                                     
                                     {!isCustomProduct && (
@@ -1241,6 +1270,45 @@
                                         </div>
                                     )}
                                 </div>
+
+                                {/* ✅ ส่วนแสดงรายการในคิว (ตะกร้างาน) */}
+                                {draftItems.length > 0 && (
+                                    <div className="border-t-2 border-dashed border-slate-200 pt-8 mt-4 animate-modal">
+                                        <div className="flex justify-between items-center mb-4 px-2">
+                                            <h3 className="font-black text-lg text-slate-800 flex items-center gap-2">
+                                                <LucideIcon name="list-todo" className="text-indigo-600" />
+                                                รายการที่เตรียมบันทึก ({draftItems.length})
+                                            </h3>
+                                        </div>
+                                        
+                                        <div className="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
+                                            {draftItems.map((item, idx) => (
+                                                <div key={idx} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 relative transition-all hover:border-indigo-300">
+                                                    <div className="w-14 h-14 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                                                        {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><LucideIcon name="package" size={20} className="text-slate-300"/></div>}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-sm text-slate-800 truncate mb-1">{item.productName}</p>
+                                                        <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+                                                            <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">x{item.quantity}</span>
+                                                            <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 truncate max-w-[80px]">{item.type}</span>
+                                                            {item.isUrgent && <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">🔥 ด่วน</span>}
+                                                            {item.isStock && <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">📦 สต๊อก</span>}
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => handleRemoveFromDraft(idx)} className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-90">
+                                                        <LucideIcon name="trash-2" size={18} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <button onClick={handleSubmitBulk} disabled={isSaving} className="w-full h-16 bg-indigo-600 disabled:bg-indigo-400 text-white rounded-[1.5rem] font-black text-lg active:scale-95 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-3">
+                                            {isSaving ? <LucideIcon name="loader-2" className="animate-spin" size={24} /> : <LucideIcon name="save" size={24} />}
+                                            ส่งเข้าสู่ระบบทั้งหมด
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
