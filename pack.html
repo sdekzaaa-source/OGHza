@@ -183,12 +183,10 @@
             idleIcon.classList.add('hidden');
             camLoading.classList.remove('hidden');
 
-            // กรอบสแกนฉลาด (Dynamic Viewfinder) - ให้พอดีกับกรอบ CSS (90% width, 120px height)
+            // แก้ไข: เอาข้อจำกัด qrbox ออกเพื่อให้แสกนได้เต็มจอ (Full Frame) 
+            // ช่วยแก้ปัญหากล้องไม่อ่านบาร์โค้ด และเพิ่มความเร็วในการสแกนขึ้น (ปรับ fps เป็น 15)
             const config = { 
-                fps: 10, 
-                qrbox: (viewfinderWidth, viewfinderHeight) => {
-                    return { width: viewfinderWidth * 0.9, height: 120 };
-                }
+                fps: 15
             };
 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
@@ -222,35 +220,41 @@
             if (isProcessing) return; // ติดสถานะล็อคอยู่ ให้ข้ามไปเลย (กันค้าง)
 
             isProcessing = true; 
-            const barcode = decodedText.trim();
             
-            // ตรวจสอบข้อมูล
-            const isDuplicate = scannedData.some(item => item.barcode === barcode);
+            try {
+                const barcode = decodedText.trim();
+                
+                // ตรวจสอบข้อมูล
+                const isDuplicate = scannedData.some(item => item.barcode === barcode);
 
-            if (isDuplicate) {
-                // เอฟเฟกต์แสกนติดแต่ซ้ำ (สีแดง)
-                triggerSnapEffect('error');
-                playSound('error');
-                showToast(`ซ้ำ! ${barcode}`, 'error');
-            } else {
-                // เอฟเฟกต์แสกนติด (สีเขียว)
-                triggerSnapEffect('success');
-                playSound('success');
-                showToast(`${barcode}`, 'success');
-                
-                // บันทึกข้อมูล
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('th-TH');
-                scannedData.push({ barcode: barcode, time: timeStr, timestamp: now.getTime() });
-                
-                saveToLocalStorage();
-                renderList();
+                if (isDuplicate) {
+                    // เอฟเฟกต์แสกนติดแต่ซ้ำ (สีแดง)
+                    triggerSnapEffect('error');
+                    playSound('error');
+                    showToast(`ซ้ำ! ${barcode}`, 'error');
+                } else {
+                    // เอฟเฟกต์แสกนติด (สีเขียว)
+                    triggerSnapEffect('success');
+                    playSound('success');
+                    showToast(`${barcode}`, 'success');
+                    
+                    // บันทึกข้อมูล
+                    const now = new Date();
+                    const timeStr = now.toLocaleTimeString('th-TH');
+                    scannedData.push({ barcode: barcode, time: timeStr, timestamp: now.getTime() });
+                    
+                    saveToLocalStorage();
+                    renderList();
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดตอนประมวลผลบาร์โค้ด:", error);
+            } finally {
+                // ล็อคเป้าไว้ 1.5 วินาที ก่อนปลดล็อคให้กล้องแสกนอันต่อไปได้ 
+                // (ใส่ finally ไว้เพื่อให้มั่นใจว่าระบบจะปลดล็อคเสมอแม้เกิด Error)
+                setTimeout(() => {
+                    isProcessing = false;
+                }, 1500);
             }
-
-            // ล็อคเป้าไว้ 1.5 วินาที ก่อนปลดล็อคให้กล้องแสกนอันต่อไปได้
-            setTimeout(() => {
-                isProcessing = false;
-            }, 1500);
         }
         
         // --- เอฟเฟกต์กระพริบตอนแสกนติด (Snap Effect) ---
