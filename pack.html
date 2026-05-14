@@ -106,8 +106,7 @@
         let scannedData = [];
         let html5QrCode = null;
         let isScannerRunning = false;
-        let lastScannedCode = "";
-        let lastScanTime = 0;
+        let isProcessing = false; // เปลี่ยนมาใช้ระบบ Lock สถานะแทนเพื่อกันกล้องค้าง
 
         // DOM Elements
         const listUl = document.getElementById('scanned-list');
@@ -136,7 +135,14 @@
             document.getElementById('btn-start-scan').classList.add('hidden');
             document.getElementById('btn-stop-scan').classList.remove('hidden');
 
-            const config = { fps: 10, qrbox: { width: 250, height: 100 } };
+            // ปรับ config ให้เหมาะกับ 1D Barcode (แท่งยาวๆ) โดยให้กรอบกว้าง 90% ของจอมือถือ
+            const config = { 
+                fps: 10, 
+                qrbox: (viewfinderWidth, viewfinderHeight) => {
+                    return { width: viewfinderWidth * 0.9, height: 120 };
+                }
+            };
+
             // ใช้กล้องหลังมือถือ (environment)
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
                 .then(() => { isScannerRunning = true; })
@@ -158,18 +164,18 @@
         }
 
         function onScanSuccess(decodedText) {
-            const now = Date.now();
+            // ถ้าระบบกำลังประมวลผลอยู่ (เพิ่งแสกนติด) ให้เมินการอ่านครั้งนี้ไปเลย กล้องจะได้ไม่ค้าง
+            if (isProcessing) return;
+
+            isProcessing = true; // ล็อคระบบไว้
             const barcode = decodedText.trim();
             
-            // ป้องกันการแสกนเบิ้ลซ้ำในเวลาไล่เลี่ยกัน (2 วินาที)
-            if (barcode === lastScannedCode && (now - lastScanTime) < 2000) {
-                return; 
-            }
-            
-            lastScannedCode = barcode;
-            lastScanTime = now;
-            
             processBarcode(barcode);
+
+            // หน่วงเวลา 1.5 วินาที ค่อยปลดล็อคให้กล้องรับบาร์โค้ดอันถัดไปได้
+            setTimeout(() => {
+                isProcessing = false;
+            }, 1500);
         }
 
         function handleManualInput() {
