@@ -14,10 +14,22 @@
         body { font-family: 'Sarabun', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         /* ตกแต่งกล้องให้เต็มจอหรือสวยงามบนมือถือ */
         #reader { width: 100%; border: none !important; border-radius: 0.75rem; overflow: hidden; background: #000; }
         #reader video { object-fit: cover; }
         #reader__dashboard_section_csr span { display: none !important; } 
+        
+        /* Effect สำหรับกล่องเป้าเล็งและเลเซอร์ */
+        @keyframes scan-laser {
+            0%, 100% { top: 0%; opacity: 0; }
+            10%, 90% { opacity: 1; }
+            50% { top: 100%; opacity: 1; }
+        }
+        .animate-scan-laser {
+            animation: scan-laser 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        .aim-corner { transition: border-color 0.2s ease; }
         
         /* Toast Notification */
         .toast { transition: opacity 0.3s, transform 0.3s; }
@@ -29,32 +41,58 @@
     <!-- Header -->
     <div class="bg-blue-700 text-white p-4 shadow-md z-10 flex justify-between items-center shrink-0">
         <h1 class="text-xl font-bold"><i class="fa-solid fa-barcode mr-2"></i> QC Scanner</h1>
-        <span class="bg-blue-800 text-xs px-2 py-1 rounded-full font-mono" id="total-count-badge">0 รายการ</span>
+        <span class="bg-blue-800 text-xs px-2 py-1 rounded-full font-mono shadow-inner" id="total-count-badge">0 รายการ</span>
     </div>
 
     <!-- Main Content Area -->
     <div class="flex-1 overflow-auto flex flex-col p-4 gap-4 pb-24 relative">
         
-        <!-- ส่วนของกล้องและปุ่มควบคุม -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 shrink-0">
-            <div id="reader" class="aspect-[4/3] md:aspect-video mb-3 relative flex items-center justify-center">
-                <i class="fa-solid fa-camera text-4xl text-gray-600"></i>
+        <!-- ส่วนของกล้องและเป้าเล็ง (Viewfinder) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 shrink-0 relative">
+            
+            <div id="scanner-wrapper" class="relative rounded-lg overflow-hidden bg-black mb-3 aspect-[4/3] md:aspect-video flex items-center justify-center">
+                <!-- กล่องวิดีโอกล้อง -->
+                <div id="reader" class="w-full h-full absolute inset-0"></div>
+                
+                <!-- ไอคอนตอนยังไม่เปิดกล้อง -->
+                <i id="idle-icon" class="fa-solid fa-camera text-5xl text-gray-600 z-0"></i>
+
+                <!-- Loading ตอนเปิดกล้อง -->
+                <div id="cam-loading" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10 backdrop-blur-sm">
+                     <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-3"></i>
+                     <span class="text-white font-medium text-sm">กำลังเปิดกล้อง...</span>
+                </div>
+
+                <!-- เป้าเล็ง (Aiming Overlay) -->
+                <div id="scanner-aim" class="hidden absolute inset-0 pointer-events-none flex items-center justify-center z-20">
+                    <!-- ขนาดความกว้าง 90% และสูง 120px (ตั้งให้พอดีกับ qrbox) -->
+                    <div class="relative w-[90%] h-[120px]">
+                        <!-- มุมเล็ง 4 ด้าน -->
+                        <div class="aim-corner absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-lg"></div>
+                        <div class="aim-corner absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-lg"></div>
+                        <div class="aim-corner absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-lg"></div>
+                        <div class="aim-corner absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-lg"></div>
+                        
+                        <!-- เส้นเลเซอร์ -->
+                        <div id="aim-laser" class="absolute top-0 left-0 w-full h-[2px] bg-red-500 shadow-[0_0_10px_rgba(239,68,68,1)] animate-scan-laser"></div>
+                    </div>
+                </div>
             </div>
             
-            <div class="flex gap-2">
-                <button id="btn-start-scan" class="flex-1 bg-blue-600 active:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition">
-                    <i class="fa-solid fa-play mr-1"></i> เปิดกล้อง
+            <div class="flex gap-2 relative z-30">
+                <button id="btn-start-scan" class="flex-1 bg-blue-600 active:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition flex items-center justify-center">
+                    <i class="fa-solid fa-play mr-2"></i> เปิดกล้อง
                 </button>
-                <button id="btn-stop-scan" class="hidden flex-1 bg-red-500 active:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow transition">
-                    <i class="fa-solid fa-stop mr-1"></i> ปิดกล้อง
+                <button id="btn-stop-scan" class="hidden flex-1 bg-gray-800 active:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg shadow transition flex items-center justify-center">
+                    <i class="fa-solid fa-stop mr-2"></i> พักกล้อง
                 </button>
             </div>
 
             <!-- กล่องกรอกข้อมูลด้วยมือ -->
             <div class="mt-3 flex gap-2">
-                <input type="text" id="manual-barcode" placeholder="กรอกเลขบาร์โค้ด..." class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
-                <button onclick="handleManualInput()" class="bg-gray-800 text-white px-4 rounded-lg active:bg-gray-700 font-bold">
-                    <i class="fa-solid fa-plus"></i> เพิ่ม
+                <input type="text" id="manual-barcode" placeholder="กรอกเลขบาร์โค้ดเผื่อแสกนไม่ติด..." class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                <button onclick="handleManualInput()" class="bg-gray-800 text-white px-4 rounded-lg active:bg-gray-700 font-bold transition">
+                    <i class="fa-solid fa-plus"></i>
                 </button>
             </div>
         </div>
@@ -62,8 +100,8 @@
         <!-- รายการที่สแกนแล้ว -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-1 min-h-[250px]">
             <div class="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-xl shrink-0">
-                <h3 class="font-bold text-gray-700"><i class="fa-solid fa-list-check mr-1"></i> รายการสแกนล่าสุด</h3>
-                <button onclick="clearAllData()" class="text-xs text-red-500 font-medium px-2 py-1 bg-red-50 rounded border border-red-200">
+                <h3 class="font-bold text-gray-700"><i class="fa-solid fa-list-check mr-2 text-blue-500"></i> รายการล่าสุด</h3>
+                <button onclick="clearAllData()" class="text-xs text-red-500 font-medium px-3 py-1.5 bg-red-50 hover:bg-red-100 rounded border border-red-200 transition">
                     ล้างทั้งหมด
                 </button>
             </div>
@@ -71,28 +109,28 @@
             <!-- List Container -->
             <div class="flex-1 overflow-y-auto p-2" id="scanned-list-container">
                 <ul id="scanned-list" class="space-y-2 flex flex-col-reverse">
-                    <!-- ข้อมูลจะถูกแทรกที่นี่ผ่าน JS (รายการใหม่สุดอยู่บน) -->
+                    <!-- ข้อมูลจะถูกแทรกที่นี่ผ่าน JS -->
                 </ul>
                 <div id="empty-state" class="h-full flex flex-col items-center justify-center text-gray-400 py-8">
-                    <i class="fa-solid fa-box-open text-4xl mb-2 text-gray-300"></i>
-                    <p class="text-sm">ยังไม่มีข้อมูลการสแกน</p>
+                    <i class="fa-solid fa-box-open text-4xl mb-3 text-gray-300"></i>
+                    <p class="text-sm font-medium">ยังไม่มีข้อมูลการสแกน</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Bottom Action Bar (Fixed) -->
-    <div class="bg-white border-t border-gray-200 p-3 flex gap-3 fixed bottom-0 w-full shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.1)] z-20">
-        <button onclick="copyToClipboard()" class="flex-1 bg-gray-100 border border-gray-300 text-gray-700 active:bg-gray-200 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
-            <i class="fa-regular fa-copy"></i> Copy
+    <div class="bg-white border-t border-gray-200 p-3 flex gap-3 fixed bottom-0 w-full shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.05)] z-20">
+        <button onclick="copyToClipboard()" class="flex-1 bg-gray-100 border border-gray-300 text-gray-700 active:bg-gray-200 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition">
+            <i class="fa-regular fa-copy"></i> คัดลอก
         </button>
-        <button onclick="exportToCSV()" class="flex-1 bg-green-50 border border-green-300 text-green-700 active:bg-green-100 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
-            <i class="fa-solid fa-file-csv"></i> Export CSV
+        <button onclick="exportToCSV()" class="flex-1 bg-green-50 border border-green-300 text-green-700 active:bg-green-100 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition">
+            <i class="fa-solid fa-file-csv"></i> โหลด CSV
         </button>
     </div>
 
-    <!-- Toast Notification (ตรงกลางด้านบน) -->
-    <div id="toast" class="toast hidden-toast fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden-toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2">
         <i id="toast-icon" class="fa-solid fa-check"></i>
         <span id="toast-text">แจ้งเตือน</span>
     </div>
@@ -106,13 +144,20 @@
         let scannedData = [];
         let html5QrCode = null;
         let isScannerRunning = false;
-        let isProcessing = false; // เปลี่ยนมาใช้ระบบ Lock สถานะแทนเพื่อกันกล้องค้าง
+        let isProcessing = false; 
 
         // DOM Elements
         const listUl = document.getElementById('scanned-list');
         const emptyState = document.getElementById('empty-state');
         const totalBadge = document.getElementById('total-count-badge');
         const manualInput = document.getElementById('manual-barcode');
+        
+        // Aiming Elements
+        const aimOverlay = document.getElementById('scanner-aim');
+        const camLoading = document.getElementById('cam-loading');
+        const idleIcon = document.getElementById('idle-icon');
+        const aimCorners = document.querySelectorAll('.aim-corner');
+        const aimLaser = document.getElementById('aim-laser');
 
         // Sounds
         const soundSuccess = document.getElementById('beep-success');
@@ -134,8 +179,11 @@
             
             document.getElementById('btn-start-scan').classList.add('hidden');
             document.getElementById('btn-stop-scan').classList.remove('hidden');
+            
+            idleIcon.classList.add('hidden');
+            camLoading.classList.remove('hidden');
 
-            // ปรับ config ให้เหมาะกับ 1D Barcode (แท่งยาวๆ) โดยให้กรอบกว้าง 90% ของจอมือถือ
+            // กรอบสแกนฉลาด (Dynamic Viewfinder) - ให้พอดีกับกรอบ CSS (90% width, 120px height)
             const config = { 
                 fps: 10, 
                 qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -143,9 +191,12 @@
                 }
             };
 
-            // ใช้กล้องหลังมือถือ (environment)
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-                .then(() => { isScannerRunning = true; })
+                .then(() => { 
+                    isScannerRunning = true; 
+                    camLoading.classList.add('hidden');
+                    aimOverlay.classList.remove('hidden'); // แสดงเป้าเล็งและเลเซอร์
+                })
                 .catch(err => {
                     showToast('ไม่สามารถเปิดกล้องได้', 'error');
                     console.error(err);
@@ -159,29 +210,88 @@
                     isScannerRunning = false;
                     document.getElementById('btn-start-scan').classList.remove('hidden');
                     document.getElementById('btn-stop-scan').classList.add('hidden');
+                    
+                    aimOverlay.classList.add('hidden'); // ซ่อนเป้าเล็ง
+                    camLoading.classList.add('hidden');
+                    idleIcon.classList.remove('hidden'); // กลับมาแสดงไอคอนกล้องพัก
                 });
             }
         }
 
         function onScanSuccess(decodedText) {
-            // ถ้าระบบกำลังประมวลผลอยู่ (เพิ่งแสกนติด) ให้เมินการอ่านครั้งนี้ไปเลย กล้องจะได้ไม่ค้าง
-            if (isProcessing) return;
+            if (isProcessing) return; // ติดสถานะล็อคอยู่ ให้ข้ามไปเลย (กันค้าง)
 
-            isProcessing = true; // ล็อคระบบไว้
+            isProcessing = true; 
             const barcode = decodedText.trim();
             
-            processBarcode(barcode);
+            // ตรวจสอบข้อมูล
+            const isDuplicate = scannedData.some(item => item.barcode === barcode);
 
-            // หน่วงเวลา 1.5 วินาที ค่อยปลดล็อคให้กล้องรับบาร์โค้ดอันถัดไปได้
+            if (isDuplicate) {
+                // เอฟเฟกต์แสกนติดแต่ซ้ำ (สีแดง)
+                triggerSnapEffect('error');
+                playSound('error');
+                showToast(`ซ้ำ! ${barcode}`, 'error');
+            } else {
+                // เอฟเฟกต์แสกนติด (สีเขียว)
+                triggerSnapEffect('success');
+                playSound('success');
+                showToast(`${barcode}`, 'success');
+                
+                // บันทึกข้อมูล
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('th-TH');
+                scannedData.push({ barcode: barcode, time: timeStr, timestamp: now.getTime() });
+                
+                saveToLocalStorage();
+                renderList();
+            }
+
+            // ล็อคเป้าไว้ 1.5 วินาที ก่อนปลดล็อคให้กล้องแสกนอันต่อไปได้
             setTimeout(() => {
                 isProcessing = false;
+            }, 1500);
+        }
+        
+        // --- เอฟเฟกต์กระพริบตอนแสกนติด (Snap Effect) ---
+        function triggerSnapEffect(type) {
+            // ซ่อนเลเซอร์
+            aimLaser.classList.add('hidden');
+            
+            // เปลี่ยนสีมุม
+            aimCorners.forEach(c => {
+                c.classList.remove('border-blue-500');
+                if (type === 'success') {
+                    c.classList.add('border-green-500');
+                } else {
+                    c.classList.add('border-red-500');
+                }
+            });
+            
+            // คืนค่ากลับเป็นสถานะ "กำลังเล็ง (เลเซอร์แดง, มุมฟ้า)" หลัง 1.5 วิ
+            setTimeout(() => {
+                aimCorners.forEach(c => {
+                    c.classList.remove('border-green-500', 'border-red-500');
+                    c.classList.add('border-blue-500');
+                });
+                aimLaser.classList.remove('hidden');
             }, 1500);
         }
 
         function handleManualInput() {
             const barcode = manualInput.value.trim();
             if (barcode) {
-                processBarcode(barcode);
+                if (scannedData.some(item => item.barcode === barcode)) {
+                    playSound('error');
+                    showToast(`ซ้ำ! ${barcode}`, 'error');
+                } else {
+                    const now = new Date();
+                    scannedData.push({ barcode: barcode, time: now.toLocaleTimeString('th-TH'), timestamp: now.getTime() });
+                    saveToLocalStorage();
+                    renderList();
+                    playSound('success');
+                    showToast(`เพิ่มแล้ว`, 'success');
+                }
                 manualInput.value = '';
             }
         }
@@ -190,29 +300,6 @@
         manualInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') handleManualInput();
         });
-
-        function processBarcode(barcode) {
-            // ตรวจสอบว่าแสกนซ้ำหรือไม่ (เคยมีอยู่ในรายการของวันนี้แล้วหรือยัง)
-            const isDuplicate = scannedData.some(item => item.barcode === barcode);
-
-            if (isDuplicate) {
-                playSound('error');
-                showToast(`ซ้ำ! ${barcode} ถูกแสกนไปแล้ว`, 'error');
-                return;
-            }
-
-            // เพิ่มเข้า List
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('th-TH');
-            const newItem = { barcode: barcode, time: timeStr, timestamp: now.getTime() };
-            
-            scannedData.push(newItem);
-            saveToLocalStorage();
-            renderList();
-            
-            playSound('success');
-            showToast(`เพิ่ม: ${barcode}`, 'success');
-        }
 
         function deleteItem(timestamp) {
             if (confirm('ต้องการลบรายการนี้ใช่หรือไม่?')) {
@@ -224,7 +311,7 @@
 
         function clearAllData() {
             if (scannedData.length === 0) return;
-            if (confirm('คุณต้องการ "ล้างข้อมูลการสแกนทั้งหมด" ใช่หรือไม่? (ไม่สามารถกู้คืนได้)')) {
+            if (confirm('คุณต้องการ "ล้างข้อมูลการสแกนทั้งหมด" ใช่หรือไม่?\n(ไม่สามารถกู้คืนได้)')) {
                 scannedData = [];
                 saveToLocalStorage();
                 renderList();
@@ -246,14 +333,14 @@
 
             scannedData.forEach((item, index) => {
                 const li = document.createElement('li');
-                li.className = "flex justify-between items-center bg-white border border-gray-100 p-3 rounded-lg shadow-sm";
+                li.className = "flex justify-between items-center bg-white border border-gray-100 p-3 rounded-lg shadow-sm mb-2";
                 li.innerHTML = `
                     <div class="flex flex-col">
-                        <span class="font-bold text-blue-700 text-lg">${item.barcode}</span>
+                        <span class="font-bold text-gray-800 text-lg tracking-wide">${item.barcode}</span>
                         <span class="text-xs text-gray-400"><i class="fa-regular fa-clock"></i> ${item.time}</span>
                     </div>
-                    <button onclick="deleteItem(${item.timestamp})" class="text-red-400 bg-red-50 p-2 rounded-full active:bg-red-100">
-                        <i class="fa-solid fa-xmark"></i>
+                    <button onclick="deleteItem(${item.timestamp})" class="text-gray-400 hover:text-red-500 bg-gray-50 p-2 rounded-full active:bg-red-100 transition">
+                        <i class="fa-solid fa-xmark px-1"></i>
                     </button>
                 `;
                 // ใช้ prepend เพื่อให้รายการใหม่สุดดันขึ้นไปอยู่บนสุด
@@ -344,13 +431,13 @@
             toastText.innerText = message;
             
             if (type === 'success') {
-                toast.className = "toast fixed top-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-green-500 text-white";
+                toast.className = "toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-green-500 text-white";
                 toastIcon.className = "fa-solid fa-circle-check";
             } else if (type === 'error') {
-                toast.className = "toast fixed top-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-red-500 text-white";
+                toast.className = "toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-red-500 text-white";
                 toastIcon.className = "fa-solid fa-circle-xmark";
             } else {
-                toast.className = "toast fixed top-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-gray-800 text-white";
+                toast.className = "toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-gray-800 text-white";
                 toastIcon.className = "fa-solid fa-circle-info";
             }
 
@@ -359,7 +446,7 @@
             // ซ่อนอัตโนมัติ
             setTimeout(() => {
                 toast.classList.add('hidden-toast');
-            }, 2500);
+            }, 2000);
         }
     </script>
 </body>
