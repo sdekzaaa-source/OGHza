@@ -3,172 +3,964 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QC Barcode Scanner (Mobile)</title>
+    <title>Mini-WMS Smart Shipping Suite PRO</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF-Lib -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- HTML5 QR Code Scanner -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- FontAwesome -->
+    <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Prompt', 'Sarabun', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .drag-active { border-color: #3b82f6; background-color: #eff6ff; }
+        #loader { border-top-color: #3b82f6; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* ตกแต่งกล้องให้เต็มจอหรือสวยงามบนมือถือ */
-        #reader { width: 100%; border: none !important; border-radius: 0.75rem; overflow: hidden; background: #000; }
-        #reader video { object-fit: cover; }
-        #reader__dashboard_section_csr span { display: none !important; } 
-        
-        /* Effect สำหรับกล่องเป้าเล็งและเลเซอร์ */
-        @keyframes scan-laser {
+        .checkbox-custom:checked + label { text-decoration: line-through; color: #9ca3af; }
+
+        /* Scanner Laser animation */
+        @keyframes laser-sweep {
             0%, 100% { top: 0%; opacity: 0; }
             10%, 90% { opacity: 1; }
             50% { top: 100%; opacity: 1; }
         }
-        .animate-scan-laser {
-            animation: scan-laser 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        .animate-laser {
+            animation: laser-sweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         .aim-corner { transition: border-color 0.2s ease; }
         
-        /* Toast Notification */
-        .toast { transition: opacity 0.3s, transform 0.3s; }
-        .toast.hidden-toast { opacity: 0; transform: translateY(-20px) translateX(-50%); pointer-events: none; }
+        /* Toast animation */
+        .toast-notify { transition: opacity 0.3s, transform 0.3s; }
+        .toast-hidden { opacity: 0; transform: translateY(-20px) translateX(-50%); pointer-events: none; }
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col h-screen overflow-hidden">
+<body class="bg-slate-50 min-h-screen flex flex-col items-center pb-12">
 
-    <!-- Header -->
-    <div class="bg-blue-700 text-white p-4 shadow-md z-10 flex justify-between items-center shrink-0">
-        <h1 class="text-xl font-bold"><i class="fa-solid fa-barcode mr-2"></i> QC Scanner</h1>
-        <span class="bg-blue-800 text-xs px-2 py-1 rounded-full font-mono shadow-inner" id="total-count-badge">0 รายการ</span>
+    <!-- Custom Modal Popup -->
+    <div id="custom-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-transform duration-200 scale-100">
+            <div id="modal-icon-container" class="flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto bg-blue-100 text-blue-500">
+                <i id="modal-icon" class="fa-solid fa-circle-info text-3xl"></i>
+            </div>
+            <h3 id="modal-title" class="text-xl font-bold text-center text-gray-800 mb-2">แจ้งเตือน</h3>
+            <p id="modal-message" class="text-center text-gray-600 text-sm mb-6 whitespace-pre-line">ข้อความรายละเอียด</p>
+            <div id="modal-buttons" class="flex justify-center gap-3"></div>
+        </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="flex-1 overflow-auto flex flex-col p-4 gap-4 pb-24 relative">
+    <!-- MAIN APP CONTAINER -->
+    <div class="max-w-6xl w-full px-4 mt-6">
         
-        <!-- ส่วนของกล้องและเป้าเล็ง (Viewfinder) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 shrink-0 relative">
-            
-            <div id="scanner-wrapper" class="relative rounded-lg overflow-hidden bg-black mb-3 aspect-[4/3] md:aspect-video flex items-center justify-center">
-                <!-- กล่องวิดีโอกล้อง -->
-                <div id="reader" class="w-full h-full absolute inset-0"></div>
-                
-                <!-- ไอคอนตอนยังไม่เปิดกล้อง -->
-                <i id="idle-icon" class="fa-solid fa-camera text-5xl text-gray-600 z-0"></i>
-
-                <!-- Loading ตอนเปิดกล้อง -->
-                <div id="cam-loading" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10 backdrop-blur-sm">
-                     <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-3"></i>
-                     <span class="text-white font-medium text-sm">กำลังเปิดกล้อง...</span>
-                </div>
-
-                <!-- เป้าเล็ง (Aiming Overlay) -->
-                <div id="scanner-aim" class="hidden absolute inset-0 pointer-events-none flex items-center justify-center z-20">
-                    <!-- ขนาดความกว้าง 90% และสูง 120px (ตั้งให้พอดีกับ qrbox) -->
-                    <div class="relative w-[90%] h-[120px]">
-                        <!-- มุมเล็ง 4 ด้าน -->
-                        <div class="aim-corner absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-lg"></div>
-                        <div class="aim-corner absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-lg"></div>
-                        <div class="aim-corner absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-lg"></div>
-                        <div class="aim-corner absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-lg"></div>
-                        
-                        <!-- เส้นเลเซอร์ -->
-                        <div id="aim-laser" class="absolute top-0 left-0 w-full h-[2px] bg-red-500 shadow-[0_0_10px_rgba(239,68,68,1)] animate-scan-laser"></div>
+        <!-- Header & Nav Bar -->
+        <header class="bg-gradient-to-r from-slate-800 to-slate-950 text-white rounded-2xl shadow-xl overflow-hidden mb-6">
+            <div class="p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600 p-2.5 rounded-lg text-white shadow-lg shadow-blue-500/30">
+                        <i class="fa-solid fa-warehouse text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight">Mini-WMS & Shipping PRO</h1>
+                        <p class="text-xs text-slate-400">ระบบบริหารคลังสินค้า จัดการใบปะหน้า และตรวจสอบคุณภาพออเดอร์</p>
                     </div>
                 </div>
+                
+                <!-- Navigation Tabs -->
+                <nav class="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700/50">
+                    <button onclick="switchTab('optimizer')" id="nav-btn-optimizer" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-600 text-white shadow-md">
+                        <i class="fa-solid fa-file-pdf mr-1.5"></i> 1. จัดการใบปะหน้า
+                    </button>
+                    <button onclick="switchTab('scanner')" id="nav-btn-scanner" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition">
+                        <i class="fa-solid fa-barcode mr-1.5"></i> 2. สแกนตรวจสอบ QC
+                    </button>
+                </nav>
             </div>
-            
-            <div class="flex gap-2 relative z-30">
-                <button id="btn-start-scan" class="flex-1 bg-blue-600 active:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition flex items-center justify-center">
-                    <i class="fa-solid fa-play mr-2"></i> เปิดกล้อง
-                </button>
-                <button id="btn-stop-scan" class="hidden flex-1 bg-gray-800 active:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg shadow transition flex items-center justify-center">
-                    <i class="fa-solid fa-stop mr-2"></i> พักกล้อง
-                </button>
+        </header>
+
+        <!-- ================= TAB 1: PDF OPTIMIZER ================= -->
+        <main id="tab-optimizer-view" class="block space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- คอลัมน์ตั้งค่า & อัปโหลด -->
+                <div class="lg:col-span-1 flex flex-col gap-6">
+                    
+                    <!-- โหมดการทำงานอัตโนมัติ -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-blue-500"></i> แกนสมอง AI วิเคราะห์ตาราง
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50 text-xs">
+                                <i class="fa-solid fa-shield-halved text-blue-600 text-lg"></i>
+                                <span class="text-slate-600 leading-relaxed">
+                                    ระบบจะสแกนและจัดกลุ่ม PDF **TikTok** หรือ **Shopee** แยกประเภทและจัดเรียงตาม SKU / Variation ให้โดยอัตโนมัติ
+                                </span>
+                            </div>
+                            
+                            <hr class="border-slate-100">
+                            
+                            <!-- ตั้งค่าแทรกหน้าคั่น -->
+                            <label class="flex items-center space-x-3 cursor-pointer group py-1">
+                                <div class="relative">
+                                    <input type="checkbox" id="setting-separator" class="sr-only peer">
+                                    <div class="block bg-slate-200 w-10 h-6 rounded-full transition group-hover:bg-slate-300 peer-checked:bg-blue-600"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform peer-checked:translate-x-full"></div>
+                                </div>
+                                <div class="text-sm text-slate-700 font-medium">แทรกหน้าคั่นแยกขนส่ง<br><span class="text-xs text-slate-400 font-normal">(ปิดเพื่อประหยัดกระดาษ)</span></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- พื้นที่โยนไฟล์ -->
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-300 bg-white hover:border-blue-400 rounded-2xl p-8 text-center cursor-pointer transition-all relative flex flex-col justify-center items-center shadow-sm h-64">
+                        <input type="file" id="file-input" accept="application/pdf,application/zip" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                        <div class="bg-blue-50 p-4 rounded-full text-blue-600 mb-4 transition-transform duration-200 group-hover:scale-110">
+                            <i class="fa-solid fa-cloud-arrow-up text-4xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-1">ลากและวางไฟล์ใบปะหน้า</h3>
+                        <p class="text-slate-400 text-xs mb-3">รองรับไฟล์รูปแบบ <b class="text-red-500">.pdf</b> และ <b class="text-yellow-600">.zip</b></p>
+                        <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full border border-slate-200">สูงสุด 100 MB</span>
+                    </div>
+
+                </div>
+
+                <!-- คอลัมน์แสดงผลลัพธ์ -->
+                <div class="lg:col-span-2">
+                    
+                    <!-- สถานะกำลังโหลด -->
+                    <div id="processing-section" class="hidden h-full min-h-[300px] flex flex-col items-center justify-center p-12 border border-slate-200 rounded-2xl bg-white shadow-sm">
+                        <div id="loader" class="border-4 border-slate-100 rounded-full w-14 h-14 mb-4"></div>
+                        <h3 class="text-lg font-bold text-slate-800" id="status-title">กำลังวิเคราะห์ข้อมูล...</h3>
+                        <p class="text-slate-400 text-xs mt-1 text-center" id="status-text">กรุณารอสักครู่ ระบบกำลังคัดแยกออเดอร์</p>
+                        <div class="w-full max-w-xs bg-slate-100 rounded-full h-2 mt-6 overflow-hidden border">
+                            <div id="progress-bar" class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- ผลลัพธ์สำเร็จ -->
+                    <div id="result-section" class="hidden space-y-6">
+                        
+                        <!-- ดาวน์โหลด PDF -->
+                        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="text-left">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded-full"><i class="fa-solid fa-check"></i> จัดเรียงสำเร็จ</span>
+                                    <span class="text-xs text-slate-400" id="detected-platform-badge">แพลตฟอร์ม: TikTok</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800">เอกสารพร้อมพิมพ์แล้ว!</h3>
+                                <p class="text-xs text-slate-500 mt-1">จำนวนหน้ากระดาษลดลงจาก <span class="font-bold text-red-500" id="old-pages">0</span> เหลือ <span class="font-bold text-green-600" id="new-pages">0</span> หน้า</p>
+                                <div id="carrier-summary" class="flex flex-wrap gap-1.5 mt-3 text-[11px] font-medium"></div>
+                            </div>
+                            <button id="print-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-print"></i> พิมพ์ใบปะหน้า
+                            </button>
+                        </div>
+
+                        <!-- รายการสินค้า Pick List -->
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                            <div class="bg-slate-50 border-b border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+                                <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-blue-500"></i> รายการของที่ต้องไปหยิบ (Pick List)</h3>
+                                
+                                <div class="flex items-center w-full sm:w-auto gap-2">
+                                    <div class="relative w-full sm:w-48">
+                                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                        </div>
+                                        <input type="text" id="pick-list-search" placeholder="ค้นหาสินค้า..." class="bg-white border border-slate-200 text-xs rounded-lg block w-full pl-8 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    </div>
+                                    <button onclick="exportCSV()" class="text-xs font-semibold bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 py-2 px-3 rounded-lg flex items-center gap-1">
+                                        <i class="fa-solid fa-file-excel"></i> CSV
+                                    </button>
+                                    <button onclick="copyPickList()" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-3 rounded-lg flex items-center gap-1">
+                                        <i class="fa-regular fa-copy"></i> คัดลอก
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- ตารางรายการหยิบของ -->
+                            <div class="overflow-auto hide-scrollbar max-h-72">
+                                <table class="w-full text-sm text-left text-slate-500">
+                                    <thead class="text-xs text-slate-600 bg-slate-50 border-b border-slate-200 sticky top-0 z-10 font-semibold">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 w-10 text-center"><i class="fa-solid fa-square-check"></i></th>
+                                            <th scope="col" class="px-4 py-3">รายละเอียดสินค้า (SKU / ตัวเลือก)</th>
+                                            <th scope="col" class="px-4 py-3 text-center w-24">จำนวนรวม</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pick-list-body"></tbody>
+                                </table>
+                            </div>
+                            <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-between items-center font-bold text-slate-800">
+                                <span>รวมจำนวนสินค้าทั้งหมด:</span>
+                                <span id="total-items-count" class="text-lg text-blue-600">0 ชิ้น</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
 
-            <!-- กล่องกรอกข้อมูลด้วยมือ -->
-            <div class="mt-3 flex gap-2">
-                <input type="text" id="manual-barcode" placeholder="กรอกเลขบาร์โค้ดเผื่อแสกนไม่ติด..." class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
-                <button onclick="handleManualInput()" class="bg-gray-800 text-white px-4 rounded-lg active:bg-gray-700 font-bold transition">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- รายการที่สแกนแล้ว -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-1 min-h-[250px]">
-            <div class="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-xl shrink-0">
-                <h3 class="font-bold text-gray-700"><i class="fa-solid fa-list-check mr-2 text-blue-500"></i> รายการล่าสุด</h3>
-                <button onclick="clearAllData()" class="text-xs text-red-500 font-medium px-3 py-1.5 bg-red-50 hover:bg-red-100 rounded border border-red-200 transition">
-                    ล้างทั้งหมด
-                </button>
-            </div>
-            
-            <!-- List Container -->
-            <div class="flex-1 overflow-y-auto p-2" id="scanned-list-container">
-                <ul id="scanned-list" class="space-y-2 flex flex-col-reverse">
-                    <!-- ข้อมูลจะถูกแทรกที่นี่ผ่าน JS -->
-                </ul>
-                <div id="empty-state" class="h-full flex flex-col items-center justify-center text-gray-400 py-8">
-                    <i class="fa-solid fa-box-open text-4xl mb-3 text-gray-300"></i>
-                    <p class="text-sm font-medium">ยังไม่มีข้อมูลการสแกน</p>
+            <!-- ประวัติการทำงานในหน้าหลัก -->
+            <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-slate-400"></i> ประวัติการจัดเรียงล่าสุด (ในเครื่องคอม)</h3>
+                    <button onclick="clearAllHistory()" class="text-xs text-red-500 hover:text-red-700 font-semibold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-100 transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i> เคลียร์ทั้งหมด
+                    </button>
+                </div>
+                <div class="overflow-x-auto hide-scrollbar">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-50 border-b">
+                            <tr>
+                                <th class="px-4 py-3 font-semibold">วันเวลา</th>
+                                <th class="px-4 py-3 font-semibold">ชื่อไฟล์</th>
+                                <th class="px-4 py-3 text-center font-semibold">จำนวนออเดอร์</th>
+                                <th class="px-4 py-3 text-center font-semibold">รวมชิ้น</th>
+                                <th class="px-4 py-3 text-center font-semibold w-20">ลบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+        </main>
+
+        <!-- ================= TAB 2: QC SCANNER ================= -->
+        <main id="tab-scanner-view" class="hidden space-y-6">
+            <div class="text-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center justify-center gap-2"><i class="fa-solid fa-barcode text-blue-600"></i> ระบบตรวจเช็คสินค้า & คัดเก็บพัสดุ (QC Scanner)</h2>
+                <p class="text-slate-500 mt-1 text-sm">กล้องสแกนระบบ Live สแกนรวดเร็ว ร้องติ๊ดเตือนออเดอร์ซ้ำ บันทึกอัตโนมัติในเครื่องมือถือ</p>
+                <div class="flex justify-center gap-3 mt-4 text-xs font-semibold">
+                    <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-100 flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> ป้องกันการส่งสินค้าซ้ำ</span>
+                    <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100 flex items-center gap-1"><i class="fa-solid fa-mobile-screen"></i> พัฒนาเพื่อสมาร์ตโฟน 100%</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- กล้องสแกนเนอร์ -->
+                <div class="lg:col-span-1 flex flex-col gap-6">
+                    <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col items-center relative">
+                        
+                        <!-- Viewfinder Wrapper -->
+                        <div id="scanner-wrapper" class="relative rounded-xl overflow-hidden bg-slate-900 w-full aspect-square mb-4 shadow-inner border flex items-center justify-center">
+                            <!-- Live Camera HTML5-QRCode Target -->
+                            <div id="reader" class="w-full h-full absolute inset-0"></div>
+                            
+                            <!-- ตัวแสดงสถานะก่อนกล้องเปิด -->
+                            <i id="idle-icon" class="fa-solid fa-camera text-4xl text-slate-600 z-10"></i>
+
+                            <!-- Loading -->
+                            <div id="cam-loading" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 backdrop-blur-sm">
+                                 <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500 mb-2"></i>
+                                 <span class="text-white text-xs">กำลังจับภาพวิดีโอ...</span>
+                            </div>
+
+                            <!-- เป้าเล็ง Visual Effects -->
+                            <div id="scanner-aim" class="hidden absolute inset-0 pointer-events-none flex items-center justify-center z-30">
+                                <div class="relative w-[90%] h-[120px]">
+                                    <!-- มุมเล็ง 4 ทิศ -->
+                                    <div class="aim-corner absolute top-0 left-0 w-8 h-8 border-t-[5px] border-l-[5px] border-blue-500 rounded-tl-xl"></div>
+                                    <div class="aim-corner absolute top-0 right-0 w-8 h-8 border-t-[5px] border-r-[5px] border-blue-500 rounded-tr-xl"></div>
+                                    <div class="aim-corner absolute bottom-0 left-0 w-8 h-8 border-b-[5px] border-l-[5px] border-blue-500 rounded-bl-xl"></div>
+                                    <div class="aim-corner absolute bottom-0 right-0 w-8 h-8 border-b-[5px] border-r-[5px] border-blue-500 rounded-br-xl"></div>
+                                    
+                                    <!-- เลเซอร์กวาดสีแดงสุดเท่ -->
+                                    <div id="aim-laser" class="absolute top-0 left-0 w-full h-[3px] bg-red-500 shadow-[0_0_12px_rgba(239,68,68,1)] animate-laser"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ตัวเปิด-ปิดควบคุมกล้อง -->
+                        <div class="flex gap-2 w-full">
+                            <button id="btn-start-scan" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-play"></i> เปิดระบบกล้อง
+                            </button>
+                            <button id="btn-stop-scan" class="hidden flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-stop"></i> ปิดกล้องสแกน
+                            </button>
+                        </div>
+
+                        <!-- ตัวเลือกเสียงแจ้งเตือน -->
+                        <div class="w-full mt-4 p-2.5 bg-slate-50 border rounded-xl flex items-center justify-between text-xs font-semibold text-slate-600">
+                            <span><i class="fa-solid fa-volume-high text-slate-400 mr-1.5"></i> เสียงบี๊บยืนยันสถานะ</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="setting-sound" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- เพิ่มข้อมูลด้วยมือเผื่อกล้องพัง -->
+                        <div class="mt-4 w-full flex gap-2">
+                            <input type="text" id="manual-barcode" placeholder="กรอกเลขบาร์โค้ดพัสดุ..." class="flex-1 text-sm border border-slate-200 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onclick="handleManualInput()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 rounded-lg font-bold transition">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- รายการผลลัพธ์การคัดบาร์โค้ด -->
+                <div class="lg:col-span-2 flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[420px]">
+                    <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center shrink-0">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-list-check text-blue-500"></i> ข้อมูลที่บันทึกไว้ในเครื่องมือถือ</h3>
+                        <span id="scan-count-badge" class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-bold">0 รายการ</span>
+                    </div>
+
+                    <!-- รายการที่เก็บแล้ว -->
+                    <div class="flex-1 overflow-y-auto p-4" id="scanned-list-wrapper">
+                        <ul id="scanned-list" class="space-y-2 flex flex-col-reverse">
+                            <!-- ข้อความประวัติการแสกน -->
+                        </ul>
+                        <div id="empty-scan-state" class="h-full flex flex-col items-center justify-center text-slate-400 py-12">
+                            <div class="bg-slate-50 p-4 rounded-full mb-3 text-slate-300">
+                                <i class="fa-solid fa-barcode text-5xl"></i>
+                            </div>
+                            <p class="text-sm font-semibold">ยังไม่มีข้อมูลการสแกนเก็บไว้</p>
+                            <p class="text-xs mt-1 text-slate-400">กรุณากดปุ่มเปิดกล้องเพื่อยิงสแกนบาร์โค้ดพัสดุ</p>
+                        </div>
+                    </div>
+
+                    <!-- ปุ่มออกข้อมูลคัดลอก/ส่งออกดาวน์โหลด -->
+                    <div class="bg-slate-50 border-t border-slate-200 p-4 flex gap-3 shrink-0">
+                        <button onclick="copyToClipboard()" class="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 active:scale-95 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">
+                            <i class="fa-regular fa-copy"></i> คัดลอกพัสดุทั้งหมด
+                        </button>
+                        <button onclick="exportToCSV()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl active:scale-95 flex items-center justify-center gap-2 transition-all text-sm shadow-md shadow-green-600/10">
+                            <i class="fa-solid fa-file-excel"></i> ดาวน์โหลด CSV (Excel)
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
     </div>
 
-    <!-- Bottom Action Bar (Fixed) -->
-    <div class="bg-white border-t border-gray-200 p-3 flex gap-3 fixed bottom-0 w-full shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.05)] z-20">
-        <button onclick="copyToClipboard()" class="flex-1 bg-gray-100 border border-gray-300 text-gray-700 active:bg-gray-200 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition">
-            <i class="fa-regular fa-copy"></i> คัดลอก
-        </button>
-        <button onclick="exportToCSV()" class="flex-1 bg-green-50 border border-green-300 text-green-700 active:bg-green-100 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition">
-            <i class="fa-solid fa-file-csv"></i> โหลด CSV
-        </button>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast hidden-toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2">
-        <i id="toast-icon" class="fa-solid fa-check"></i>
-        <span id="toast-text">แจ้งเตือน</span>
-    </div>
-
-    <!-- Audio สำหรับเสียง Beep -->
+    <!-- ลิงก์เล่นเสียง Beep แจ้งเตือนสถานะ -->
     <audio id="beep-success" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
     <audio id="beep-error" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3" preload="auto"></audio>
 
     <script>
-        // --- State Management ---
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // State Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const processingSection = document.getElementById('processing-section');
+        const resultSection = document.getElementById('result-section');
+        const statusText = document.getElementById('status-text');
+        const progressBar = document.getElementById('progress-bar');
+        const searchInput = document.getElementById('pick-list-search');
+
+        let extractedProducts = {}; 
+        let currentPdfUrl = null; 
+        let currentFileName = "";
+
+        // --- ระบบ Custom Modal ถามลบ/ข้อมูลซ้ำ ---
+        function showModal(title, message, type = 'info', showCancel = false) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                const modalTitle = document.getElementById('modal-title');
+                const modalMessage = document.getElementById('modal-message');
+                const modalIconContainer = document.getElementById('modal-icon-container');
+                const modalIcon = document.getElementById('modal-icon');
+                const modalButtons = document.getElementById('modal-buttons');
+
+                modalTitle.innerText = title;
+                modalMessage.innerText = message;
+
+                if (type === 'warning') {
+                    modalIconContainer.className = 'flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto bg-yellow-50 text-yellow-500 border border-yellow-100';
+                    modalIcon.className = 'fa-solid fa-triangle-exclamation text-2xl';
+                } else if (type === 'error') {
+                    modalIconContainer.className = 'flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto bg-red-50 text-red-500 border border-red-100';
+                    modalIcon.className = 'fa-solid fa-circle-xmark text-2xl';
+                } else if (type === 'success') {
+                    modalIconContainer.className = 'flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto bg-green-50 text-green-500 border border-green-100';
+                    modalIcon.className = 'fa-solid fa-circle-check text-2xl';
+                } else {
+                    modalIconContainer.className = 'flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto bg-blue-50 text-blue-500 border border-blue-100';
+                    modalIcon.className = 'fa-solid fa-circle-info text-2xl';
+                }
+
+                modalButtons.innerHTML = '';
+
+                if (showCancel) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-semibold transition w-full text-sm border';
+                    cancelBtn.innerText = 'ยกเลิก';
+                    cancelBtn.onclick = () => { modal.classList.add('hidden'); resolve(false); };
+                    modalButtons.appendChild(cancelBtn);
+                }
+
+                const confirmBtn = document.createElement('button');
+                const confirmColor = (type === 'error' || type === 'warning') ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700';
+                confirmBtn.className = `px-4 py-2 text-white rounded-xl font-semibold transition w-full text-sm shadow-md ${confirmColor}`;
+                confirmBtn.innerText = 'ตกลง';
+                confirmBtn.onclick = () => { modal.classList.add('hidden'); resolve(true); };
+                modalButtons.appendChild(confirmBtn);
+
+                modal.classList.remove('hidden');
+            });
+        }
+
+        // --- ระบบ Tab Switcher ---
+        function switchTab(tabName) {
+            const optimizerView = document.getElementById('tab-optimizer-view');
+            const scannerView = document.getElementById('tab-scanner-view');
+            const optBtn = document.getElementById('nav-btn-optimizer');
+            const scanBtn = document.getElementById('nav-btn-scanner');
+
+            if (tabName === 'optimizer') {
+                optimizerView.classList.remove('hidden');
+                optimizerView.classList.add('block');
+                scannerView.classList.add('hidden');
+                scannerView.classList.remove('block');
+                optBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-500/10";
+                scanBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition";
+                stopScanner();
+            } else {
+                scannerView.classList.remove('hidden');
+                scannerView.classList.add('block');
+                optimizerView.classList.add('hidden');
+                optimizerView.classList.remove('block');
+                scanBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-500/10";
+                optBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition";
+            }
+        }
+
+        // --- ประวัติการทำงานคอมพิวเตอร์ ---
+        loadHistory();
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, preventDefaults, false); });
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        ['dragenter', 'dragover'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-active'), false));
+        ['dragleave', 'drop'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-active'), false));
+
+        dropZone.addEventListener('drop', (e) => { handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', function(e) { handleFiles(this.files); });
+
+        async function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'pdf' || ext === 'zip') {
+                    let history = JSON.parse(localStorage.getItem('pdf_optimizer_history') || '[]');
+                    if (history.some(h => h.name === file.name)) {
+                        const confirmProceed = await showModal('⚠️ แจ้งเตือนไฟล์ซ้ำ', `ไฟล์ชื่อ "${file.name}" เคยผ่านระบบไปแล้ว\nคุณต้องการประมวลผลอีกครั้งหรือไม่?`, 'warning', true);
+                        if (!confirmProceed) { fileInput.value = ''; return; }
+                    }
+                    currentFileName = file.name;
+                    processFileWrapper(file, ext);
+                } else {
+                    showModal('ประเภทไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดไฟล์นามสกุล .pdf หรือ .zip เท่านั้นครับ', 'error');
+                }
+            }
+        }
+
+        searchInput.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.pick-list-row').forEach(row => {
+                const text = row.querySelector('.product-name').innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+
+        function resetApp() {
+            processingSection.classList.add('hidden');
+            resultSection.classList.add('hidden');
+            progressBar.style.width = '0%';
+            extractedProducts = {};
+            searchInput.value = '';
+            if (currentPdfUrl) { URL.revokeObjectURL(currentPdfUrl); currentPdfUrl = null; }
+        }
+
+        function printPDF(url) {
+            const printWindow = window.open(url, '_blank');
+            if (printWindow) printWindow.focus();
+            else showModal('ถูกบล็อก Pop-up', 'กรุณากดอนุญาตให้เบราว์เซอร์เปิด Pop-up เพื่อพิมพ์เอกสาร', 'warning');
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFFรายละเอียดสินค้า (SKU),จำนวน (ชิ้น)\n"; 
+            for (const [product, qty] of Object.entries(extractedProducts)) {
+                csvContent += `"${product.replace(/"/g, '""')}",${qty}\n`; 
+            }
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `PickList_${currentFileName.replace(/\.[^/.]+$/, "")}.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function copyPickList() {
+            let copyText = "📋 สรุปยอดหยิบของคลังสินค้า\n------------------------\n";
+            let total = 0;
+            for (const [product, qty] of Object.entries(extractedProducts)) {
+                copyText += `- ${product} : ${qty} ชิ้น\n`;
+                total += qty;
+            }
+            copyText += `------------------------\nรวมพัสดุ: ${total} ชิ้น`;
+            const el = document.createElement('textarea'); el.value = copyText;
+            document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+            showModal('คัดลอกสำเร็จ', 'สามารถนำไปวางในแชตกลุ่มไลน์หรือหน้าต่างอื่นๆ ได้เลยครับ', 'success');
+        }
+
+        function saveHistory(filename, orders, items) {
+            let history = JSON.parse(localStorage.getItem('pdf_optimizer_history') || '[]');
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH');
+            history.unshift({ date: dateStr, name: filename, orders: orders, items: items });
+            if (history.length > 10) history.pop();
+            localStorage.setItem('pdf_optimizer_history', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const tbody = document.getElementById('history-body');
+            let history = JSON.parse(localStorage.getItem('pdf_optimizer_history') || '[]');
+            tbody.innerHTML = '';
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-slate-400">ยังไม่มีประวัติประมวลผล</td></tr>`;
+            } else {
+                history.forEach((h, index) => {
+                    tbody.innerHTML += `
+                        <tr class="bg-white border-b hover:bg-slate-50/50">
+                            <td class="px-4 py-3 text-slate-500 text-xs">${h.date}</td>
+                            <td class="px-4 py-3 font-semibold text-slate-700 truncate max-w-[200px]" title="${h.name}">${h.name}</td>
+                            <td class="px-4 py-3 text-center font-bold text-slate-800">${h.orders}</td>
+                            <td class="px-4 py-3 text-center text-blue-600 font-bold">${h.items}</td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick="deleteHistoryItem(${index})" class="text-red-400 hover:text-red-600 p-1 rounded transition"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        async function deleteHistoryItem(index) {
+            const isConfirm = await showModal('ลบรายการ', 'คุณต้องการลบประวัติรายการนี้หรือไม่?', 'warning', true);
+            if (isConfirm) {
+                let history = JSON.parse(localStorage.getItem('pdf_optimizer_history') || '[]');
+                history.splice(index, 1);
+                localStorage.setItem('pdf_optimizer_history', JSON.stringify(history));
+                loadHistory();
+            }
+        }
+
+        async function clearAllHistory() {
+            const isConfirm = await showModal('ลบประวัติทั้งหมด', 'ยืนยันเพื่อลบประวัติการจัดเรียงพัสดุในเครื่องทั้งหมดหรือไม่?', 'error', true);
+            if (isConfirm) {
+                localStorage.removeItem('pdf_optimizer_history');
+                loadHistory();
+            }
+        }
+
+        async function processFileWrapper(file, ext) {
+            resetApp(); processingSection.classList.remove('hidden');
+            let pdfBytesToProcess;
+
+            try {
+                if (ext === 'zip') {
+                    statusText.innerText = "กำลังคลายซิปไฟล์และดึงข้อมูล PDF..."; progressBar.style.width = '5%';
+                    const zip = new JSZip(); const zipContents = await zip.loadAsync(file);
+                    const mergedPdf = await PDFLib.PDFDocument.create();
+                    
+                    let pdfFiles = Object.keys(zipContents.files).filter(name => {
+                        const isPdf = name.toLowerCase().endsWith('.pdf');
+                        const isNotDir = !zipContents.files[name].dir;
+                        const isNotMacOsHidden = !name.includes('__MACOSX') && !name.split('/').pop().startsWith('._');
+                        return isPdf && isNotDir && isNotMacOsHidden;
+                    });
+                    
+                    if(pdfFiles.length === 0) throw new Error("ไม่พบไฟล์เอกสาร PDF ด้านในไฟล์ ZIP นี้");
+
+                    let validPdfCount = 0;
+                    for (let i=0; i<pdfFiles.length; i++) {
+                        statusText.innerText = `รวมไฟล์เอกสารใบปะหน้า ${i+1}/${pdfFiles.length}...`;
+                        try {
+                            const pdfData = await zipContents.files[pdfFiles[i]].async('uint8array');
+                            const tempPdf = await PDFLib.PDFDocument.load(pdfData);
+                            const copiedPages = await mergedPdf.copyPages(tempPdf, tempPdf.getPageIndices());
+                            copiedPages.forEach(p => mergedPdf.addPage(p));
+                            validPdfCount++;
+                        } catch (e) { console.warn("ข้ามไฟล์ที่เข้ารหัสหรือเสียหาย:", pdfFiles[i]); }
+                    }
+                    if(validPdfCount === 0) throw new Error("ไฟล์ PDF ด้านในเสียหายหรือไม่รองรับ");
+                    pdfBytesToProcess = await mergedPdf.save();
+                } else {
+                    const arrayBuffer = await file.arrayBuffer(); pdfBytesToProcess = new Uint8Array(arrayBuffer);
+                }
+                await processCorePDF(pdfBytesToProcess);
+
+            } catch (error) {
+                console.error(error); showModal('ข้อผิดพลาดระบบ', `ไม่สำเร็จ: ${error.message}`, 'error'); resetApp();
+            }
+        }
+
+        // ========================================================
+        // 🧠 UNIVERSAL CORE ENGINE (AUTO DETECT PLATFORM & SMART COORDINATE)
+        // ========================================================
+        async function processCorePDF(pdfDataBytes) {
+            try {
+                statusText.innerText = "กำลังตรวจสอบโครงสร้างหน้ากระดาษพัสดุ...";
+                progressBar.style.width = '10%';
+                
+                const dataForPdfJs = pdfDataBytes.slice(0);
+                const loadingTask = pdfjsLib.getDocument({data: dataForPdfJs});
+                const pdfDocPdfJs = await loadingTask.promise;
+                const totalPages = pdfDocPdfJs.numPages;
+
+                let groups = [];
+                let currentGroup = [];
+                let currentOrderId = null;
+                let pageTexts = [];
+                let pageItemsArray = []; 
+                let isShopeePlatform = false;
+
+                // --- เฟส 1: สแกนโครงสร้าง และระบุแพลตฟอร์มแบบอัตโนมัติ ---
+                for (let i = 1; i <= totalPages; i++) {
+                    progressBar.style.width = `${10 + ((i / totalPages) * 15)}%`; 
+                    statusText.innerText = `ประเมินโครงสร้างใบปะหน้า ${i}/${totalPages}...`;
+                    
+                    const page = await pdfDocPdfJs.getPage(i);
+                    const textContent = await page.getTextContent();
+                    
+                    const text = textContent.items.map(item => item.str).join(' ');
+                    pageTexts[i - 1] = text;
+                    pageItemsArray[i - 1] = textContent.items;
+
+                    // ตรวจจับระบบตาราง Shopee จาก Keyword สำคัญ
+                    if (/Shopee Order No|ตัวเลือกสินค้า|จำนวนรวม/i.test(text)) {
+                        isShopeePlatform = true;
+                    }
+
+                    // ค้นหาเลขที่คำสั่งซื้อสำหรับเป็นคีย์จัดกลุ่ม
+                    const match = text.match(/(?:Order ID|หมายเลขคำสั่งซื้อ|หมายเลขพัสดุ|Shopee Order No\.)[\s:]*([A-Z0-9\-]+)/i);
+                    if (match) {
+                        const foundId = match[1];
+                        if (currentOrderId !== foundId) {
+                            if (currentGroup.length > 0) groups.push({ orderId: currentOrderId, pages: currentGroup });
+                            currentOrderId = foundId;
+                            currentGroup = [i - 1]; 
+                        } else { currentGroup.push(i - 1); }
+                    } else {
+                        if (currentOrderId === null) currentOrderId = `Unknown_${i}`;
+                        currentGroup.push(i - 1);
+                    }
+                }
+                if (currentGroup.length > 0) groups.push({ orderId: currentOrderId, pages: currentGroup });
+
+                document.getElementById('detected-platform-badge').innerText = `ระบบ AI: ตรวจจับรูปแบบตาราง ${isShopeePlatform ? 'Shopee' : 'TikTok'}`;
+
+                // --- เฟส 2: คัดแยกข้อมูลแต่ละกลุ่มพัสดุด้วย Coordinate แกน X, Y ---
+                statusText.innerText = "กำลังแยกข้อมูลสินค้าและสกัด SKU / Variation...";
+                progressBar.style.width = '30%';
+
+                for (let group of groups) {
+                    let firstPageIdx = group.pages[0];
+                    let firstPageText = pageTexts[firstPageIdx];
+                    let firstPageItems = pageItemsArray[firstPageIdx];
+                    
+                    let cleanHeader = "";
+                    if (firstPageItems && firstPageItems.length > 0) {
+                        let maxY = Math.max(...firstPageItems.map(item => item.transform[5]));
+                        cleanHeader = firstPageItems.filter(item => item.transform[5] > maxY * 0.45).map(item => item.str).join('').replace(/\s+/g, '').toUpperCase();
+                    } else {
+                        cleanHeader = firstPageText.replace(/\s+/g, '').toUpperCase();
+                    }
+
+                    // ระบุคลาสขนส่ง
+                    let carrier = '99_อื่นๆ'; 
+                    if (cleanHeader.includes('THAILANDPOST') || cleanHeader.includes('ไปรษณีย์ไทย') || cleanHeader.includes('EMS')) carrier = '01_ThailandPost';
+                    else if (cleanHeader.includes('J&T')) carrier = '02_J&T';
+                    else if (cleanHeader.includes('SPX') || cleanHeader.includes('SHOPEEEXPRESS') || firstPageText.toUpperCase().includes('SHOPEE')) carrier = '03_SPX';
+                    else {
+                        let thMatch = firstPageText.match(/\bTH[A-Z0-9]{9,}\b/i) || firstPageText.match(/\b[A-Z]{2}[0-9]{9}TH\b/i);
+                        let numbersOnly = firstPageText.replace(/[:\-]/g, ' ').match(/\b\d{12}\b/g); 
+                        if (thMatch || cleanHeader.includes('DROP-OFF')) carrier = '01_ThailandPost';
+                        else if (numbersOnly && numbersOnly.some(n => /^[6789]/.test(n))) carrier = '02_J&T';
+                        else {
+                            let fullClean = firstPageText.replace(/\s+/g, '').toUpperCase();
+                            if (fullClean.includes('THAILANDPOST') || fullClean.includes('ไปรษณีย์ไทย')) carrier = '01_ThailandPost';
+                            else if (fullClean.includes('J&T')) carrier = '02_J&T';
+                            else carrier = '01_ThailandPost'; 
+                        }
+                    }
+                    group.carrier = carrier;
+
+                    let orderProductsForSort = {};
+                    let firstSortKey = "";
+
+                    // เช็คกรองหน้าว่างใบสรุปของ
+                    let validPages = [group.pages[0]]; 
+                    for(let k = 1; k < group.pages.length; k++) {
+                        let text = pageTexts[group.pages[k]];
+                        let cleanText = text.replace(/Order ID|Shopee Order No\.|จำนวนรวม|จำนวน|หมายเลขพัสดุ/ig, '').replace(/[0-9]{15,}/g, '').replace(/\s+/g, '').trim();
+                        if (cleanText.length > 15) {
+                            validPages.push(group.pages[k]);
+                        }
+                    }
+                    group.pages = validPages;
+
+                    // สกัดค่าด้วยพิกัดแกน X
+                    for (let pIdx of validPages) {
+                        let pageItems = pageItemsArray[pIdx];
+                        
+                        let colVarSkuX = 140; // ค่าเริ่มต้นแกน X ของคอลัมน์ SKU / ตัวเลือกสินค้า
+                        let colQtyX = 235;    // ค่าเริ่มต้นแกน X ของคอลัมน์ Qty / จำนวน
+
+                        // ค้นหาพิกัดแกนอ้างอิงจากหัวตารางในเอกสาร
+                        for (let item of pageItems) {
+                            let str = item.str.trim();
+                            if (/SKU|ตัวเลือกสินค้า/i.test(str)) colVarSkuX = item.transform[4] - 15;
+                            if (/Qty|จำนวน/i.test(str) && !/รวม/i.test(str)) colQtyX = item.transform[4] - 15;
+                        }
+
+                        // จัดกลุ่มไอเทมเป็นบรรทัดตามแกน Y
+                        let sortedItems = pageItems.slice().sort((a,b) => {
+                            let yDiff = b.transform[5] - a.transform[5];
+                            if (Math.abs(yDiff) > 4) return yDiff;
+                            return a.transform[4] - b.transform[4];
+                        });
+
+                        let rows = []; let currentRow = [];
+                        let currentY = sortedItems.length > 0 ? sortedItems[0].transform[5] : 0;
+                        for (let item of sortedItems) {
+                            if (Math.abs(item.transform[5] - currentY) > 4) {
+                                if (currentRow.length > 0) rows.push(currentRow);
+                                currentRow = []; currentY = item.transform[5];
+                            }
+                            if (item.str.trim() !== '') currentRow.push(item);
+                        }
+                        if (currentRow.length > 0) rows.push(currentRow);
+
+                        let inTable = false;
+                        let nameBuffer = [];
+                        let varSkuBuffer = [];
+
+                        for (let row of rows) {
+                            let lineStr = row.map(i => i.str.trim()).join(' ');
+                            
+                            if (/Product Name|ชื่อสินค้า|รายการสินค้า|ตัวเลือกสินค้า/i.test(lineStr)) {
+                                inTable = true; nameBuffer = []; varSkuBuffer = []; continue;
+                            }
+                            
+                            if (inTable) {
+                                if (/Order ID|Shopee Order No\.|จำนวนรวม|ยอดรวม|Total|ยอดสุทธิ/i.test(lineStr)) {
+                                    inTable = false; continue;
+                                }
+                                
+                                // หาตัวเลขที่เป็นจำนวนพัสดุ (ต้องอยู่ขวาสุดหลังคอลัมน์ Qty)
+                                let qtyItem = row.slice().reverse().find(i => /^\d+$/.test(i.str.trim()) && i.transform[4] >= colQtyX - 10);
+                                
+                                for (let item of row) {
+                                    if (item === qtyItem) continue;
+                                    let text = item.str.trim();
+                                    let x = item.transform[4];
+                                    
+                                    if (x < colVarSkuX) {
+                                        // 🎯 ข้ามตัวเลขลำดับที่ '#' ของระบบ Shopee (เลขโดดตรงแกน X กลางซ้าย)
+                                        if (isShopeePlatform && /^\d+$/.test(text) && x > 40 && x < colVarSkuSkuX - 10) continue;
+                                        nameBuffer.push(text);
+                                    } else {
+                                        varSkuBuffer.push(text);
+                                    }
+                                }
+
+                                if (qtyItem) {
+                                    let qtyVal = parseInt(qtyItem.str.trim(), 10);
+                                    let nameStr = nameBuffer.join(' ').replace(/\s+/g, ' ').trim();
+                                    let varSkuStr = varSkuBuffer.join(' ').replace(/\s+/g, ' ').trim();
+                                    
+                                    if (nameStr.length > 2 && !nameStr.toLowerCase().includes('page')) {
+                                        let sortKey = "";
+                                        let fullLine = "";
+
+                                        if (isShopeePlatform) {
+                                            // Shopee: เรียงตาม ตัวเลือกสินค้า (Variation)
+                                            sortKey = varSkuStr ? varSkuStr : nameStr;
+                                            fullLine = varSkuStr ? `${nameStr} [${varSkuStr}]` : nameStr;
+                                        } else {
+                                            // TikTok: พลิกข้อความส่วน SKU และชื่อสินค้า เพื่อให้ Seller SKU (คำสุดท้าย) มาเป็น Priority 1
+                                            sortKey = varSkuStr ? varSkuStr.split(/\s+/).reverse().join(' ') : nameStr.split(/\s+/).reverse().join(' ');
+                                            fullLine = `${nameStr} ${varSkuStr}`.trim();
+                                        }
+
+                                        extractedProducts[fullLine] = (extractedProducts[fullLine] || 0) + qtyVal;
+                                        orderProductsForSort[sortKey] = 1; // บันทึกชนิดเพื่อตรวจสอบความซับซ้อนของคำสั่งซื้อ
+                                        if (!firstSortKey) firstSortKey = sortKey;
+                                    }
+                                    nameBuffer = []; varSkuBuffer = []; // รีเซ็ตสำหรับพัสดุถัดไป
+                                }
+                            }
+                        }
+                    }
+                    
+                    let uniqueTypesCount = Object.keys(orderProductsForSort).length;
+                    group.isSingleType = (uniqueTypesCount === 1);
+                    group.primarySku = firstSortKey; 
+                }
+
+                // --- เฟส 3: Sorting - ระบบจัดเรียง Priority ขั้นสูงสุด ---
+                groups.sort((a, b) => {
+                    // 1. แยกตามประเภทขนส่ง (Carrier)
+                    if (a.carrier !== b.carrier) return (a.carrier || "").localeCompare(b.carrier || "");
+                    
+                    // 2. แยก "ออเดอร์ชิ้นเดียว" ขึ้นก่อน "ออเดอร์หลายชิ้น" เพื่อให้ฝ่ายแพ็คหยิบของได้เร็ว
+                    if (a.isSingleType !== b.isSingleType) return a.isSingleType ? -1 : 1;
+                    
+                    // 3. เรียงตามคีย์ Priority ของแต่ละขนส่ง (Seller SKU หรือ ตัวเลือกสินค้า)
+                    if (a.isSingleType && b.isSingleType) return (a.primarySku || "").localeCompare(b.primarySku || "");
+                    
+                    // 4. กลุ่มหลายชิ้นเรียงอิงตาม Order ID
+                    return (a.orderId || "").localeCompare(b.orderId || "");
+                });
+
+                // --- อัปเดต UI รายงานตัวเลข ---
+                const carrierSummaryDiv = document.getElementById('carrier-summary');
+                carrierSummaryDiv.innerHTML = '';
+                let displayCarrierCounts = {};
+                let displayNames = {
+                    '01_ThailandPost': 'ไปรษณีย์ไทย', '02_J&T': 'J&T Express', '03_SPX': 'Shopee Xpress', '99_อื่นๆ': 'อื่นๆ'
+                };
+                for (let group of groups) displayCarrierCounts[group.carrier] = (displayCarrierCounts[group.carrier] || 0) + 1;
+
+                for (const [carrier, count] of Object.entries(displayCarrierCounts)) {
+                    let colorClass = "bg-blue-50 text-blue-700 border-blue-200";
+                    if (carrier.includes('Post')) colorClass = "bg-red-50 text-red-700 border-red-200";
+                    else if (carrier.includes('J&T')) colorClass = "bg-red-500 text-white border-red-600";
+                    else if (carrier.includes('SPX')) colorClass = "bg-orange-500 text-white border-orange-600";
+                    carrierSummaryDiv.innerHTML += `<span class="${colorClass} border px-3 py-1 rounded-full shadow-sm">${displayNames[carrier] || carrier.replace(/^\d+_/, '')}: ${count} กล่อง</span>`;
+                }
+
+                // สรุปยอดลง Pick List Table
+                const tbody = document.getElementById('pick-list-body'); tbody.innerHTML = '';
+                let totalItemsCount = 0;
+                const productEntries = Object.entries(extractedProducts).sort((a, b) => b[1] - a[1]); // ยอดหยิบสูงสุดขึ้นก่อน
+                
+                if (productEntries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-6 text-center text-slate-400">ไม่พบสินค้าในระบบ</td></tr>`;
+                } else {
+                    productEntries.forEach(([name, qty], index) => {
+                        totalItemsCount += qty;
+                        let hotBadge = qty >= 10 ? `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800"><i class="fa-solid fa-fire mr-1"></i> ยอดนิยม</span>` : '';
+                        tbody.innerHTML += `
+                            <tr class="pick-list-row bg-white border-b hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-3.5 text-center"><input type="checkbox" id="cb-${index}" class="checkbox-custom w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded cursor-pointer focus:ring-blue-500"></td>
+                                <td class="px-4 py-3.5 font-medium text-slate-800"><label for="cb-${index}" class="cursor-pointer product-name">${name} ${hotBadge}</label></td>
+                                <td class="px-4 py-3.5 text-center font-bold text-blue-600 bg-blue-50/30">${qty}</td>
+                            </tr>`;
+                    });
+                }
+                document.getElementById('total-items-count').innerText = `${totalItemsCount} ชิ้น`;
+
+                saveHistory(currentFileName, groups.length, totalItemsCount);
+
+                // --- เฟส 4: สร้างไฟล์ PDF ตามลำดับที่ผ่านการจัดสเรียงแล้ว ---
+                statusText.innerText = "กำลังรวมไฟล์และจัดสเกลหน้าป้ายพิมพ์...";
+                progressBar.style.width = '55%';
+                
+                const dataForPdfLib = pdfDataBytes.slice(0);
+                const pdfDocPdfLib = await PDFLib.PDFDocument.load(dataForPdfLib);
+                const newPdf = await PDFLib.PDFDocument.create();
+                const useSeparator = document.getElementById('setting-separator').checked;
+                let currentDrawCarrier = null;
+
+                for (let i = 0; i < groups.length; i++) {
+                    progressBar.style.width = `${55 + ((i / groups.length) * 45)}%`; 
+                    const group = groups[i];
+
+                    if (useSeparator && group.carrier !== currentDrawCarrier) {
+                        currentDrawCarrier = group.carrier;
+                        const sepPage = newPdf.addPage([150 * 2.83, 100 * 2.83]); 
+                        const font = await newPdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
+                        let printName = displayNames[group.carrier] || group.carrier;
+                        let engName = group.carrier.replace(/[^\x00-\x7F]/g, "").replace(/_+/g, " ").trim() || "CARRIER";
+                        sepPage.drawRectangle({ x: 0, y: 0, width: sepPage.getSize().width, height: sepPage.getSize().height, color: PDFLib.rgb(0.95, 0.95, 0.95) }); 
+                        sepPage.drawText(`>>> ${engName} <<<`, { x: 40, y: sepPage.getSize().height / 2 - 15, size: 36, font: font, color: PDFLib.rgb(0.1, 0.1, 0.1) });
+                    }
+
+                    const copiedPages = await newPdf.copyPages(pdfDocPdfLib, group.pages);
+                    const { width, height } = copiedPages[0].getSize();
+
+                    if (group.pages.length === 1) {
+                        const newPage = newPdf.addPage([width, height]);
+                        const embeddedPage = await newPdf.embedPage(copiedPages[0]);
+                        newPage.drawPage(embeddedPage, { x: 0, y: 0, width, height });
+                    } else {
+                        const landscapeWidth = height; const landscapeHeight = width;
+                        for (let chunkStart = 0; chunkStart < group.pages.length; chunkStart += 2) {
+                            const newPage = newPdf.addPage([landscapeWidth, landscapeHeight]);
+                            const numPagesInChunk = Math.min(chunkStart + 2, group.pages.length) - chunkStart;
+                            const colWidth = landscapeWidth / 2;
+                            for (let j = 0; j < numPagesInChunk; j++) {
+                                const embeddedPage = await newPdf.embedPage(copiedPages[chunkStart + j]);
+                                const scale = Math.min(colWidth / width, landscapeHeight / height);
+                                const drawWidth = width * scale; const drawHeight = height * scale;
+                                newPage.drawPage(embeddedPage, { x: (j * colWidth) + ((colWidth - drawWidth) / 2), y: (landscapeHeight - drawHeight) / 2, width: drawWidth, height: drawHeight });
+                                if (j === 1) newPage.drawLine({ start: { x: colWidth, y: 15 }, end: { x: colWidth, y: landscapeHeight - 15 }, thickness: 1, color: PDFLib.rgb(0.8, 0.8, 0.8), opacity: 0.5 });
+                            }
+                        }
+                    }
+                }
+
+                progressBar.style.width = '100%'; statusText.innerText = "เรียบร้อย!";
+                const pdfBytes = await newPdf.save();
+                currentPdfUrl = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' })); 
+                document.getElementById('old-pages').innerText = totalPages;
+                document.getElementById('new-pages').innerText = newPdf.getPageCount();
+                document.getElementById('print-btn').onclick = () => printPDF(currentPdfUrl);
+                
+                setTimeout(() => { processingSection.classList.add('hidden'); resultSection.classList.remove('hidden'); }, 500);
+
+            } catch (error) { showModal('เกิดข้อผิดพลาด', `${error.message}`, 'error'); resetApp(); }
+        }
+
+        // ========================================================
+        // 📸 SYSTEMS 2: LIVE QC BARCODE SCANNER (STANDALONE + SMART TARGET)
+        // ========================================================
         let scannedData = [];
         let html5QrCode = null;
         let isScannerRunning = false;
-        let isProcessing = false; 
+        let isProcessing = false;
 
-        // DOM Elements
         const listUl = document.getElementById('scanned-list');
-        const emptyState = document.getElementById('empty-state');
-        const totalBadge = document.getElementById('total-count-badge');
+        const emptyState = document.getElementById('empty-scan-state');
+        const totalBadge = document.getElementById('scan-count-badge');
         const manualInput = document.getElementById('manual-barcode');
-        
-        // Aiming Elements
+
+        // Target Overlays
         const aimOverlay = document.getElementById('scanner-aim');
         const camLoading = document.getElementById('cam-loading');
         const idleIcon = document.getElementById('idle-icon');
         const aimCorners = document.querySelectorAll('.aim-corner');
         const aimLaser = document.getElementById('aim-laser');
 
-        // Sounds
+        // Sounds elements
         const soundSuccess = document.getElementById('beep-success');
         const soundError = document.getElementById('beep-error');
 
-        // --- เริ่มต้นโหลดข้อมูล ---
-        window.onload = () => {
-            loadFromLocalStorage();
-        };
+        // โหลดข้อมูลเก่าจากเครื่องมือถือขึ้นมาแสดง
+        loadFromLocalStorage();
 
-        // --- Scanner Logic ---
         document.getElementById('btn-start-scan').addEventListener('click', startScanner);
         document.getElementById('btn-stop-scan').addEventListener('click', stopScanner);
 
@@ -183,21 +975,16 @@
             idleIcon.classList.add('hidden');
             camLoading.classList.remove('hidden');
 
-            // แก้ไข: เอาข้อจำกัด qrbox ออกเพื่อให้แสกนได้เต็มจอ (Full Frame) 
-            // ช่วยแก้ปัญหากล้องไม่อ่านบาร์โค้ด และเพิ่มความเร็วในการสแกนขึ้น (ปรับ fps เป็น 15)
-            const config = { 
-                fps: 15
-            };
+            const config = { fps: 15 }; // ปรับเฟรมให้ลื่นเป็น 15 เฟรม/วินาที
 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
                 .then(() => { 
                     isScannerRunning = true; 
                     camLoading.classList.add('hidden');
-                    aimOverlay.classList.remove('hidden'); // แสดงเป้าเล็งและเลเซอร์
+                    aimOverlay.classList.remove('hidden'); 
                 })
                 .catch(err => {
-                    showToast('ไม่สามารถเปิดกล้องได้', 'error');
-                    console.error(err);
+                    showModal('กล้องทำงานไม่สำเร็จ', 'กรุณากดเปิดสิทธิ์เข้าใช้งานกล้องในการตั้งค่าของเบราว์เซอร์บนมือถือ', 'error');
                     stopScanner();
                 });
         }
@@ -209,60 +996,48 @@
                     document.getElementById('btn-start-scan').classList.remove('hidden');
                     document.getElementById('btn-stop-scan').classList.add('hidden');
                     
-                    aimOverlay.classList.add('hidden'); // ซ่อนเป้าเล็ง
+                    aimOverlay.classList.add('hidden'); 
                     camLoading.classList.add('hidden');
-                    idleIcon.classList.remove('hidden'); // กลับมาแสดงไอคอนกล้องพัก
+                    idleIcon.classList.remove('hidden'); 
                 });
             }
         }
 
         function onScanSuccess(decodedText) {
-            if (isProcessing) return; // ติดสถานะล็อคอยู่ ให้ข้ามไปเลย (กันค้าง)
+            if (isProcessing) return; // ติดสถานะหน่วงเวลาอยู่ เพื่อไม่ให้แอปสั่นและสแกนเบิ้ล
 
             isProcessing = true; 
+            const barcode = decodedText.trim();
             
-            try {
-                const barcode = decodedText.trim();
-                
-                // ตรวจสอบข้อมูล
-                const isDuplicate = scannedData.some(item => item.barcode === barcode);
+            // ตรวจสอบความซ้ำในรอบวัน
+            const isDuplicate = scannedData.some(item => item.barcode === barcode);
 
-                if (isDuplicate) {
-                    // เอฟเฟกต์แสกนติดแต่ซ้ำ (สีแดง)
-                    triggerSnapEffect('error');
-                    playSound('error');
-                    showToast(`ซ้ำ! ${barcode}`, 'error');
-                } else {
-                    // เอฟเฟกต์แสกนติด (สีเขียว)
-                    triggerSnapEffect('success');
-                    playSound('success');
-                    showToast(`${barcode}`, 'success');
-                    
-                    // บันทึกข้อมูล
-                    const now = new Date();
-                    const timeStr = now.toLocaleTimeString('th-TH');
-                    scannedData.push({ barcode: barcode, time: timeStr, timestamp: now.getTime() });
-                    
-                    saveToLocalStorage();
-                    renderList();
-                }
-            } catch (error) {
-                console.error("เกิดข้อผิดพลาดตอนประมวลผลบาร์โค้ด:", error);
-            } finally {
-                // ล็อคเป้าไว้ 1.5 วินาที ก่อนปลดล็อคให้กล้องแสกนอันต่อไปได้ 
-                // (ใส่ finally ไว้เพื่อให้มั่นใจว่าระบบจะปลดล็อคเสมอแม้เกิด Error)
-                setTimeout(() => {
-                    isProcessing = false;
-                }, 1500);
+            if (isDuplicate) {
+                triggerSnapEffect('error');
+                playSound('error');
+                showToast(`ซ้ำ! พัสดุเลข ${barcode} สแกนไปแล้ว`, 'error');
+            } else {
+                triggerSnapEffect('success');
+                playSound('success');
+                showToast(`สำเร็จ: ${barcode}`, 'success');
+                
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('th-TH');
+                scannedData.push({ barcode: barcode, time: timeStr, timestamp: now.getTime() });
+                
+                saveToLocalStorage();
+                renderList();
             }
+
+            // ดีเลย์ระบบสแกนถัดไป 1.5 วินาที
+            setTimeout(() => {
+                isProcessing = false;
+            }, 1500);
         }
-        
-        // --- เอฟเฟกต์กระพริบตอนแสกนติด (Snap Effect) ---
+
+        // เอฟเฟกต์กระพริบเมื่อสแกนติด
         function triggerSnapEffect(type) {
-            // ซ่อนเลเซอร์
             aimLaser.classList.add('hidden');
-            
-            // เปลี่ยนสีมุม
             aimCorners.forEach(c => {
                 c.classList.remove('border-blue-500');
                 if (type === 'success') {
@@ -272,7 +1047,6 @@
                 }
             });
             
-            // คืนค่ากลับเป็นสถานะ "กำลังเล็ง (เลเซอร์แดง, มุมฟ้า)" หลัง 1.5 วิ
             setTimeout(() => {
                 aimCorners.forEach(c => {
                     c.classList.remove('border-green-500', 'border-red-500');
@@ -287,35 +1061,36 @@
             if (barcode) {
                 if (scannedData.some(item => item.barcode === barcode)) {
                     playSound('error');
-                    showToast(`ซ้ำ! ${barcode}`, 'error');
+                    showToast(`ซ้ำ! ${barcode} สแกนไปแล้ว`, 'error');
                 } else {
                     const now = new Date();
                     scannedData.push({ barcode: barcode, time: now.toLocaleTimeString('th-TH'), timestamp: now.getTime() });
                     saveToLocalStorage();
                     renderList();
                     playSound('success');
-                    showToast(`เพิ่มแล้ว`, 'success');
+                    showToast(`บันทึกแล้ว`, 'success');
                 }
                 manualInput.value = '';
             }
         }
 
-        // จับกด Enter ในช่องพิมพ์
         manualInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') handleManualInput();
         });
 
-        function deleteItem(timestamp) {
-            if (confirm('ต้องการลบรายการนี้ใช่หรือไม่?')) {
+        async function deleteItem(timestamp) {
+            const isConfirm = await showModal('ยืนยันลบพัสดุ', 'คุณต้องการลบข้อมูลบาร์โค้ดพัสดุรายการนี้ออกจากเครื่องหรือไม่?', 'warning', true);
+            if (isConfirm) {
                 scannedData = scannedData.filter(item => item.timestamp !== timestamp);
                 saveToLocalStorage();
                 renderList();
             }
         }
 
-        function clearAllData() {
+        async function clearAllData() {
             if (scannedData.length === 0) return;
-            if (confirm('คุณต้องการ "ล้างข้อมูลการสแกนทั้งหมด" ใช่หรือไม่?\n(ไม่สามารถกู้คืนได้)')) {
+            const isConfirm = await showModal('ยืนยันล้างข้อมูล', 'ยืนยันเพื่อลบข้อมูลบาร์โค้ดทั้งหมดที่สแกนสะสมไว้หรือไม่?', 'error', true);
+            if (isConfirm) {
                 scannedData = [];
                 saveToLocalStorage();
                 renderList();
@@ -323,7 +1098,6 @@
             }
         }
 
-        // --- Data & UI Update ---
         function renderList() {
             listUl.innerHTML = '';
             totalBadge.innerText = `${scannedData.length} รายการ`;
@@ -335,19 +1109,18 @@
 
             emptyState.classList.add('hidden');
 
-            scannedData.forEach((item, index) => {
+            scannedData.forEach((item) => {
                 const li = document.createElement('li');
-                li.className = "flex justify-between items-center bg-white border border-gray-100 p-3 rounded-lg shadow-sm mb-2";
+                li.className = "flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-xl shadow-sm mb-2";
                 li.innerHTML = `
                     <div class="flex flex-col">
-                        <span class="font-bold text-gray-800 text-lg tracking-wide">${item.barcode}</span>
-                        <span class="text-xs text-gray-400"><i class="fa-regular fa-clock"></i> ${item.time}</span>
+                        <span class="font-bold text-slate-800 text-base tracking-wide">${item.barcode}</span>
+                        <span class="text-[10px] text-slate-400 font-medium"><i class="fa-regular fa-clock mr-1"></i> ${item.time}</span>
                     </div>
-                    <button onclick="deleteItem(${item.timestamp})" class="text-gray-400 hover:text-red-500 bg-gray-50 p-2 rounded-full active:bg-red-100 transition">
-                        <i class="fa-solid fa-xmark px-1"></i>
+                    <button onclick="deleteItem(${item.timestamp})" class="text-slate-400 hover:text-red-500 bg-white hover:bg-red-50 p-2 rounded-full border transition">
+                        <i class="fa-solid fa-trash-can px-0.5"></i>
                     </button>
                 `;
-                // ใช้ prepend เพื่อให้รายการใหม่สุดดันขึ้นไปอยู่บนสุด
                 listUl.prepend(li);
             });
         }
@@ -363,93 +1136,68 @@
                     scannedData = JSON.parse(saved);
                     renderList();
                 }
-            } catch (e) {
-                console.error("Load error:", e);
-            }
+            } catch (e) { console.error("Error loading barcode logs:", e); }
         }
 
-        // --- Export Functions ---
         function copyToClipboard() {
             if (scannedData.length === 0) {
-                showToast('ไม่มีข้อมูลให้คัดลอก', 'error');
+                showToast('ไม่มีข้อมูลที่จะคัดลอก', 'error');
                 return;
             }
-
-            let textToCopy = "บาร์โค้ด\tเวลา\n";
-            // เรียงจากเก่าไปใหม่สำหรับ Export
-            scannedData.forEach(item => {
-                textToCopy += `${item.barcode}\t${item.time}\n`;
-            });
-
-            const el = document.createElement('textarea');
-            el.value = textToCopy;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            
-            showToast('คัดลอกสำเร็จ!', 'success');
+            let textToCopy = "บาร์โค้ดพัสดุ\tเวลาสแกน\n";
+            scannedData.forEach(item => { textToCopy += `${item.barcode}\t${item.time}\n`; });
+            const el = document.createElement('textarea'); el.value = textToCopy;
+            document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+            showToast('คัดลอกพัสดุทั้งหมดลงคลิปบอร์ดแล้ว', 'success');
         }
 
         function exportToCSV() {
             if (scannedData.length === 0) {
-                showToast('ไม่มีข้อมูลให้ Export', 'error');
+                showToast('ไม่มีข้อมูลสำหรับส่งออก', 'error');
                 return;
             }
-
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFFบาร์โค้ด,เวลา\n";
-            scannedData.forEach(item => {
-                csvContent += `"${item.barcode}","${item.time}"\n`;
-            });
-
-            const encodedUri = encodeURI(csvContent);
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFFบาร์โค้ดพัสดุ,เวลาสแกน\n";
+            scannedData.forEach(item => { csvContent += `"${item.barcode}","${item.time}"\n`; });
             const link = document.createElement("a");
             const dateStr = new Date().toISOString().split('T')[0];
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `QC_Scan_${dateStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showToast('ดาวน์โหลด CSV สำเร็จ!', 'success');
+            link.href = encodeURI(csvContent);
+            link.download = `WMS_Scanned_${dateStr}.csv`;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            showToast('ดาวน์โหลดไฟล์ CSV เรียบร้อย', 'success');
         }
 
-        // --- Utils ---
         function playSound(type) {
+            if (!document.getElementById('setting-sound').checked) return;
             try {
                 if (type === 'success') {
-                    soundSuccess.currentTime = 0;
-                    soundSuccess.play().catch(e=>console.log(e));
+                    soundSuccess.currentTime = 0; soundSuccess.play();
                 } else {
-                    soundError.currentTime = 0;
-                    soundError.play().catch(e=>console.log(e));
+                    soundError.currentTime = 0; soundError.play();
                 }
             } catch (error) {}
         }
 
         function showToast(message, type) {
-            const toast = document.getElementById('toast');
-            const toastIcon = document.getElementById('toast-icon');
-            const toastText = document.getElementById('toast-text');
-
-            toastText.innerText = message;
+            // ระบบแจ้งเตือนลอยตัวแบบหัวใจของแอป
+            const toast = document.createElement('div');
+            let color = "bg-slate-900 text-white";
+            let icon = "fa-circle-info";
             
             if (type === 'success') {
-                toast.className = "toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-green-500 text-white";
-                toastIcon.className = "fa-solid fa-circle-check";
+                color = "bg-green-600 text-white shadow-lg shadow-green-600/10";
+                icon = "fa-circle-check";
             } else if (type === 'error') {
-                toast.className = "toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-red-500 text-white";
-                toastIcon.className = "fa-solid fa-circle-xmark";
-            } else {
-                toast.className = "toast fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full font-bold shadow-lg flex items-center gap-2 bg-gray-800 text-white";
-                toastIcon.className = "fa-solid fa-circle-info";
+                color = "bg-red-600 text-white shadow-lg shadow-red-600/10";
+                icon = "fa-triangle-exclamation";
             }
+            
+            toast.className = `fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-full font-bold shadow-2xl flex items-center gap-2 transform transition-all duration-300 ${color}`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span class="text-sm">${message}</span>`;
+            document.body.appendChild(toast);
 
-            toast.classList.remove('hidden-toast');
-
-            // ซ่อนอัตโนมัติ
             setTimeout(() => {
-                toast.classList.add('hidden-toast');
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => document.body.removeChild(toast), 300);
             }, 2000);
         }
     </script>
